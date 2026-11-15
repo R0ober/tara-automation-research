@@ -1,0 +1,41 @@
+name: Shared validation
+
+# Runs on pull requests that change shared/ or this workflow.
+#
+# Current scope: repository-structure check only. The shared schemas and
+# reference artifacts do not exist yet. Add schema and data validation here
+# when they exist, and record the format decision in shared/docs/decisions/.
+
+on:
+  pull_request:
+    paths:
+      - "shared/**"
+      - ".github/workflows/shared-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  structure:
+    name: Shared structure check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check that the shared directories exist
+        run: |
+          missing=0
+          for dir in shared/architecture shared/reference-tara shared/schemas shared/docs/decisions; do
+            if [ -d "$dir" ]; then
+              echo "Found: $dir"
+            else
+              echo "::error::Missing directory: $dir"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Report validation scope
+        run: |
+          echo "This check verifies the shared directory structure only."
+          echo "It does not validate schemas or reference data."

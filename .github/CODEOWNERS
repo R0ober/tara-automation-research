@@ -1,0 +1,27 @@
+# Code owners for this repository.
+#
+# GitHub requests a review from the code owners when a pull request changes
+# their files. This file does not guarantee approval by a specific owner unless
+# branch protection enables "Require review from Code Owners".
+#
+# STATUS: TEMPLATE. The entries are commented out because most GitHub usernames
+# are not yet verified. Invalid usernames make CODEOWNERS entries fail.
+#
+# To activate:
+#   1. Replace each <placeholder> with the verified GitHub username.
+#   2. Remove the leading "# " from each entry.
+#   3. Check the file at: Repository > Code > .github/CODEOWNERS (GitHub shows errors there).
+#
+# Known username: Robin = @R0ober (the account that set up this repository).
+#
+# Later entries take precedence over earlier entries.
+
+# /generation/      @R0ober @<lucas>
+# /verification/    @<zhuoyu> @<yixiang>
+# /maintenance/     @<hongbin> @<zeren>
+
+# Cross-team review: all contributors own shared/ and infrastructure/.
+# Review convention: a contributor from a different subproject than the author reviews these changes.
+# /shared/          @R0ober @<lucas> @<zhuoyu> @<yixiang> @<hongbin> @<zeren>
+# /infrastructure/  @R0ober @<lucas> @<zhuoyu> @<yixiang> @<hongbin> @<zeren>
+# /.github/         @R0ober @<lucas> @<zhuoyu> @<yixiang> @<hongbin> @<zeren>
