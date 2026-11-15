@@ -1,0 +1,26 @@
+# operating system and editor files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# secrets and local configuration. 
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# common local enviormensts and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+node_modules/
+.cache/
+
+# subprojects can add their own .gitignore files for stack-specific entries.
