@@ -24,3 +24,6 @@ node_modules/
 .cache/
 
 # subprojects can add their own .gitignore files for stack-specific entries.
+
+generation/ics-attack.json
+generation/enterprise-attack.json
