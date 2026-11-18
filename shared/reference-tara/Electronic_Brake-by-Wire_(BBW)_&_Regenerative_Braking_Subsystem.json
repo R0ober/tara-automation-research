@@ -1,0 +1,341 @@
+{
+  "item_definition": {
+    "item_id": "AUTO-BBW-01",
+    "name": "Electronic Brake-by-Wire (BBW) & Regenerative Braking Subsystem",
+    "standard_reference": "ISO/SAE 21434:2021",
+    "system_boundary": "Function-level boundary encompassing the complete braking signal chain: from the physical Brake Pedal Sensor Unit (BPSU) and Vehicle Motion & Chassis Domain Controller (VDCM), through the Electronic Brake Control Module (EBCM) and Regenerative Inverter Controller (RIC), down to the 4-corner Smart Electro-Mechanical Brake Caliper Actuators (EMBA). Includes the exposed OBD-II / Wireless Diagnostic Service Interface on the VDCM.",
+    "functions": [
+      {
+        "function_id": "FUNC-BRK-01",
+        "name": "Driver Pedal Travel & Force Sensing",
+        "description": "Reads redundant Hall-effect pedal travel and pressure sensors at 1 kHz and transmits driver braking intent frames via SENT/PSI5 and Chassis CAN-FD to the Vehicle Motion & Chassis Domain Controller."
+      },
+      {
+        "function_id": "FUNC-BRK-02",
+        "name": "Brake Torque Blending & Dynamic Allocation",
+        "description": "Calculates total deceleration demand, blends regenerative braking torque (sent to the Inverter) with friction braking torque (sent to the EBCM), and computes per-wheel slip targets (ABS/ESC)."
+      },
+      {
+        "function_id": "FUNC-BRK-03",
+        "name": "Electro-Mechanical Friction Brake Actuation",
+        "description": "Translates target clamping force commands from the EBCM into 48V 3-phase BLDC motor currents at each wheel's Smart Brake Caliper Actuator to press the brake pads against the rotor."
+      }
+    ]
+  },
+  "components": [
+    {
+      "component_id": "COMP-BPSU",
+      "name": "Brake Pedal Sensor Unit (BPSU)",
+      "type": "Smart_Sensor_Node",
+      "trust_zone": "Cabin_Pedal_Box_Zone",
+      "asil_level": "ASIL-D",
+      "hardware": "Infineon TLE4998S Hall Sensor + NXP S32K116 Cortex-M0+ MCU",
+      "os": {
+        "name": "Bare-Metal Firmware",
+        "version": "1.0.4"
+      },
+      "hosted_software": [
+        {
+          "name": "pedal_feel_and_travel_encoder",
+          "version": "1.0.4",
+          "role": "Samples dual Hall sensors and packages CAN ID 0x080 (Pedal_Travel_Demand)",
+          "security_configuration": {
+            "e2e_crc_enabled": true,
+            "secoc_mac_enabled": false,
+            "jtag_swd_debug_port_locked": false,
+            "calibration_eeprom_write_protected": false
+          }
+        }
+      ],
+      "interfaces": [
+        "INT-CAN-CHASSIS",
+        "INT-SWD-HEADER"
+      ]
+    },
+    {
+      "component_id": "COMP-VDCM",
+      "name": "Vehicle Motion & Chassis Domain Controller (VDCM)",
+      "type": "Domain_Controller_HPC",
+      "trust_zone": "Chassis_Backbone_Zone",
+      "asil_level": "ASIL-D",
+      "hardware": "Renesas R-Car S4 (ARM Cortex-A55 + Cortex-R52 Lockstep)",
+      "os": {
+        "name": "Embedded Linux (AGL) + AUTOSAR Adaptive",
+        "kernel_version": "5.10.70",
+        "cpe": "cpe:2.3:o:linux:linux_kernel:5.10.70:*:*:*:*:*:*:*"
+      },
+      "hosted_software": [
+        {
+          "name": "bluez",
+          "version": "5.54",
+          "cpe": "cpe:2.3:a:bluez:bluez:5.54:*:*:*:*:*:*:*",
+          "role": "BLE Factory & Workshop Wireless Brake Diagnostics Interface (Bleeding/Pad Service Mode)",
+          "listening_port": 0
+        },
+        {
+          "name": "mosquitto",
+          "version": "2.0.10",
+          "cpe": "cpe:2.3:a:eclipse:mosquitto:2.0.10:*:*:*:*:*:*:*",
+          "role": "Internal IPC / SOME-IP to MQTT Telemetry Bridge",
+          "listening_port": 1883
+        },
+        {
+          "name": "brake_blending_coordinator",
+          "version": "2.3.1",
+          "role": "Computes friction vs. regenerative torque split and transmits SOME/IP BrakeTorqueRequest over TSN Ethernet to EBCM",
+          "security_configuration": {
+            "runs_as_root": true,
+            "someip_tls_or_ipsec_enabled": false,
+            "allow_diagnostic_brake_override_while_driving": true,
+            "uds_0x2F_io_control_auth_required": false
+          }
+        }
+      ],
+      "interfaces": [
+        "INT-BLE-DIAG",
+        "INT-OBD2-CAN",
+        "INT-CAN-CHASSIS",
+        "INT-ETH-TSN-BRAKE"
+      ]
+    },
+    {
+      "component_id": "COMP-RIC",
+      "name": "Regenerative Inverter Controller (RIC)",
+      "type": "ECU_Powertrain",
+      "trust_zone": "Powertrain_HV_Zone",
+      "asil_level": "ASIL-C",
+      "hardware": "TI C2000 TMS320F28388D",
+      "os": {
+        "name": "TI-RTOS (SYS/BIOS)",
+        "version": "6.83.00.18",
+        "cpe": "cpe:2.3:o:ti:sys\\/bios:6.83.00.18:*:*:*:*:*:*:*"
+      },
+      "hosted_software": [
+        {
+          "name": "regen_torque_inverter_app",
+          "version": "4.1.2",
+          "role": "Executes negative torque (regenerative braking) on traction motor and reports actual achieved regen torque (CAN ID 0x1A0)",
+          "security_configuration": {
+            "secoc_mac_verification": false,
+            "plausibility_check_on_regen_drop": false
+          }
+        }
+      ],
+      "interfaces": [
+        "INT-CAN-CHASSIS"
+      ]
+    },
+    {
+      "component_id": "COMP-EBCM",
+      "name": "Electronic Brake Control Module (EBCM)",
+      "type": "ECU_Safety_Critical",
+      "trust_zone": "Safety_Critical_Braking_Zone",
+      "asil_level": "ASIL-D",
+      "hardware": "NXP S32K344 (Triple Lockstep ARM Cortex-M7)",
+      "os": {
+        "name": "FreeRTOS + LwIP TCP/IP Stack",
+        "version": "10.4.1",
+        "cpe": "cpe:2.3:o:amazon:freertos:10.4.1:*:*:*:*:*:*:*"
+      },
+      "hosted_software": [
+        {
+          "name": "lwip",
+          "version": "2.1.2",
+          "cpe": "cpe:2.3:a:lwip_project:lwip:2.1.2:*:*:*:*:*:*:*",
+          "role": "Embedded TCP/IP & SOME/IP Stack for TSN Ethernet",
+          "listening_port": 30490
+        },
+        {
+          "name": "abs_esc_clamping_controller",
+          "version": "3.4.0",
+          "role": "Receives SOME/IP braking demand, executes wheel-slip PID loop, and sends CAN-FD clamping force frames (ID 0x040) to the 4 wheel caliper actuators",
+          "security_configuration": {
+            "secoc_freshness_counter_enabled": false,
+            "uds_0x27_seed_entropy_bits": 8,
+            "uds_0x31_bleed_routine_speed_interlock_enabled": false,
+            "bootloader_rollback_protection": false
+          }
+        }
+      ],
+      "interfaces": [
+        "INT-ETH-TSN-BRAKE",
+        "INT-CANFD-ACTUATOR"
+      ]
+    },
+    {
+      "component_id": "COMP-EMBA",
+      "name": "Smart Electro-Mechanical Brake Caliper Actuator (EMBA x4)",
+      "type": "Smart_Actuator_Node",
+      "trust_zone": "Wheel_End_Actuator_Zone",
+      "asil_level": "ASIL-D",
+      "hardware": "Infineon MOTIX TLE9879QXA40 (3-Phase BLDC Gate Driver + ARM Cortex-M3)",
+      "os": {
+        "name": "Bare-Metal Motor Control Firmware",
+        "version": "2.0.0"
+      },
+      "hosted_software": [
+        {
+          "name": "caliper_piston_servo_driver",
+          "version": "2.0.0",
+          "role": "Drives 48V BLDC ball-screw mechanism to push brake pads against disc rotor based on CAN ID 0x040",
+          "security_configuration": {
+            "command_authentication_mac": false,
+            "max_clamping_current_limiter_overrideable_via_uds": true,
+            "wheel_harness_physical_shielding": "Unshielded wheel-well twisted pair (accessible without cabin entry)"
+          }
+        }
+      ],
+      "interfaces": [
+        "INT-CANFD-ACTUATOR"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "connection_id": "CONN-BRK-01",
+      "name": "Workshop BLE & OBD-II Diagnostic Interface",
+      "source_component": "EXTERNAL_ATTACKER_SURFACE",
+      "target_component": "COMP-VDCM",
+      "medium": "Bluetooth Low Energy (BLE 5.0) & Physical OBD-II Port (ISO 15765-4)",
+      "protocol": "GATT / L2CAP (BLE) & UDS on CAN (0x7E0 / 0x7DF)",
+      "encrypted": false,
+      "authenticated": "Static 4-digit PIN (0000) on BLE / Unauthenticated UDS 0x2F & 0x31 services"
+    },
+    {
+      "connection_id": "CONN-BRK-02",
+      "name": "Chassis & Pedal Sensor CAN-FD Bus",
+      "source_component": "COMP-BPSU",
+      "target_component": "COMP-VDCM",
+      "adjacent_components": [
+        "COMP-RIC"
+      ],
+      "medium": "CAN-FD (500 kbps nominal / 2 Mbps data)",
+      "protocol": "Raw CAN-FD Frames (CAN ID 0x080 Pedal Travel, CAN ID 0x1A0 Regen Torque Status)",
+      "encrypted": false,
+      "authenticated": "CRC-8 only (AUTOSAR SecOC disabled; vulnerable to frame injection and replay)"
+    },
+    {
+      "connection_id": "CONN-BRK-03",
+      "name": "Redundant Braking TSN Ethernet Link",
+      "source_component": "COMP-VDCM",
+      "target_component": "COMP-EBCM",
+      "medium": "100BASE-T1 Automotive Ethernet (IEEE 802.1Qbv TSN)",
+      "protocol": "SOME/IP over UDP Port 30490 & DoIP over TCP Port 13400",
+      "encrypted": false,
+      "authenticated": "None (Plaintext SOME/IP without MACsec, IPsec, or SecOC)"
+    },
+    {
+      "connection_id": "CONN-BRK-04",
+      "name": "Wheel-End Brake Actuator CAN-FD Bus",
+      "source_component": "COMP-EBCM",
+      "target_component": "COMP-EMBA",
+      "medium": "Private CAN-FD Sub-bus routed to all 4 wheel wells (2 Mbps)",
+      "protocol": "Raw CAN-FD Frames (CAN ID 0x040 Target_Clamping_Force_kN) & UDS (0x750)",
+      "encrypted": false,
+      "authenticated": "None (Plaintext CAN-FD without SecOC; physical wiring exposed in wheel arches)"
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "ASSET-BRK-01",
+      "name": "Driver Pedal Travel & Braking Demand Signal (CAN ID 0x080)",
+      "parent_component": "COMP-BPSU",
+      "associated_connections": [
+        "CONN-BRK-02"
+      ],
+      "cybersecurity_properties": [
+        "Integrity",
+        "Authenticity",
+        "Availability"
+      ],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-BRK-01",
+          "description": "Attacker spoofs 0% pedal travel during an emergency stop (loss of braking) or injects 100% pedal travel at highway speed (unintended full deceleration).",
+          "expected_sfop_impact": {
+            "Safety": "Severe",
+            "Financial": "Major",
+            "Operational": "Severe",
+            "Privacy": "Negligible"
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": "ASSET-BRK-02",
+      "name": "Blended Friction & Regenerative Torque Command (SOME/IP 0x1020 & CAN ID 0x1A0)",
+      "parent_component": "COMP-VDCM",
+      "associated_connections": [
+        "CONN-BRK-02",
+        "CONN-BRK-03"
+      ],
+      "cybersecurity_properties": [
+        "Integrity",
+        "Authenticity",
+        "Availability"
+      ],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-BRK-02",
+          "description": "Attacker falsifies high regenerative braking torque achievement from COMP-RIC while zeroing friction torque to COMP-EBCM, resulting in sudden total loss of vehicle deceleration.",
+          "expected_sfop_impact": {
+            "Safety": "Severe",
+            "Financial": "Major",
+            "Operational": "Severe",
+            "Privacy": "Negligible"
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": "ASSET-BRK-03",
+      "name": "Wheel Caliper Clamping Force Command (CAN ID 0x040)",
+      "parent_component": "COMP-EMBA",
+      "associated_connections": [
+        "CONN-BRK-04"
+      ],
+      "cybersecurity_properties": [
+        "Integrity",
+        "Authenticity",
+        "Availability"
+      ],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-BRK-03",
+          "description": "Asymmetric clamping force commands (e.g., 45 kN on front-left caliper and 0 kN on right calipers) cause violent yaw spin-out, or UDS pad-retraction command retracts pistons completely so pads cannot contact the rotor.",
+          "expected_sfop_impact": {
+            "Safety": "Severe",
+            "Financial": "Major",
+            "Operational": "Severe",
+            "Privacy": "Negligible"
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": "ASSET-BRK-04",
+      "name": "EBCM & Caliper Actuator Control Firmware",
+      "parent_component": "COMP-EBCM",
+      "associated_connections": [
+        "CONN-BRK-03",
+        "CONN-BRK-04"
+      ],
+      "cybersecurity_properties": [
+        "Integrity",
+        "Authenticity"
+      ],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-BRK-04",
+          "description": "Unauthorized UDS flashing or thermal current-limit override permanently damages the 48V BLDC caliper motors or disables ABS wheel-lock prevention.",
+          "expected_sfop_impact": {
+            "Safety": "Severe",
+            "Financial": "Severe",
+            "Operational": "Severe",
+            "Privacy": "Negligible"
+          }
+        }
+      ]
+    }
+  ]
+}
