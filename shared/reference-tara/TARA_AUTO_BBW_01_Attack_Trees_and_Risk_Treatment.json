@@ -1,0 +1,1460 @@
+{
+  "tara_metadata": {
+    "document_id": "TARA-AUTO-BBW-01",
+    "version": "1.0.0",
+    "date": "2026-11-18",
+    "standard_reference": "ISO/SAE 21434:2021 (Clauses 15.3 - 15.9)",
+    "item_id": "AUTO-BBW-01",
+    "item_name": "Electronic Brake-by-Wire (BBW) & Regenerative Braking Subsystem",
+    "target_asil": "ASIL-D",
+    "methodology": {
+      "impact_rating_method": "ISO/SAE 21434 Annex F (Safety, Financial, Operational, Privacy - SFOP)",
+      "impact_levels": [
+        "Negligible",
+        "Moderate",
+        "Major",
+        "Severe"
+      ],
+      "attack_feasibility_method": "Attack Potential-based Approach (ISO/SAE 21434 Annex G.4 / ISO/IEC 18045)",
+      "attack_potential_parameters": {
+        "elapsed_time": {
+          "<=1d": 0,
+          "<=1w": 1,
+          "<=1m": 4,
+          "<=3m": 10,
+          "<=6m": 17,
+          ">6m": 19
+        },
+        "specialist_expertise": {
+          "Layman": 0,
+          "Proficient": 3,
+          "Expert": 6,
+          "Multiple_Experts": 8
+        },
+        "knowledge_of_item": {
+          "Public": 0,
+          "Restricted": 3,
+          "Confidential": 7,
+          "Strictly_Confidential": 11
+        },
+        "window_of_opportunity": {
+          "Unlimited": 0,
+          "Easy": 1,
+          "Moderate": 4,
+          "Difficult_None": 10
+        },
+        "equipment": {
+          "Standard": 0,
+          "Specialized": 4,
+          "Bespoke": 7,
+          "Multiple_Bespoke": 9
+        }
+      },
+      "feasibility_mapping": {
+        "0-9": "High",
+        "10-13": "Medium",
+        "14-19": "Low",
+        "20-24": "Very Low",
+        ">=25": "Very Low"
+      },
+      "tree_aggregation_rules": {
+        "AND_gate": "Sum or Maximum of child leaf attack potential scores (representing combined barrier difficulty), mapped to corresponding feasibility rating.",
+        "OR_gate": "Minimum of child attack potential scores (Wait/Weakest link principle: highest feasibility path determines parent node feasibility)."
+      },
+      "risk_matrix_5x5": {
+        "Severe": {
+          "High": 5,
+          "Medium": 5,
+          "Low": 4,
+          "Very Low": 3
+        },
+        "Major": {
+          "High": 4,
+          "Medium": 4,
+          "Low": 3,
+          "Very Low": 2
+        },
+        "Moderate": {
+          "High": 3,
+          "Medium": 2,
+          "Low": 2,
+          "Very Low": 1
+        },
+        "Negligible": {
+          "High": 1,
+          "Medium": 1,
+          "Low": 1,
+          "Very Low": 1
+        }
+      }
+    }
+  },
+  "threat_scenarios_and_attack_trees": [
+    {
+      "threat_scenario_id": "TS-BRK-01",
+      "threat_scenario_name": "Spoofing or Tampering of Driver Pedal Travel & Braking Demand Signal (CAN ID 0x080)",
+      "targeted_asset": {
+        "asset_id": "ASSET-BRK-01",
+        "asset_name": "Driver Pedal Travel & Braking Demand Signal (CAN ID 0x080)",
+        "parent_component": "COMP-BPSU",
+        "associated_connections": [
+          "CONN-BRK-02"
+        ],
+        "compromised_properties": [
+          "Integrity",
+          "Authenticity",
+          "Availability"
+        ]
+      },
+      "stride_classification": [
+        "Spoofing",
+        "Tampering",
+        "Denial of Service"
+      ],
+      "associated_damage_scenario": {
+        "damage_id": "DS-BRK-01",
+        "description": "Attacker spoofs 0% pedal travel during an emergency stop (loss of braking) or injects 100% pedal travel at highway speed (unintended full deceleration).",
+        "impact_ratings": {
+          "Safety": {
+            "rating": "Severe",
+            "justification": "Total loss of braking during emergency stop or sudden 100% full braking at highway speed directly leads to life-threatening high-speed collisions (ISO 26262 S3 / ASIL-D)."
+          },
+          "Financial": {
+            "rating": "Major",
+            "justification": "High liability claims, mandatory fleet-wide safety recall of brake-by-wire subsystem, and regulatory penalties."
+          },
+          "Operational": {
+            "rating": "Severe",
+            "justification": "Complete loss of primary vehicle longitudinal deceleration control."
+          },
+          "Privacy": {
+            "rating": "Negligible",
+            "justification": "No personal or PII data is processed within the pedal sensor signal chain."
+          },
+          "overall_impact_rating": "Severe"
+        }
+      },
+      "attack_tree": {
+        "node_id": "AT-BRK-01-ROOT",
+        "node_type": "ROOT_GOAL",
+        "gate": "OR",
+        "title": "Falsify or Suppress Driver Pedal Travel Demand (CAN ID 0x080) Received by COMP-VDCM",
+        "aggregated_attack_potential_score": 1,
+        "aggregated_attack_feasibility": "High",
+        "critical_attack_path": [
+          "AT-BRK-01-ROOT",
+          "AT-BRK-01-B1",
+          "AT-BRK-01-B1-2"
+        ],
+        "children": [
+          {
+            "node_id": "AT-BRK-01-B1",
+            "node_type": "SUB_GOAL",
+            "gate": "AND",
+            "title": "Path 1: Wireless BLE Workshop Interface Exploitation & Chassis CAN-FD Frame Injection",
+            "description": "Attacker exploits the BLE interface on COMP-VDCM to gain root execution and transmit forged CAN ID 0x080 frames with valid CRC-8 checksums.",
+            "aggregated_attack_potential_score": 4,
+            "aggregated_attack_feasibility": "High",
+            "children": [
+              {
+                "node_id": "AT-BRK-01-B1-1",
+                "node_type": "SUB_GOAL",
+                "gate": "OR",
+                "title": "Gain Unauthenticated Wireless Execution on COMP-VDCM via INT-BLE-DIAG",
+                "aggregated_attack_potential_score": 1,
+                "aggregated_attack_feasibility": "High",
+                "children": [
+                  {
+                    "node_id": "AT-BRK-01-B1-1A",
+                    "node_type": "LEAF_ATTACK_STEP",
+                    "title": "Exploit CVE-2020-12351 (BleedingTooth) in BlueZ 5.54 over BLE",
+                    "target_component": "COMP-VDCM",
+                    "target_interface": "INT-BLE-DIAG",
+                    "vulnerability_reference": "CVE-2020-12351 (CVSS 8.3 High) - Heap-based type confusion in L2CAP",
+                    "technical_detail": "Send malformed L2CAP packets to COMP-VDCM's active BLE diagnostic interface within short-range wireless proximity to achieve remote code execution.",
+                    "attack_potential": {
+                      "elapsed_time": {
+                        "label": "<=1w",
+                        "score": 1
+                      },
+                      "specialist_expertise": {
+                        "label": "Expert",
+                        "score": 6
+                      },
+                      "knowledge_of_item": {
+                        "label": "Public",
+                        "score": 0
+                      },
+                      "window_of_opportunity": {
+                        "label": "Easy",
+                        "score": 1
+                      },
+                      "equipment": {
+                        "label": "Standard",
+                        "score": 0
+                      },
+                      "total_score": 8,
+                      "feasibility_rating": "High"
+                    }
+                  },
+                  {
+                    "node_id": "AT-BRK-01-B1-1B",
+                    "node_type": "LEAF_ATTACK_STEP",
+                    "title": "Pair with Workshop BLE Service Using Static Default PIN (0000)",
+                    "target_component": "COMP-VDCM",
+                    "target_interface": "INT-BLE-DIAG",
+                    "vulnerability_reference": "CONN-BRK-01 Misconfiguration: Static 4-digit PIN (0000) on BLE",
+                    "technical_detail": "Connect to INT-BLE-DIAG using default PIN '0000' and access internal diagnostic bridge or exploit local Mosquitto 2.0.10 (TCP 1883) / Dirty Pipe (CVE-2022-0847).",
+                    "attack_potential": {
+                      "elapsed_time": {
+                        "label": "<=1d",
+                        "score": 0
+                      },
+                      "specialist_expertise": {
+                        "label": "Layman",
+                        "score": 0
+                      },
+                      "knowledge_of_item": {
+                        "label": "Public",
+                        "score": 0
+                      },
+                      "window_of_opportunity": {
+                        "label": "Easy",
+                        "score": 1
+                      },
+                      "equipment": {
+                        "label": "Standard",
+                        "score": 0
+                      },
+                      "total_score": 1,
+                      "feasibility_rating": "High"
+                    }
+                  }
+                ]
+              },
+              {
+                "node_id": "AT-BRK-01-B1-2",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Inject High-Frequency Spoofed CAN ID 0x080 Frames with Calculated CRC-8",
+                "target_component": "COMP-VDCM",
+                "target_interface": "INT-CAN-CHASSIS",
+                "vulnerability_reference": "COMP-BPSU / CONN-BRK-02: secoc_mac_enabled: false (CRC-8 only)",
+                "technical_detail": "Because AUTOSAR SecOC is disabled on CONN-BRK-02, attacker computes valid E2E CRC-8 safety checksums and overrides Pedal_Travel_Demand at 1 kHz.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1w",
+                    "score": 1
+                  },
+                  "specialist_expertise": {
+                    "label": "Proficient",
+                    "score": 3
+                  },
+                  "knowledge_of_item": {
+                    "label": "Restricted",
+                    "score": 3
+                  },
+                  "window_of_opportunity": {
+                    "label": "Unlimited",
+                    "score": 0
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 7,
+                  "feasibility_rating": "High"
+                }
+              }
+            ]
+          },
+          {
+            "node_id": "AT-BRK-01-B2",
+            "node_type": "SUB_GOAL",
+            "gate": "AND",
+            "title": "Path 2: Direct Physical OBD-II Port Injection onto Chassis CAN-FD Bus",
+            "description": "Attacker plugs a CAN-FD interface or wireless dongle into the cabin OBD-II port and floods CONN-BRK-02 with spoofed CAN ID 0x080 frames.",
+            "aggregated_attack_potential_score": 8,
+            "aggregated_attack_feasibility": "High",
+            "children": [
+              {
+                "node_id": "AT-BRK-01-B2-1",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Attach CAN-FD Injection Dongle to Physical OBD-II Port",
+                "target_component": "COMP-VDCM",
+                "target_interface": "INT-OBD2-CAN",
+                "vulnerability_reference": "CONN-BRK-01: Unauthenticated OBD-II CAN access without gateway filtering",
+                "technical_detail": "Requires brief physical access to cabin (e.g., valet, service workshop, unlocked door) to plug in a hidden CAN-FD transceiver.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1d",
+                    "score": 0
+                  },
+                  "specialist_expertise": {
+                    "label": "Layman",
+                    "score": 0
+                  },
+                  "knowledge_of_item": {
+                    "label": "Public",
+                    "score": 0
+                  },
+                  "window_of_opportunity": {
+                    "label": "Moderate",
+                    "score": 4
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 4,
+                  "feasibility_rating": "High"
+                }
+              },
+              {
+                "node_id": "AT-BRK-01-B2-2",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Transmit Dominant CAN ID 0x080 Frames with Valid E2E CRC-8",
+                "target_component": "COMP-VDCM",
+                "target_interface": "CONN-BRK-02",
+                "vulnerability_reference": "CONN-BRK-02: Lack of SecOC MAC verification",
+                "technical_detail": "Inject spoofed 0% or 100% pedal travel frames faster than the 1 kHz sensor cycle or force COMP-BPSU into Bus-Off state via dominant error active injection.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1w",
+                    "score": 1
+                  },
+                  "specialist_expertise": {
+                    "label": "Proficient",
+                    "score": 3
+                  },
+                  "knowledge_of_item": {
+                    "label": "Restricted",
+                    "score": 3
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 8,
+                  "feasibility_rating": "High"
+                }
+              }
+            ]
+          },
+          {
+            "node_id": "AT-BRK-01-B3",
+            "node_type": "SUB_GOAL",
+            "gate": "AND",
+            "title": "Path 3: Physical Tampering of Brake Pedal Sensor Unit (COMP-BPSU) via Unlocked SWD & Unprotected EEPROM",
+            "description": "Attacker accesses the cabin pedal box and overwrites the zero-point calibration EEPROM or flashes malicious firmware over the unlocked SWD debug header.",
+            "aggregated_attack_potential_score": 15,
+            "aggregated_attack_feasibility": "Low",
+            "children": [
+              {
+                "node_id": "AT-BRK-01-B3-1",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Connect SWD Debugger to Unlocked INT-SWD-HEADER in Cabin Pedal Box",
+                "target_component": "COMP-BPSU",
+                "target_interface": "INT-SWD-HEADER",
+                "vulnerability_reference": "COMP-BPSU: jtag_swd_debug_port_locked: false",
+                "technical_detail": "Gain physical access to the footwell pedal box and attach an ARM Cortex-M0+ SWD probe to the exposed debug pins.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1w",
+                    "score": 1
+                  },
+                  "specialist_expertise": {
+                    "label": "Proficient",
+                    "score": 3
+                  },
+                  "knowledge_of_item": {
+                    "label": "Restricted",
+                    "score": 3
+                  },
+                  "window_of_opportunity": {
+                    "label": "Moderate",
+                    "score": 4
+                  },
+                  "equipment": {
+                    "label": "Specialized",
+                    "score": 4
+                  },
+                  "total_score": 15,
+                  "feasibility_rating": "Low"
+                }
+              },
+              {
+                "node_id": "AT-BRK-01-B3-2",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Overwrite Unprotected Calibration EEPROM to Invert or Dead-Zone Pedal Travel Curve",
+                "target_component": "COMP-BPSU",
+                "target_interface": "INT-SWD-HEADER",
+                "vulnerability_reference": "COMP-BPSU: calibration_eeprom_write_protected: false",
+                "technical_detail": "Modify EEPROM calibration map in pedal_feel_and_travel_encoder v1.0.4 so physical pedal depression outputs 0% demand on CAN ID 0x080.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1w",
+                    "score": 1
+                  },
+                  "specialist_expertise": {
+                    "label": "Proficient",
+                    "score": 3
+                  },
+                  "knowledge_of_item": {
+                    "label": "Restricted",
+                    "score": 3
+                  },
+                  "window_of_opportunity": {
+                    "label": "Moderate",
+                    "score": 4
+                  },
+                  "equipment": {
+                    "label": "Specialized",
+                    "score": 4
+                  },
+                  "total_score": 15,
+                  "feasibility_rating": "Low"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "risk_determination": {
+        "overall_impact_rating": "Severe",
+        "aggregated_attack_feasibility": "High",
+        "minimum_attack_potential_score": 1,
+        "inherent_risk_value": 5,
+        "inherent_risk_level": "Critical (Risk Level 5 / 5)",
+        "risk_determination_rationale": "Severe safety impact (ASIL-D loss of braking / unintended full deceleration) combined with High attack feasibility via wireless BLE (static PIN '0000' and CVE-2020-12351) and unauthenticated CAN ID 0x080 frames lacking SecOC MACs yields the maximum Risk Value of 5."
+      },
+      "proposed_risk_treatment": {
+        "risk_treatment_option": "Reduce",
+        "cybersecurity_goals": [
+          {
+            "goal_id": "CG-BRK-01",
+            "description": "The subsystem shall ensure the authenticity, integrity, and freshness of Driver Pedal Travel Demand signals (CAN ID 0x080) from COMP-BPSU to COMP-VDCM, and prevent unauthorized physical or wireless alteration of pedal sensor calibration."
+          }
+        ],
+        "cybersecurity_requirements": [
+          {
+            "requirement_id": "CSR-BRK-01.1",
+            "target_component": "COMP-BPSU & COMP-VDCM",
+            "description": "Enable AUTOSAR SecOC (AES-128-CMAC with 24-bit truncated MAC and monotonic freshness counter) on CAN ID 0x080 over CONN-BRK-02 in addition to E2E CRC-8."
+          },
+          {
+            "requirement_id": "CSR-BRK-01.2",
+            "target_component": "COMP-BPSU",
+            "description": "Permanently blow/lock hardware JTAG/SWD debug fuses (jtag_swd_debug_port_locked = true) prior to production SOP and enforce hardware write-protection plus cryptographic signature verification on the calibration EEPROM."
+          },
+          {
+            "requirement_id": "CSR-BRK-01.3",
+            "target_component": "COMP-VDCM",
+            "description": "Upgrade BlueZ from v5.54 to >= v5.66 (patching CVE-2020-12351), disable BLE interface entirely when vehicle speed > 0 km/h, and replace static PIN '0000' with certificate-based workshop authentication."
+          },
+          {
+            "requirement_id": "CSR-BRK-01.4",
+            "target_component": "COMP-VDCM",
+            "description": "Implement hardware domain isolation / CAN gateway filtering on INT-OBD2-CAN to block inbound raw CAN ID 0x080 frames from the OBD-II port."
+          }
+        ],
+        "target_residual_feasibility": "Very Low",
+        "target_residual_risk_value": 3,
+        "target_residual_risk_level": "Medium / ALARP (Acceptable with continuous monitoring)"
+      }
+    },
+    {
+      "threat_scenario_id": "TS-BRK-02",
+      "threat_scenario_name": "Manipulation of Regenerative & Friction Brake Torque Blending (CAN ID 0x1A0 & SOME/IP 0x1020)",
+      "targeted_asset": {
+        "asset_id": "ASSET-BRK-02",
+        "asset_name": "Blended Friction & Regenerative Torque Command (SOME/IP 0x1020 & CAN ID 0x1A0)",
+        "parent_component": "COMP-VDCM",
+        "associated_connections": [
+          "CONN-BRK-02",
+          "CONN-BRK-03"
+        ],
+        "compromised_properties": [
+          "Integrity",
+          "Authenticity",
+          "Availability"
+        ]
+      },
+      "stride_classification": [
+        "Spoofing",
+        "Tampering",
+        "Elevation of Privilege",
+        "Denial of Service"
+      ],
+      "associated_damage_scenario": {
+        "damage_id": "DS-BRK-02",
+        "description": "Attacker falsifies high regenerative braking torque achievement from COMP-RIC while zeroing friction torque to COMP-EBCM, resulting in sudden total loss of vehicle deceleration.",
+        "impact_ratings": {
+          "Safety": {
+            "rating": "Severe",
+            "justification": "Tricking the brake blending coordinator into commanding 0 kN friction braking while actual regenerative braking is zero results in complete unmitigated failure to decelerate (ISO 26262 S3 / ASIL-D)."
+          },
+          "Financial": {
+            "rating": "Major",
+            "justification": "Severe crash liabilities, brand damage, and recall costs across affected vehicle platform."
+          },
+          "Operational": {
+            "rating": "Severe",
+            "justification": "Complete defeat of primary service braking function."
+          },
+          "Privacy": {
+            "rating": "Negligible",
+            "justification": "No driver PII is exposed by torque blending messages."
+          },
+          "overall_impact_rating": "Severe"
+        }
+      },
+      "attack_tree": {
+        "node_id": "AT-BRK-02-ROOT",
+        "node_type": "ROOT_GOAL",
+        "gate": "OR",
+        "title": "Induce Zero Friction Braking Torque While Falsifying Regenerative Braking Torque (DS-BRK-02)",
+        "aggregated_attack_potential_score": 2,
+        "aggregated_attack_feasibility": "High",
+        "critical_attack_path": [
+          "AT-BRK-02-ROOT",
+          "AT-BRK-02-B2",
+          "AT-BRK-02-B2-1",
+          "AT-BRK-02-B2-2"
+        ],
+        "children": [
+          {
+            "node_id": "AT-BRK-02-B1",
+            "node_type": "SUB_GOAL",
+            "gate": "AND",
+            "title": "Path 1: Spoof Achieved Regenerative Torque (CAN ID 0x1A0) on CONN-BRK-02 (Architectural Flaw 1)",
+            "description": "Attacker injects falsified CAN ID 0x1A0 frames claiming COMP-RIC is delivering 100% of requested deceleration, causing COMP-VDCM to subtract 100% from total demand and send 0 kN friction demand over SOME/IP 0x1020.",
+            "aggregated_attack_potential_score": 6,
+            "aggregated_attack_feasibility": "High",
+            "children": [
+              {
+                "node_id": "AT-BRK-02-B1-1",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Gain Access to Chassis CAN-FD Bus (CONN-BRK-02) via OBD-II or Compromised BLE Service",
+                "target_component": "COMP-VDCM",
+                "target_interface": "CONN-BRK-01 / CONN-BRK-02",
+                "vulnerability_reference": "CONN-BRK-01: Static BLE PIN (0000) / CVE-2020-12351 / Direct OBD-II access",
+                "technical_detail": "Use wireless BLE RCE/pairing on COMP-VDCM or physical OBD-II connection to transmit frames onto CONN-BRK-02.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1d",
+                    "score": 0
+                  },
+                  "specialist_expertise": {
+                    "label": "Layman",
+                    "score": 0
+                  },
+                  "knowledge_of_item": {
+                    "label": "Public",
+                    "score": 0
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 1,
+                  "feasibility_rating": "High"
+                }
+              },
+              {
+                "node_id": "AT-BRK-02-B1-2",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Inject Falsified CAN ID 0x1A0 Reporting 100% Regen Torque Without SecOC or IMU Plausibility Check",
+                "target_component": "COMP-RIC / COMP-VDCM",
+                "target_interface": "CONN-BRK-02",
+                "vulnerability_reference": "Architectural Flaw 1: secoc_mac_verification: false & plausibility_check_on_regen_drop: false",
+                "technical_detail": "Transmit CAN ID 0x1A0 frames indicating achieved negative motor torque equals driver demand; COMP-VDCM lacks IMU longitudinal deceleration plausibility check and reduces friction torque to zero.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1w",
+                    "score": 1
+                  },
+                  "specialist_expertise": {
+                    "label": "Proficient",
+                    "score": 3
+                  },
+                  "knowledge_of_item": {
+                    "label": "Restricted",
+                    "score": 3
+                  },
+                  "window_of_opportunity": {
+                    "label": "Unlimited",
+                    "score": 0
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 7,
+                  "feasibility_rating": "High"
+                }
+              }
+            ]
+          },
+          {
+            "node_id": "AT-BRK-02-B2",
+            "node_type": "SUB_GOAL",
+            "gate": "AND",
+            "title": "Path 2: Unauthenticated Diagnostic Override of Brake Torque via UDS 0x2F While Driving (Architectural Flaw 2)",
+            "description": "Attacker issues UDS 0x2F (InputOutputControlByIdentifier) over BLE or OBD-II to force brake_blending_coordinator output to 0 kN while the vehicle is in motion.",
+            "aggregated_attack_potential_score": 2,
+            "aggregated_attack_feasibility": "High",
+            "children": [
+              {
+                "node_id": "AT-BRK-02-B2-1",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Connect to Diagnostic Session on COMP-VDCM via BLE (PIN 0000) or OBD-II (0x7E0)",
+                "target_component": "COMP-VDCM",
+                "target_interface": "INT-BLE-DIAG / INT-OBD2-CAN",
+                "vulnerability_reference": "CONN-BRK-01: Static 4-digit BLE PIN (0000) & exposed UDS 0x7E0",
+                "technical_detail": "Establish wireless GATT/L2CAP or CAN diagnostic channel to COMP-VDCM.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1d",
+                    "score": 0
+                  },
+                  "specialist_expertise": {
+                    "label": "Layman",
+                    "score": 0
+                  },
+                  "knowledge_of_item": {
+                    "label": "Public",
+                    "score": 0
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 1,
+                  "feasibility_rating": "High"
+                }
+              },
+              {
+                "node_id": "AT-BRK-02-B2-2",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Execute Unauthenticated UDS 0x2F IO Control to Zero Friction Torque Output at Highway Speed",
+                "target_component": "COMP-VDCM",
+                "target_interface": "CONN-BRK-01",
+                "vulnerability_reference": "Architectural Flaw 2: uds_0x2F_io_control_auth_required: false & allow_diagnostic_brake_override_while_driving: true",
+                "technical_detail": "Send UDS 0x2F command overriding BrakeTorqueRequest to 0 kN without needing UDS 0x27 SecurityAccess and with no vehicle speed interlock.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1d",
+                    "score": 0
+                  },
+                  "specialist_expertise": {
+                    "label": "Layman",
+                    "score": 0
+                  },
+                  "knowledge_of_item": {
+                    "label": "Restricted",
+                    "score": 3
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 4,
+                  "feasibility_rating": "High"
+                }
+              }
+            ]
+          },
+          {
+            "node_id": "AT-BRK-02-B3",
+            "node_type": "SUB_GOAL",
+            "gate": "AND",
+            "title": "Path 3: Multi-Stage Linux Compromise on COMP-VDCM & Plaintext SOME/IP 0x1020 Injection over TSN Ethernet",
+            "description": "Attacker chains BleedingTooth (CVE-2020-12351) and Dirty Pipe (CVE-2022-0847) on COMP-VDCM to hijack the root-privileged brake_blending_coordinator or spoof plaintext SOME/IP packets over CONN-BRK-03.",
+            "aggregated_attack_potential_score": 8,
+            "aggregated_attack_feasibility": "High",
+            "children": [
+              {
+                "node_id": "AT-BRK-02-B3-1",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Exploit BlueZ 5.54 (CVE-2020-12351) or Mosquitto 2.0.10 to Gain Local Shell on COMP-VDCM",
+                "target_component": "COMP-VDCM",
+                "target_interface": "INT-BLE-DIAG",
+                "vulnerability_reference": "CVE-2020-12351 (BlueZ 5.54) & Mosquitto 2.0.10 IPC Bridge (Port 1883)",
+                "technical_detail": "Trigger heap-based type confusion in BlueZ L2CAP over BLE to obtain code execution on Embedded Linux 5.10.70.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1w",
+                    "score": 1
+                  },
+                  "specialist_expertise": {
+                    "label": "Expert",
+                    "score": 6
+                  },
+                  "knowledge_of_item": {
+                    "label": "Public",
+                    "score": 0
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 8,
+                  "feasibility_rating": "High"
+                }
+              },
+              {
+                "node_id": "AT-BRK-02-B3-2",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Escalate Privileges via Dirty Pipe (CVE-2022-0847) and Hijack Root brake_blending_coordinator",
+                "target_component": "COMP-VDCM",
+                "target_interface": "INT-ETH-TSN-BRAKE",
+                "vulnerability_reference": "CVE-2022-0847 (Linux Kernel 5.10.70) & runs_as_root: true & someip_tls_or_ipsec_enabled: false",
+                "technical_detail": "Exploit CVE-2022-0847 to overwrite read-only binaries or leverage root privileges of brake_blending_coordinator to transmit forged plaintext SOME/IP BrakeTorqueRequest (0x1020) frames on UDP port 30490 over CONN-BRK-03.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1d",
+                    "score": 0
+                  },
+                  "specialist_expertise": {
+                    "label": "Proficient",
+                    "score": 3
+                  },
+                  "knowledge_of_item": {
+                    "label": "Public",
+                    "score": 0
+                  },
+                  "window_of_opportunity": {
+                    "label": "Unlimited",
+                    "score": 0
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 3,
+                  "feasibility_rating": "High"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "risk_determination": {
+        "overall_impact_rating": "Severe",
+        "aggregated_attack_feasibility": "High",
+        "minimum_attack_potential_score": 2,
+        "inherent_risk_value": 5,
+        "inherent_risk_level": "Critical (Risk Level 5 / 5)",
+        "risk_determination_rationale": "Total loss of vehicle deceleration (Severe Safety Impact) can be triggered with High feasibility either via unauthenticated UDS 0x2F override while driving, spoofing unauthenticated CAN ID 0x1A0 frames, or chaining CVE-2020-12351 and CVE-2022-0847 on COMP-VDCM."
+      },
+      "proposed_risk_treatment": {
+        "risk_treatment_option": "Reduce",
+        "cybersecurity_goals": [
+          {
+            "goal_id": "CG-BRK-02",
+            "description": "The subsystem shall authenticate all regenerative and friction torque blending communications, enforce closed-loop physical deceleration plausibility checks, and prohibit diagnostic torque overrides when the vehicle is in motion."
+          }
+        ],
+        "cybersecurity_requirements": [
+          {
+            "requirement_id": "CSR-BRK-02.1",
+            "target_component": "COMP-RIC & COMP-VDCM",
+            "description": "Enable AUTOSAR SecOC MAC verification on CAN ID 0x1A0 (Regen Torque Status) and implement an independent closed-loop IMU/wheel-speed deceleration plausibility monitor in COMP-VDCM and COMP-EBCM that immediately falls back to 100% friction braking if measured vehicle deceleration deviates from reported regenerative torque for > 30 ms."
+          },
+          {
+            "requirement_id": "CSR-BRK-02.2",
+            "target_component": "COMP-VDCM",
+            "description": "Enforce strict vehicle speed interlocks (Vehicle_Speed == 0 km/h AND Gear == Park) and UDS 0x29 / 0x27 cryptographic authentication before permitting UDS 0x2F (InputOutputControlByIdentifier) brake torque overrides."
+          },
+          {
+            "requirement_id": "CSR-BRK-02.3",
+            "target_component": "COMP-VDCM & COMP-EBCM",
+            "description": "Protect SOME/IP Service 0x1020 over CONN-BRK-03 (100BASE-T1 TSN Ethernet) using IEEE 802.1AE MACsec (or IPsec/SecOC) to guarantee message authenticity and replay protection."
+          },
+          {
+            "requirement_id": "CSR-BRK-02.4",
+            "target_component": "COMP-VDCM",
+            "description": "Patch Embedded Linux kernel to >= 5.10.102 (remediating CVE-2022-0847 Dirty Pipe), run brake_blending_coordinator on the isolated Cortex-R52 lockstep real-time core (or as an unprivileged SELinux-confined user), and bind Mosquitto (port 1883) strictly to authenticated localhost IPC."
+          }
+        ],
+        "target_residual_feasibility": "Very Low",
+        "target_residual_risk_value": 3,
+        "target_residual_risk_level": "Medium / ALARP (Acceptable with continuous monitoring)"
+      }
+    },
+    {
+      "threat_scenario_id": "TS-BRK-03",
+      "threat_scenario_name": "Injection of Asymmetric Clamping Commands (CAN ID 0x040) or Unintended Mid-Drive Caliper Piston Retraction (UDS 0x31)",
+      "targeted_asset": {
+        "asset_id": "ASSET-BRK-03",
+        "asset_name": "Wheel Caliper Clamping Force Command (CAN ID 0x040)",
+        "parent_component": "COMP-EMBA",
+        "associated_connections": [
+          "CONN-BRK-04"
+        ],
+        "compromised_properties": [
+          "Integrity",
+          "Authenticity",
+          "Availability"
+        ]
+      },
+      "stride_classification": [
+        "Spoofing",
+        "Tampering",
+        "Denial of Service"
+      ],
+      "associated_damage_scenario": {
+        "damage_id": "DS-BRK-03",
+        "description": "Asymmetric clamping force commands (e.g., 45 kN on front-left caliper and 0 kN on right calipers) cause violent yaw spin-out, or UDS pad-retraction command retracts pistons completely so pads cannot contact the rotor.",
+        "impact_ratings": {
+          "Safety": {
+            "rating": "Severe",
+            "justification": "Asymmetric 45 kN one-sided braking at speed causes instantaneous uncontrollable yaw spin-out into oncoming traffic; complete piston retraction removes all braking capability (ISO 26262 S3 / ASIL-D)."
+          },
+          "Financial": {
+            "rating": "Major",
+            "justification": "Catastrophic accident liability, regulatory stoppage of sale, and hardware retrofit costs for wheel-well harnesses."
+          },
+          "Operational": {
+            "rating": "Severe",
+            "justification": "Immediate loss of lateral vehicle stability and/or longitudinal braking actuation."
+          },
+          "Privacy": {
+            "rating": "Negligible",
+            "justification": "No personal data involved in actuator bus traffic."
+          },
+          "overall_impact_rating": "Severe"
+        }
+      },
+      "attack_tree": {
+        "node_id": "AT-BRK-03-ROOT",
+        "node_type": "ROOT_GOAL",
+        "gate": "OR",
+        "title": "Trigger Asymmetric Wheel Clamping Spin-Out or Mid-Drive Caliper Piston Retraction (DS-BRK-03)",
+        "aggregated_attack_potential_score": 4,
+        "aggregated_attack_feasibility": "High",
+        "critical_attack_path": [
+          "AT-BRK-03-ROOT",
+          "AT-BRK-03-B2",
+          "AT-BRK-03-B2-1",
+          "AT-BRK-03-B2-2"
+        ],
+        "children": [
+          {
+            "node_id": "AT-BRK-03-B1",
+            "node_type": "SUB_GOAL",
+            "gate": "AND",
+            "title": "Path 1: Exterior Wheel-Well Harness Tap on CONN-BRK-04 (Architectural Flaw 3)",
+            "description": "Attacker physically accesses the exposed unshielded twisted-pair CAN-FD cable in the exterior wheel arch without unlocking the vehicle and attaches a miniature vampire-tap CAN-FD injector.",
+            "aggregated_attack_potential_score": 8,
+            "aggregated_attack_feasibility": "High",
+            "children": [
+              {
+                "node_id": "AT-BRK-03-B1-1",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Attach Vampire-Tap CAN-FD Transceiver to Unshielded Wheel-Well Harness (CONN-BRK-04)",
+                "target_component": "COMP-EMBA",
+                "target_interface": "INT-CANFD-ACTUATOR (CONN-BRK-04)",
+                "vulnerability_reference": "Architectural Flaw 3: wheel_harness_physical_shielding: Unshielded wheel-well twisted pair (accessible without cabin entry)",
+                "technical_detail": "Reach into the exterior wheel well of a parked vehicle and clip an inductive/insulation-displacement CAN-FD implant onto CONN-BRK-04 in under 60 seconds.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1d",
+                    "score": 0
+                  },
+                  "specialist_expertise": {
+                    "label": "Proficient",
+                    "score": 3
+                  },
+                  "knowledge_of_item": {
+                    "label": "Restricted",
+                    "score": 3
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 7,
+                  "feasibility_rating": "High"
+                }
+              },
+              {
+                "node_id": "AT-BRK-03-B1-2",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Inject Unauthenticated CAN ID 0x040 Asymmetric Force (45 kN Left / 0 kN Right) or Bus-Off DoS",
+                "target_component": "COMP-EMBA",
+                "target_interface": "CONN-BRK-04",
+                "vulnerability_reference": "COMP-EMBA / CONN-BRK-04: command_authentication_mac: false & secoc_freshness_counter_enabled: false",
+                "technical_detail": "Wait for vehicle speed to build and inject plaintext CAN ID 0x040 frames commanding 45 kN on front-left caliper and 0 kN on right calipers, or transmit dominant error frames to force COMP-EBCM off the bus.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1w",
+                    "score": 1
+                  },
+                  "specialist_expertise": {
+                    "label": "Proficient",
+                    "score": 3
+                  },
+                  "knowledge_of_item": {
+                    "label": "Restricted",
+                    "score": 3
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 8,
+                  "feasibility_rating": "High"
+                }
+              }
+            ]
+          },
+          {
+            "node_id": "AT-BRK-03-B2",
+            "node_type": "SUB_GOAL",
+            "gate": "AND",
+            "title": "Path 2: Wireless/OBD Execution of UDS 0x31 Caliper Piston Retraction Routine While Driving (Architectural Flaw 2)",
+            "description": "Attacker invokes UDS Service 0x31 (RoutineControl: Bleed/Pad Service Mode) to fully retract the 48V ball-screw caliper pistons while the vehicle is moving.",
+            "aggregated_attack_potential_score": 4,
+            "aggregated_attack_feasibility": "High",
+            "children": [
+              {
+                "node_id": "AT-BRK-03-B2-1",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Establish Diagnostic Session via Workshop BLE Interface (PIN 0000) or OBD-II",
+                "target_component": "COMP-VDCM / COMP-EBCM",
+                "target_interface": "INT-BLE-DIAG / INT-OBD2-CAN",
+                "vulnerability_reference": "CONN-BRK-01: Static BLE PIN (0000) & DoIP/UDS routing to COMP-EBCM",
+                "technical_detail": "Pair to BLE workshop diagnostics using PIN 0000 or connect to OBD-II port to route UDS requests to COMP-EBCM / COMP-EMBA (0x750).",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1d",
+                    "score": 0
+                  },
+                  "specialist_expertise": {
+                    "label": "Layman",
+                    "score": 0
+                  },
+                  "knowledge_of_item": {
+                    "label": "Public",
+                    "score": 0
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 1,
+                  "feasibility_rating": "High"
+                }
+              },
+              {
+                "node_id": "AT-BRK-03-B2-2",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Send Unauthenticated UDS 0x31 Pad Retraction Command Without Vehicle Speed Interlock",
+                "target_component": "COMP-EBCM & COMP-EMBA",
+                "target_interface": "CONN-BRK-03 / CONN-BRK-04",
+                "vulnerability_reference": "Architectural Flaw 2: uds_0x31_bleed_routine_speed_interlock_enabled: false",
+                "technical_detail": "Trigger UDS 0x31 routine to wind back all 4 caliper ball-screw pistons to maximum service clearance while driving, creating a multi-second mechanical air gap where pads cannot touch the discs.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1d",
+                    "score": 0
+                  },
+                  "specialist_expertise": {
+                    "label": "Layman",
+                    "score": 0
+                  },
+                  "knowledge_of_item": {
+                    "label": "Restricted",
+                    "score": 3
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 4,
+                  "feasibility_rating": "High"
+                }
+              }
+            ]
+          },
+          {
+            "node_id": "AT-BRK-03-B3",
+            "node_type": "SUB_GOAL",
+            "gate": "AND",
+            "title": "Path 3: Remote Exploit of LwIP 2.1.2 Buffer Overflow (CVE-2020-22283) on COMP-EBCM over TSN Ethernet",
+            "description": "Attacker pivots from COMP-VDCM across CONN-BRK-03 to exploit CVE-2020-22283 in COMP-EBCM's LwIP TCP/IP stack, gaining arbitrary code execution on the safety-critical brake controller.",
+            "aggregated_attack_potential_score": 11,
+            "aggregated_attack_feasibility": "Medium",
+            "children": [
+              {
+                "node_id": "AT-BRK-03-B3-1",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Compromise COMP-VDCM via CVE-2020-12351 (BleedingTooth) over BLE",
+                "target_component": "COMP-VDCM",
+                "target_interface": "INT-BLE-DIAG",
+                "vulnerability_reference": "CVE-2020-12351 (BlueZ 5.54)",
+                "technical_detail": "Gain initial foothold on COMP-VDCM via wireless BLE L2CAP exploit.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1w",
+                    "score": 1
+                  },
+                  "specialist_expertise": {
+                    "label": "Expert",
+                    "score": 6
+                  },
+                  "knowledge_of_item": {
+                    "label": "Public",
+                    "score": 0
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 8,
+                  "feasibility_rating": "High"
+                }
+              },
+              {
+                "node_id": "AT-BRK-03-B3-2",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Exploit LwIP 2.1.2 Buffer Overflow (CVE-2020-22283) on COMP-EBCM via CONN-BRK-03",
+                "target_component": "COMP-EBCM",
+                "target_interface": "INT-ETH-TSN-BRAKE (UDP 30490)",
+                "vulnerability_reference": "CVE-2020-22283 (LwIP 2.1.2 Urgent11-style buffer overflow)",
+                "technical_detail": "Send crafted TCP/IP packets from COMP-VDCM over 100BASE-T1 Ethernet (CONN-BRK-03) to overflow LwIP 2.1.2 buffers on COMP-EBCM and hijack abs_esc_clamping_controller.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1m",
+                    "score": 4
+                  },
+                  "specialist_expertise": {
+                    "label": "Expert",
+                    "score": 6
+                  },
+                  "knowledge_of_item": {
+                    "label": "Public",
+                    "score": 0
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 11,
+                  "feasibility_rating": "Medium"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "risk_determination": {
+        "overall_impact_rating": "Severe",
+        "aggregated_attack_feasibility": "High",
+        "minimum_attack_potential_score": 4,
+        "inherent_risk_value": 5,
+        "inherent_risk_level": "Critical (Risk Level 5 / 5)",
+        "risk_determination_rationale": "Violent yaw spin-out or total pad retraction at highway speed carries a Severe safety impact. Because UDS 0x31 lacks a speed interlock and the exterior wheel-well CAN-FD harness is unshielded and unauthenticated, attack feasibility is High, yielding a Critical Risk Value of 5."
+      },
+      "proposed_risk_treatment": {
+        "risk_treatment_option": "Reduce",
+        "cybersecurity_goals": [
+          {
+            "goal_id": "CG-BRK-03",
+            "description": "The subsystem shall cryptographically authenticate all wheel caliper clamping commands (CAN ID 0x040), protect wheel-end communication against physical tampering or Bus-Off injection, and enforce hardware/software speed interlocks on caliper piston retraction routines."
+          }
+        ],
+        "cybersecurity_requirements": [
+          {
+            "requirement_id": "CSR-BRK-03.1",
+            "target_component": "COMP-EBCM & COMP-EMBA",
+            "description": "Implement hardware-accelerated AUTOSAR SecOC (AES-128-CMAC + 32-bit monotonic freshness counter) on CAN ID 0x040 over CONN-BRK-04 using SHE/HSM modules inside COMP-EBCM and COMP-EMBA."
+          },
+          {
+            "requirement_id": "CSR-BRK-03.2",
+            "target_component": "COMP-EBCM & COMP-EMBA",
+            "description": "Enforce dual-independent vehicle speed interlocks (verified by both COMP-EBCM wheel-speed sensors and COMP-EMBA local rotor back-EMF/Hall movement detection) that reject UDS 0x31 piston retraction commands whenever wheel rotation > 0 RPM."
+          },
+          {
+            "requirement_id": "CSR-BRK-03.3",
+            "target_component": "CONN-BRK-04 & COMP-EMBA",
+            "description": "Redesign CONN-BRK-04 from a single shared 4-wheel bus into isolated point-to-point or dual-diagonal star links with armored braided conduit in the wheel wells and CAN signal guardian (active bus-off protection) transceivers."
+          },
+          {
+            "requirement_id": "CSR-BRK-03.4",
+            "target_component": "COMP-EBCM",
+            "description": "Upgrade LwIP TCP/IP stack from v2.1.2 to >= v2.2.0 (patching CVE-2020-22283) and enable NXP S32K344 Memory Protection Unit (MPU) isolation between the network stack task and abs_esc_clamping_controller."
+          }
+        ],
+        "target_residual_feasibility": "Very Low",
+        "target_residual_risk_value": 3,
+        "target_residual_risk_level": "Medium / ALARP (Acceptable with continuous monitoring)"
+      }
+    },
+    {
+      "threat_scenario_id": "TS-BRK-04",
+      "threat_scenario_name": "Unauthorized Firmware Flashing, Downgrade, or Thermal Current-Limit Override on COMP-EBCM & COMP-EMBA",
+      "targeted_asset": {
+        "asset_id": "ASSET-BRK-04",
+        "asset_name": "EBCM & Caliper Actuator Control Firmware",
+        "parent_component": "COMP-EBCM",
+        "associated_connections": [
+          "CONN-BRK-03",
+          "CONN-BRK-04"
+        ],
+        "compromised_properties": [
+          "Integrity",
+          "Authenticity"
+        ]
+      },
+      "stride_classification": [
+        "Tampering",
+        "Elevation of Privilege",
+        "Denial of Service"
+      ],
+      "associated_damage_scenario": {
+        "damage_id": "DS-BRK-04",
+        "description": "Unauthorized UDS flashing or thermal current-limit override permanently damages the 48V BLDC caliper motors or disables ABS wheel-lock prevention.",
+        "impact_ratings": {
+          "Safety": {
+            "rating": "Severe",
+            "justification": "Disabling ABS wheel-lock prevention or burning out the 48V BLDC caliper actuator windings destroys braking control and causes loss of vehicle stability (ISO 26262 S3 / ASIL-D)."
+          },
+          "Financial": {
+            "rating": "Severe",
+            "justification": "Permanent physical destruction of all four 48V smart electro-mechanical brake caliper assemblies and EBCM hardware across targeted fleet vehicles."
+          },
+          "Operational": {
+            "rating": "Severe",
+            "justification": "Vehicle is permanently immobilized requiring physical replacement of all four brake calipers."
+          },
+          "Privacy": {
+            "rating": "Negligible",
+            "justification": "No driver PII is stored in EBCM or caliper motor control firmware."
+          },
+          "overall_impact_rating": "Severe"
+        }
+      },
+      "attack_tree": {
+        "node_id": "AT-BRK-04-ROOT",
+        "node_type": "ROOT_GOAL",
+        "gate": "OR",
+        "title": "Corrupt EBCM/EMBA Control Firmware or Permanently Burn Out 48V BLDC Caliper Motors via Thermal Override (DS-BRK-04)",
+        "aggregated_attack_potential_score": 5,
+        "aggregated_attack_feasibility": "High",
+        "critical_attack_path": [
+          "AT-BRK-04-ROOT",
+          "AT-BRK-04-B1",
+          "AT-BRK-04-B1-1",
+          "AT-BRK-04-B1-2"
+        ],
+        "children": [
+          {
+            "node_id": "AT-BRK-04-B1",
+            "node_type": "SUB_GOAL",
+            "gate": "AND",
+            "title": "Path 1: Brute-Force Weak 8-Bit UDS 0x27 Seed & Flash Downgraded/Malicious Firmware to COMP-EBCM",
+            "description": "Attacker connects via OBD-II or BLE/DoIP, exhausts the 256 possible UDS 0x27 seeds on COMP-EBCM in seconds, and flashes tampered or downgraded firmware disabling ABS.",
+            "aggregated_attack_potential_score": 5,
+            "aggregated_attack_feasibility": "High",
+            "children": [
+              {
+                "node_id": "AT-BRK-04-B1-1",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Brute-Force 8-Bit UDS 0x27 SecurityAccess Seed (256 Keyspace) on COMP-EBCM",
+                "target_component": "COMP-EBCM",
+                "target_interface": "CONN-BRK-01 -> CONN-BRK-03 (DoIP Port 13400)",
+                "vulnerability_reference": "COMP-EBCM: uds_0x27_seed_entropy_bits: 8",
+                "technical_detail": "Issue UDS 0x27 RequestSeed commands over DoIP/OBD-II; because seed entropy is only 8 bits (256 possible values), attacker brute-forces or pre-computes the key in < 1 minute.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1d",
+                    "score": 0
+                  },
+                  "specialist_expertise": {
+                    "label": "Proficient",
+                    "score": 3
+                  },
+                  "knowledge_of_item": {
+                    "label": "Public",
+                    "score": 0
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 4,
+                  "feasibility_rating": "High"
+                }
+              },
+              {
+                "node_id": "AT-BRK-04-B1-2",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Flash Modified or Vulnerable Downgraded Firmware via UDS 0x34/0x36 Without Rollback Protection",
+                "target_component": "COMP-EBCM",
+                "target_interface": "CONN-BRK-03",
+                "vulnerability_reference": "COMP-EBCM: bootloader_rollback_protection: false",
+                "technical_detail": "Upload downgraded or altered abs_esc_clamping_controller firmware image that disables wheel-slip PID modulation (ABS/ESC).",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1w",
+                    "score": 1
+                  },
+                  "specialist_expertise": {
+                    "label": "Proficient",
+                    "score": 3
+                  },
+                  "knowledge_of_item": {
+                    "label": "Public",
+                    "score": 0
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 5,
+                  "feasibility_rating": "High"
+                }
+              }
+            ]
+          },
+          {
+            "node_id": "AT-BRK-04-B2",
+            "node_type": "SUB_GOAL",
+            "gate": "AND",
+            "title": "Path 2: Override 48V BLDC Max Clamping Current Limiter via UDS on COMP-EMBA to Induce Stator Thermal Burnout",
+            "description": "Attacker accesses CONN-BRK-04 (via wheel-well tap or compromised COMP-EBCM/VDCM) and overrides the UDS maximum current limit while commanding continuous stall clamping.",
+            "aggregated_attack_potential_score": 7,
+            "aggregated_attack_feasibility": "High",
+            "children": [
+              {
+                "node_id": "AT-BRK-04-B2-1",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Send UDS Command (0x750) to COMP-EMBA to Override Max Clamping Current Limiter",
+                "target_component": "COMP-EMBA",
+                "target_interface": "CONN-BRK-04 (UDS 0x750)",
+                "vulnerability_reference": "COMP-EMBA: max_clamping_current_limiter_overrideable_via_uds: true",
+                "technical_detail": "Transmit UDS WriteDataByIdentifier / RoutineControl frame to COMP-EMBA (ID 0x750) disabling the 48V BLDC motor thermal over-current cutoff in caliper_piston_servo_driver v2.0.0.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1w",
+                    "score": 1
+                  },
+                  "specialist_expertise": {
+                    "label": "Proficient",
+                    "score": 3
+                  },
+                  "knowledge_of_item": {
+                    "label": "Restricted",
+                    "score": 3
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 8,
+                  "feasibility_rating": "High"
+                }
+              },
+              {
+                "node_id": "AT-BRK-04-B2-2",
+                "node_type": "LEAF_ATTACK_STEP",
+                "title": "Command Continuous Maximum Stall Clamping on CAN ID 0x040 Until 48V BLDC Windings Demagnetize/Burn Out",
+                "target_component": "COMP-EMBA",
+                "target_interface": "CONN-BRK-04",
+                "vulnerability_reference": "COMP-EMBA: command_authentication_mac: false",
+                "technical_detail": "Inject sustained maximum clamping force commands while rotor is stationary or moving, overheating the Infineon MOTIX TLE9879QXA40 MOSFET bridge and burning out the 48V BLDC stator coils.",
+                "attack_potential": {
+                  "elapsed_time": {
+                    "label": "<=1d",
+                    "score": 0
+                  },
+                  "specialist_expertise": {
+                    "label": "Proficient",
+                    "score": 3
+                  },
+                  "knowledge_of_item": {
+                    "label": "Restricted",
+                    "score": 3
+                  },
+                  "window_of_opportunity": {
+                    "label": "Easy",
+                    "score": 1
+                  },
+                  "equipment": {
+                    "label": "Standard",
+                    "score": 0
+                  },
+                  "total_score": 7,
+                  "feasibility_rating": "High"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "risk_determination": {
+        "overall_impact_rating": "Severe",
+        "aggregated_attack_feasibility": "High",
+        "minimum_attack_potential_score": 5,
+        "inherent_risk_value": 5,
+        "inherent_risk_level": "Critical (Risk Level 5 / 5)",
+        "risk_determination_rationale": "Both Safety and Financial impacts are Severe due to loss of ABS control and permanent physical burnout of all four 48V smart brake caliper actuators. Weak 8-bit UDS 0x27 seed entropy, disabled rollback protection, and UDS-overrideable motor thermal limiters result in High attack feasibility and a Critical Risk Value of 5."
+      },
+      "proposed_risk_treatment": {
+        "risk_treatment_option": "Reduce",
+        "cybersecurity_goals": [
+          {
+            "goal_id": "CG-BRK-04",
+            "description": "The subsystem shall prevent unauthorized firmware flashing or downgrade on COMP-EBCM and COMP-EMBA, and enforce immutable hardware/firmware thermal current protection on the 48V BLDC caliper motors."
+          }
+        ],
+        "cybersecurity_requirements": [
+          {
+            "requirement_id": "CSR-BRK-04.1",
+            "target_component": "COMP-EBCM",
+            "description": "Replace 8-bit UDS 0x27 seed-key with UDS Service 0x29 (Authentication with PKI certificates) or a minimum 128-bit TRNG seed generated by the NXP S32K344 HSE hardware security engine, combined with a 10-second lockout timer after 3 failed attempts."
+          },
+          {
+            "requirement_id": "CSR-BRK-04.2",
+            "target_component": "COMP-EBCM & COMP-EMBA",
+            "description": "Enforce Secure Boot with asymmetric signature verification (ECDSA P-256 / RSA-3072) and hardware monotonic anti-rollback counters in OTP/eFuse memory (bootloader_rollback_protection = true)."
+          },
+          {
+            "requirement_id": "CSR-BRK-04.3",
+            "target_component": "COMP-EMBA",
+            "description": "Remove the UDS override capability for the 48V BLDC motor maximum clamping current limiter (max_clamping_current_limiter_overrideable_via_uds = false) and enforce a hardwired hardware current comparator and thermal NTC cutoff in the Infineon TLE9879QXA40 gate driver."
+          }
+        ],
+        "target_residual_feasibility": "Very Low",
+        "target_residual_risk_value": 3,
+        "target_residual_risk_level": "Medium / ALARP (Acceptable with continuous monitoring)"
+      }
+    }
+  ],
+  "traceability_and_risk_summary": [
+    {
+      "threat_scenario_id": "TS-BRK-01",
+      "asset_id": "ASSET-BRK-01",
+      "damage_id": "DS-BRK-01",
+      "primary_vulnerabilities_exploited": [
+        "CVE-2020-12351 (BlueZ 5.54 BleedingTooth)",
+        "CONN-BRK-01 Static BLE PIN (0000)",
+        "CONN-BRK-02 secoc_mac_enabled: false (CRC-8 only)",
+        "COMP-BPSU jtag_swd_debug_port_locked: false & calibration_eeprom_write_protected: false"
+      ],
+      "inherent_impact": "Severe",
+      "inherent_feasibility": "High (Min Attack Potential = 1)",
+      "inherent_risk": "5 (Critical)",
+      "treatment_decision": "Reduce (CG-BRK-01 / CSR-BRK-01.1 to 01.4)",
+      "residual_feasibility": "Very Low",
+      "residual_risk": "3 (Medium / ALARP)"
+    },
+    {
+      "threat_scenario_id": "TS-BRK-02",
+      "asset_id": "ASSET-BRK-02",
+      "damage_id": "DS-BRK-02",
+      "primary_vulnerabilities_exploited": [
+        "Architectural Flaw 1: CAN ID 0x1A0 secoc_mac_verification: false & plausibility_check_on_regen_drop: false",
+        "Architectural Flaw 2: uds_0x2F_io_control_auth_required: false & allow_diagnostic_brake_override_while_driving: true",
+        "CVE-2020-12351 (BlueZ 5.54) + CVE-2022-0847 (Linux Kernel 5.10.70 Dirty Pipe)",
+        "CONN-BRK-03 someip_tls_or_ipsec_enabled: false & runs_as_root: true"
+      ],
+      "inherent_impact": "Severe",
+      "inherent_feasibility": "High (Min Attack Potential = 2)",
+      "inherent_risk": "5 (Critical)",
+      "treatment_decision": "Reduce (CG-BRK-02 / CSR-BRK-02.1 to 02.4)",
+      "residual_feasibility": "Very Low",
+      "residual_risk": "3 (Medium / ALARP)"
+    },
+    {
+      "threat_scenario_id": "TS-BRK-03",
+      "asset_id": "ASSET-BRK-03",
+      "damage_id": "DS-BRK-03",
+      "primary_vulnerabilities_exploited": [
+        "Architectural Flaw 3: Exterior wheel-well unshielded CAN-FD harness (CONN-BRK-04) & command_authentication_mac: false",
+        "Architectural Flaw 2: uds_0x31_bleed_routine_speed_interlock_enabled: false",
+        "CVE-2020-22283 (LwIP 2.1.2 Buffer Overflow on COMP-EBCM)"
+      ],
+      "inherent_impact": "Severe",
+      "inherent_feasibility": "High (Min Attack Potential = 4)",
+      "inherent_risk": "5 (Critical)",
+      "treatment_decision": "Reduce (CG-BRK-03 / CSR-BRK-03.1 to 03.4)",
+      "residual_feasibility": "Very Low",
+      "residual_risk": "3 (Medium / ALARP)"
+    },
+    {
+      "threat_scenario_id": "TS-BRK-04",
+      "asset_id": "ASSET-BRK-04",
+      "damage_id": "DS-BRK-04",
+      "primary_vulnerabilities_exploited": [
+        "COMP-EBCM uds_0x27_seed_entropy_bits: 8",
+        "COMP-EBCM bootloader_rollback_protection: false",
+        "COMP-EMBA max_clamping_current_limiter_overrideable_via_uds: true"
+      ],
+      "inherent_impact": "Severe",
+      "inherent_feasibility": "High (Min Attack Potential = 5)",
+      "inherent_risk": "5 (Critical)",
+      "treatment_decision": "Reduce (CG-BRK-04 / CSR-BRK-04.1 to 04.3)",
+      "residual_feasibility": "Very Low",
+      "residual_risk": "3 (Medium / ALARP)"
+    }
+  ]
+}
