@@ -50,9 +50,16 @@ System Boundary:
      + NXP S32K116 running Bare-Metal Firmware v1.0.4) samples two redundant
      Hall-effect travel sensors at 1 kHz via `pedal_feel_and_travel_encoder`
      (v1.0.4).
-  2. Signal Transmission: The encoded pedal demand is packaged into CAN-FD 
-     frames with CAN ID `0x080` (`Pedal_Travel_Demand`, ASSET-BRK-01) and 
-     transmitted over `CONN-BRK-02` to `COMP-VDCM`.
+     Both readings must be within 0-100% travel, inclusive. Their absolute
+     difference must be at most 5 percentage points. When both checks pass,
+     BPSU uses their arithmetic mean as pedal demand and sets `demand_valid`
+     to true. Otherwise, it sets `demand_valid` to false and does not select
+     either sensor as correct. The travel value has no meaning when invalid.
+  2. Signal Transmission: BPSU sends CAN-FD message `0x080`
+     (`Pedal_Travel_Demand`, ASSET-BRK-01) over `CONN-BRK-02` to `COMP-VDCM`.
+     The message contains `pedal_travel_percent`, `demand_valid`, and an E2E
+     CRC-8 covering both fields. Invalid demand is distinct from a valid 0%
+     reading, which represents a released pedal.
 
 - Current Security & Operational Parameters (As-Built Baseline):
   * End-to-End (E2E) CRC-8 safety checksums are enabled (`e2e_crc_enabled: true`), 

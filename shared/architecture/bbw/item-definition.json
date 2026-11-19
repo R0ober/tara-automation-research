@@ -44,6 +44,14 @@
             "secoc_mac_enabled": false,
             "jtag_swd_debug_port_locked": false,
             "calibration_eeprom_write_protected": false
+          },
+          "operational_parameters": {
+            "sensor_sampling_rate_hz": 1000,
+            "sensor_travel_min_percent": 0,
+            "sensor_travel_max_percent": 100,
+            "sensor_disagreement_threshold_percentage_points": 5,
+            "valid_demand_rule": "Both sensor readings are within 0 to 100 percent inclusive and their absolute difference is at most 5 percentage points; pedal travel demand is their arithmetic mean and demand_valid is true",
+            "invalid_demand_rule": "If either reading is outside the permitted range or their absolute difference exceeds the threshold, demand_valid is false; pedal_travel_percent has no meaning and neither sensor is selected as correct"
           }
         }
       ],
@@ -242,6 +250,34 @@
       ],
       "medium": "CAN-FD (500 kbps nominal / 2 Mbps data)",
       "protocol": "Raw CAN-FD Frames (CAN ID 0x080 Pedal Travel, CAN ID 0x1A0 Regen Torque Status)",
+      "messages": [
+        {
+          "can_id": "0x080",
+          "name": "Pedal_Travel_Demand",
+          "source_component": "COMP-BPSU",
+          "target_component": "COMP-VDCM",
+          "payload_fields": [
+            {
+              "name": "pedal_travel_percent",
+              "unit": "percent",
+              "meaning": "Arithmetic mean of the two sensor readings when demand_valid is true; no meaning when demand_valid is false"
+            },
+            {
+              "name": "demand_valid",
+              "type": "boolean",
+              "meaning": "Result of the BPSU sensor range and disagreement checks"
+            },
+            {
+              "name": "e2e_crc",
+              "type": "CRC-8",
+              "covered_fields": [
+                "pedal_travel_percent",
+                "demand_valid"
+              ]
+            }
+          ]
+        }
+      ],
       "encrypted": false,
       "authenticated": "CRC-8 only (AUTOSAR SecOC disabled; vulnerable to frame injection and replay)"
     },
