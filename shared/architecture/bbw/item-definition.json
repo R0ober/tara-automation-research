@@ -252,7 +252,35 @@
       "medium": "Bluetooth Low Energy (BLE 5.0) & Physical OBD-II Port (ISO 15765-4)",
       "protocol": "GATT / L2CAP (BLE) & UDS on CAN (0x7E0 / 0x7DF)",
       "encrypted": false,
-      "authenticated": "Static 4-digit PIN (0000) on BLE / Unauthenticated UDS 0x2F & 0x31 services"
+      "authenticated": "BLE diagnostic service requires pairing with static PIN 0000; OBD-II requires physical connection. VDCM UDS 0x2F requires no additional application authorization.",
+      "entry_points": [
+        {
+          "interface_id": "INT-BLE-DIAG",
+          "medium": "Bluetooth Low Energy (BLE 5.0)",
+          "protocol": "Workshop diagnostic requests over GATT / L2CAP",
+          "access_requirement": "Wireless proximity and pairing with the static PIN 0000 for normal diagnostic service access"
+        },
+        {
+          "interface_id": "INT-OBD2-CAN",
+          "medium": "Physical OBD-II CAN connector",
+          "protocol": "UDS on CAN (0x7E0 / 0x7DF)",
+          "access_requirement": "Physical connection to the diagnostic connector; no additional client authentication for the VDCM brake override service"
+        }
+      ],
+      "diagnostic_access": {
+        "request_handler_component": "COMP-VDCM",
+        "raw_chassis_can_forwarding_enabled": false,
+        "brake_override_service": {
+          "service_id": "0x2F",
+          "handler_software": "brake_blending_coordinator",
+          "entry_interfaces": [
+            "INT-BLE-DIAG",
+            "INT-OBD2-CAN"
+          ],
+          "additional_authorization_required": false,
+          "allowed_while_driving": true
+        }
+      }
     },
     {
       "connection_id": "CONN-BRK-02",

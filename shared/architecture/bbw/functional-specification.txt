@@ -139,9 +139,15 @@ System Boundary:
        its contribution is zero under the pedal fallback rule.
      - The next accepted message restores blending with its reported torque.
      This fallback defines the requested torque, not the achieved deceleration.
-  4. Workshop Diagnostics & IPC: `COMP-VDCM` runs `bluez` (v5.54) for wireless 
-     BLE workshop brake service routines (pad replacement/bleeding) and 
-     `mosquitto` (v2.0.10, TCP port 1883) for internal SOME/IP-to-MQTT telemetry.
+  4. Workshop Diagnostics & IPC: `COMP-VDCM` uses `bluez` (v5.54) for BLE
+     transport to the workshop diagnostic service. Normal BLE service access
+     requires wireless proximity and pairing with the static PIN `0000`.
+     OBD-II access requires a physical connection to `INT-OBD2-CAN`.
+     Both entry points submit diagnostic requests to VDCM. VDCM handles the
+     supported requests; it does not forward arbitrary chassis CAN frames
+     from either entry point to `CONN-BRK-02`.
+     VDCM also runs `mosquitto` (v2.0.10, TCP port 1883) for internal
+     SOME/IP-to-MQTT telemetry.
 
 - Current Security & Operational Parameters (As-Built Baseline):
   * Known Vulnerable Software on COMP-VDCM: `linux_kernel` v5.10.70, `bluez` 
@@ -151,10 +157,11 @@ System Boundary:
   * `brake_blending_coordinator` runs with root privileges (`runs_as_root: true`).
   * SOME/IP traffic over `CONN-BRK-03` is transmitted in plaintext without TLS, 
     IPsec, or MACsec (`someip_tls_or_ipsec_enabled: false`).
-  * Diagnostic brake override is permitted while the vehicle is in motion 
-    (`allow_diagnostic_brake_override_while_driving: true`), and UDS Service 
-    `0x2F` (InputOutputControlByIdentifier) does not require prior authentication 
-    (`uds_0x2F_io_control_auth_required: false`).
+  * VDCM accepts UDS `0x2F` (InputOutputControlByIdentifier) brake-demand
+    override requests through either diagnostic entry point without additional
+    application authorization (`uds_0x2F_io_control_auth_required: false`).
+    The override is permitted while driving
+    (`allow_diagnostic_brake_override_while_driving: true`).
   * `COMP-VDCM` checks the E2E CRC-8 of regenerative torque feedback on CAN ID
     `0x1A0` (`regen_feedback_e2e_crc_enabled: true`). CRC detects transmission
     errors; it does not authenticate the sender.
