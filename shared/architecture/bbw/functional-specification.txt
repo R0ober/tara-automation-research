@@ -85,10 +85,14 @@ System Boundary:
     (`pedal_demand_e2e_crc_enabled: true`), but does not verify a MAC or
     freshness counter (`pedal_demand_mac_verification_enabled: false`,
     `pedal_demand_freshness_counter_verification_enabled: false`).
-  * Hardware JTAG/SWD debug pins (`INT-SWD-HEADER`) are unlocked 
-    (`jtag_swd_debug_port_locked: false`).
-  * Pedal travel zero-point calibration EEPROM is not write-protected 
-    (`calibration_eeprom_write_protected: false`).
+  * The SWD header (`INT-SWD-HEADER`) is unlocked
+    (`jtag_swd_debug_port_locked: false`). Debugger access requires cabin access
+    and physical access to the BPSU board in the pedal box. No additional debug
+    authentication is required.
+  * Pedal travel zero-point calibration storage is not write-protected
+    (`calibration_eeprom_write_protected: false`) and can be modified through
+    SWD debugger access. This is the modeled calibration write path; diagnostic
+    or remote calibration writes are not established.
 
 - Associated Cybersecurity Goals & Damage Scenarios:
   * Protected Asset: ASSET-BRK-01 (Driver Pedal Travel & Braking Demand Signal)
@@ -246,8 +250,10 @@ System Boundary:
     (`command_authentication_mac: false`, `secoc_freshness_counter_enabled: false`).
   * Maximum BLDC motor current limits on `COMP-EMBA` can be overridden via UDS 
     (`max_clamping_current_limiter_overrideable_via_uds: true`).
-  * Physical wiring for `CONN-BRK-04` uses unshielded twisted-pair cables 
+  * Physical wiring for `CONN-BRK-04` uses unshielded twisted-pair cables
     accessible inside the exterior wheel wells without entering the cabin.
+    Bus access requires physical contact with this wiring and a CAN-FD
+    interface. Wireless proximity alone does not provide this access.
 
 - Associated Cybersecurity Goals & Damage Scenarios:
   * Protected Assets:

@@ -63,7 +63,13 @@
       "interfaces": [
         "INT-CAN-CHASSIS",
         "INT-SWD-HEADER"
-      ]
+      ],
+      "physical_access": {
+        "interface_id": "INT-SWD-HEADER",
+        "required_access": "Cabin access and physical access to the BPSU board in the pedal box",
+        "debug_authentication_required": false,
+        "capability": "Debugger access through the unlocked SWD header, including writes to pedal zero-point calibration storage"
+      }
     },
     {
       "component_id": "COMP-VDCM",
@@ -412,7 +418,13 @@
       "medium": "Private CAN-FD Sub-bus routed to all 4 wheel wells (2 Mbps)",
       "protocol": "Raw CAN-FD Frames (CAN ID 0x040 Target_Clamping_Force_kN) & UDS (0x750)",
       "encrypted": false,
-      "authenticated": "None (Plaintext CAN-FD without SecOC; physical wiring exposed in wheel arches)"
+      "authenticated": "None (Plaintext CAN-FD without SecOC; physical wiring exposed in wheel arches)",
+      "physical_access": {
+        "location": "Exterior wheel-well harness",
+        "required_access": "Physical contact with the CAN-FD wiring",
+        "required_equipment": "CAN-FD interface",
+        "cabin_access_required": false
+      }
     }
   ],
   "assets": [
