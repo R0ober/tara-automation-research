@@ -113,7 +113,7 @@
       ],
       "associated_damage_scenario": {
         "damage_id": "DS-BRK-01",
-        "description": "Attacker spoofs 0% pedal travel during an emergency stop (loss of braking) or injects 100% pedal travel at highway speed (unintended full deceleration).",
+        "description": "Insufficient braking during an emergency stop or unintended braking at highway speed can cause a collision. The collision can cause serious injury or death.",
         "impact_ratings": {
           "Safety": {
             "rating": "Severe",
@@ -491,7 +491,7 @@
       ],
       "associated_damage_scenario": {
         "damage_id": "DS-BRK-02",
-        "description": "Attacker falsifies high regenerative braking torque achievement from COMP-RIC while zeroing friction torque to COMP-EBCM, resulting in sudden total loss of vehicle deceleration.",
+        "description": "Insufficient combined regenerative and friction braking can prevent the vehicle from achieving the required deceleration. This can cause a collision and serious injury or death.",
         "impact_ratings": {
           "Safety": {
             "rating": "Severe",

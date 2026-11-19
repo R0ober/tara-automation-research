@@ -65,9 +65,9 @@ System Boundary:
 - Associated Cybersecurity Goals & Damage Scenarios:
   * Protected Asset: ASSET-BRK-01 (Driver Pedal Travel & Braking Demand Signal)
   * Security Properties: Integrity, Authenticity, Availability
-  * Damage Scenario (DS-BRK-01): Attacker spoofs 0% pedal travel during an 
-    emergency stop (complete loss of braking) or injects 100% pedal travel at 
-    highway speed (unintended full deceleration).
+  * Damage Scenario (DS-BRK-01): Insufficient braking during an emergency stop
+    or unintended braking at highway speed can cause a collision. The collision
+    can cause serious injury or death.
     Impact — Safety: Severe, Financial: Major, Operational: Severe, Privacy: Negligible.
 
 
@@ -91,11 +91,24 @@ System Boundary:
   2. Regenerative Feedback Loop: The Regenerative Inverter Controller (`COMP-RIC`, 
      TI C2000 running TI-RTOS `sys/bios` v6.83.00.18 with `regen_torque_inverter_app` 
      v4.1.2) applies negative motor torque and reports actual achieved 
-     regenerative torque via CAN ID `0x1A0` over `CONN-BRK-02`.
-  3. Friction Demand Transmission: `COMP-VDCM` subtracts achieved regenerative 
-     torque from total driver demand and sends the remaining friction torque 
-     request (`BrakeTorqueRequest`, SOME/IP Service `0x1020`, ASSET-BRK-02) over 
-     100BASE-T1 TSN Ethernet (`CONN-BRK-03`, UDP port 30490) to `COMP-EBCM`.
+     regenerative torque to `COMP-VDCM` via CAN ID `0x1A0` over `CONN-BRK-02`.
+     The feedback period is 10 ms.
+  3. Friction Demand Transmission: `COMP-VDCM` calculates friction torque demand
+     as max(0, driver demand - credited regenerative contribution). Both inputs
+     use the same torque basis, with positive values representing braking.
+     It sends the friction torque request (`BrakeTorqueRequest`, SOME/IP Service
+     `0x1020`, ASSET-BRK-02) over 100BASE-T1 TSN Ethernet (`CONN-BRK-03`,
+     UDP port 30490) to `COMP-EBCM`.
+     - At startup, the credited regenerative contribution is zero.
+     - Each correctly formatted feedback message that passes E2E CRC-8 updates
+       the stored torque and local monotonic reception time.
+     - Invalid messages are discarded without updating torque or reception time.
+       The previous contribution remains in use until timeout.
+     - When 30 ms have elapsed since the last accepted message, VDCM credits
+       zero regenerative contribution and requests the full driver braking
+       demand through friction braking.
+     - The next accepted message restores blending with its reported torque.
+     This fallback defines the requested torque, not the achieved deceleration.
   4. Workshop Diagnostics & IPC: `COMP-VDCM` runs `bluez` (v5.54) for wireless 
      BLE workshop brake service routines (pad replacement/bleeding) and 
      `mosquitto` (v2.0.10, TCP port 1883) for internal SOME/IP-to-MQTT telemetry.
@@ -112,16 +125,23 @@ System Boundary:
     (`allow_diagnostic_brake_override_while_driving: true`), and UDS Service 
     `0x2F` (InputOutputControlByIdentifier) does not require prior authentication 
     (`uds_0x2F_io_control_auth_required: false`).
-  * `COMP-RIC` does not authenticate `CAN ID 0x1A0` (`secoc_mac_verification: false`) 
-    and lacks plausibility checks on sudden regenerative torque drops.
+  * `COMP-VDCM` checks the E2E CRC-8 of regenerative torque feedback on CAN ID
+    `0x1A0` (`regen_feedback_e2e_crc_enabled: true`). CRC detects transmission
+    errors; it does not authenticate the sender.
+  * `COMP-VDCM` does not verify a cryptographic MAC on this feedback
+    (`regen_feedback_mac_verification_enabled: false`).
+  * `COMP-VDCM` does not check a freshness counter on this feedback
+    (`regen_feedback_freshness_counter_verification_enabled: false`).
+  * `COMP-VDCM` does not compare the reported regenerative torque with an
+    independent measurement of actual vehicle deceleration
+    (`regen_feedback_independent_deceleration_check_enabled: false`).
 
 - Associated Cybersecurity Goals & Damage Scenarios:
   * Protected Asset: ASSET-BRK-02 (Blended Friction & Regenerative Torque Command)
   * Security Properties: Integrity, Authenticity, Availability
-  * Damage Scenario (DS-BRK-02): Attacker falsifies high regenerative braking 
-    torque achievement (`CAN ID 0x1A0`) from `COMP-RIC` while zeroing friction 
-    torque (`SOME/IP 0x1020`) to `COMP-EBCM`, resulting in sudden total loss of 
-    vehicle deceleration.
+  * Damage Scenario (DS-BRK-02): Insufficient combined regenerative and friction
+    braking can prevent the vehicle from achieving the required deceleration.
+    This can cause a collision and serious injury or death.
     Impact — Safety: Severe, Financial: Major, Operational: Severe, Privacy: Negligible.
 
 

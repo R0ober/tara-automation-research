@@ -82,12 +82,26 @@
         {
           "name": "brake_blending_coordinator",
           "version": "2.3.1",
-          "role": "Computes friction vs. regenerative torque split and transmits SOME/IP BrakeTorqueRequest over TSN Ethernet to EBCM",
+          "role": "Calculates remaining friction torque demand from driver demand and achieved regenerative torque reported by RIC (CAN ID 0x1A0), then transmits SOME/IP BrakeTorqueRequest over TSN Ethernet to EBCM",
           "security_configuration": {
             "runs_as_root": true,
             "someip_tls_or_ipsec_enabled": false,
             "allow_diagnostic_brake_override_while_driving": true,
-            "uds_0x2F_io_control_auth_required": false
+            "uds_0x2F_io_control_auth_required": false,
+            "regen_feedback_e2e_crc_enabled": true,
+            "regen_feedback_mac_verification_enabled": false,
+            "regen_feedback_freshness_counter_verification_enabled": false,
+            "regen_feedback_independent_deceleration_check_enabled": false
+          },
+          "operational_parameters": {
+            "braking_torque_basis": "Driver demand and reported regenerative contribution use the same torque basis, with positive values representing braking",
+            "friction_torque_demand": "max(0, driver demand - credited regenerative contribution)",
+            "regen_feedback_timeout_ms": 30,
+            "regen_feedback_initial_contribution": 0,
+            "regen_feedback_acceptance": "Accept correctly formatted CAN ID 0x1A0 feedback that passes E2E CRC-8; store reported torque and local monotonic reception time on each accepted message",
+            "regen_feedback_on_invalid_message": "Discard without updating stored torque or reception time; retain the previous contribution until timeout",
+            "regen_feedback_on_timeout": "When elapsed time since the last accepted message reaches the timeout, credit zero regenerative contribution and request the full driver braking demand through friction braking",
+            "regen_feedback_on_recovery": "Resume blending with the reported torque from the next accepted message"
           }
         }
       ],
@@ -114,10 +128,9 @@
         {
           "name": "regen_torque_inverter_app",
           "version": "4.1.2",
-          "role": "Executes negative torque (regenerative braking) on traction motor and reports actual achieved regen torque (CAN ID 0x1A0)",
-          "security_configuration": {
-            "secoc_mac_verification": false,
-            "plausibility_check_on_regen_drop": false
+          "role": "Executes negative torque (regenerative braking) on traction motor and reports achieved regenerative torque to VDCM (CAN ID 0x1A0)",
+          "operational_parameters": {
+            "regen_feedback_period_ms": 10
           }
         }
       ],
@@ -251,7 +264,7 @@
       "damage_scenarios": [
         {
           "damage_id": "DS-BRK-01",
-          "description": "Inability to decelerate during an emergency stop or unexpected full deceleration at highway speed, resulting in an unmitigated collision causing severe physical injury or fatalities.",
+          "description": "Insufficient braking during an emergency stop or unintended braking at highway speed can cause a collision. The collision can cause serious injury or death.",
           "expected_sfop_impact": {
             "Safety": "Severe",
             "Financial": "Major",
@@ -277,7 +290,7 @@
       "damage_scenarios": [
         {
           "damage_id": "DS-BRK-02",
-          "description": "Sudden and unexpected total loss of vehicle deceleration capability, leading to an unavoidable high-speed collision causing severe physical injury or fatalities.",
+          "description": "Insufficient combined regenerative and friction braking can prevent the vehicle from achieving the required deceleration. This can cause a collision and serious injury or death.",
           "expected_sfop_impact": {
             "Safety": "Severe",
             "Financial": "Major",
