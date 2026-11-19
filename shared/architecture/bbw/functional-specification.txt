@@ -146,6 +146,9 @@ System Boundary:
      Both entry points submit diagnostic requests to VDCM. VDCM handles the
      supported requests; it does not forward arbitrary chassis CAN frames
      from either entry point to `CONN-BRK-02`.
+     VDCM forwards EBCM-supported diagnostic requests from either entry point
+     over DoIP on `CONN-BRK-03`, without additional client authorization.
+     EBCM applies authorization separately for each requested operation.
      VDCM also runs `mosquitto` (v2.0.10, TCP port 1883) for internal
      SOME/IP-to-MQTT telemetry.
 
@@ -221,11 +224,23 @@ System Boundary:
 
 - Current Security & Operational Parameters (As-Built Baseline):
   * Known Vulnerable Software on COMP-EBCM: `freertos` v10.4.1 and `lwip` v2.1.2.
-  * UDS `0x27` SecurityAccess on `COMP-EBCM` uses weak 8-bit seed entropy 
-    (`uds_0x27_seed_entropy_bits: 8`), and bootloader rollback protection is 
-    disabled (`bootloader_rollback_protection: false`).
-  * UDS `0x31` (RoutineControl: Caliper Piston Retraction / Bleed Mode) lacks a 
-    vehicle speed interlock (`uds_0x31_bleed_routine_speed_interlock_enabled: false`).
+  * EBCM permits programming only while stationary, in a programming session,
+    after a successful UDS `0x27` SecurityAccess unlock. Access uses the existing
+    diagnostic route from VDCM; forwarding alone does not authorize programming.
+    SecurityAccess uses 8-bit seed entropy (`uds_0x27_seed_entropy_bits: 8`).
+    The seed/key algorithm and retry policy are not specified.
+  * EBCM verifies the firmware signature against a configured trusted firmware
+    signer before activation. It activates only complete, compatible images
+    with valid signatures. Incomplete, unsigned, or invalidly signed images
+    are rejected.
+  * Bootloader rollback protection is disabled
+    (`bootloader_rollback_protection: false`). An older compatible image can be
+    accepted after programming authorization if its signature is valid.
+  * EBCM accepts the UDS `0x31` pad-retraction routine without a SecurityAccess
+    unlock and without a vehicle speed check
+    (`uds_0x31_bleed_routine_speed_interlock_enabled: false`). It issues piston-
+    retraction requests to the wheel actuators over `CONN-BRK-04`. These rules
+    apply to this routine; they do not authorize other diagnostic operations.
   * `CONN-BRK-04` and `COMP-EMBA` do not verify command MACs or freshness counters 
     (`command_authentication_mac: false`, `secoc_freshness_counter_enabled: false`).
   * Maximum BLDC motor current limits on `COMP-EMBA` can be overridden via UDS 

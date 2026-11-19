@@ -195,7 +195,30 @@
       "interfaces": [
         "INT-ETH-TSN-BRAKE",
         "INT-CANFD-ACTUATOR"
-      ]
+      ],
+      "diagnostic_services": [
+        {
+          "service_id": "0x31",
+          "routine": "Caliper piston retraction for pad replacement",
+          "security_access_required": false,
+          "vehicle_speed_interlock_enabled": false,
+          "execution_connection": "CONN-BRK-04",
+          "execution_behavior": "EBCM issues piston-retraction requests to the wheel actuators over the actuator bus"
+        }
+      ],
+      "diagnostic_programming": {
+        "required_session": "programming",
+        "security_access_service": "0x27",
+        "security_access_required": true,
+        "required_vehicle_state": "stationary",
+        "firmware_signature_verification_required": true,
+        "firmware_signature_verification_component": "COMP-EBCM",
+        "image_activation_rule": "Activate only complete compatible images whose signature verifies against a configured trusted firmware signer; reject incomplete, unsigned, or invalidly signed images",
+        "rollback_protection_enabled": false,
+        "older_image_policy": "An older compatible image can be accepted after programming authorization if its signature is valid",
+        "security_access_seed_key_algorithm": "Not specified",
+        "security_access_retry_policy": "Not specified"
+      }
     },
     {
       "component_id": "COMP-EMBA",
@@ -279,7 +302,20 @@
           ],
           "additional_authorization_required": false,
           "allowed_while_driving": true
-        }
+        },
+        "downstream_routes": [
+          {
+            "target_component": "COMP-EBCM",
+            "via_connection": "CONN-BRK-03",
+            "protocol": "DoIP",
+            "entry_interfaces": [
+              "INT-BLE-DIAG",
+              "INT-OBD2-CAN"
+            ],
+            "additional_client_authorization_required": false,
+            "request_scope": "Forward EBCM-supported diagnostic requests; EBCM applies authorization for each operation"
+          }
+        ]
       }
     },
     {
