@@ -90,8 +90,7 @@
           "name": "bluez",
           "version": "5.54",
           "cpe": "cpe:2.3:a:bluez:bluez:5.54:*:*:*:*:*:*:*",
-          "role": "BLE Factory & Workshop Wireless Brake Diagnostics Interface (Bleeding/Pad Service Mode)",
-          "listening_port": 0
+          "role": "BLE Factory & Workshop Wireless Brake Diagnostics Interface (Bleeding/Pad Service Mode)"
         },
         {
           "name": "mosquitto",
@@ -175,7 +174,7 @@
       "type": "ECU_Safety_Critical",
       "trust_zone": "Safety_Critical_Braking_Zone",
       "asil_level": "ASIL-D",
-      "hardware": "NXP S32K344 (Triple Lockstep ARM Cortex-M7)",
+      "hardware": "NXP S32K344 (two ARM Cortex-M7 cores configured as one lockstep pair)",
       "os": {
         "name": "FreeRTOS + LwIP TCP/IP Stack",
         "version": "10.4.1",
@@ -186,12 +185,12 @@
           "name": "lwip",
           "version": "2.1.2",
           "cpe": "cpe:2.3:a:lwip_project:lwip:2.1.2:*:*:*:*:*:*:*",
-          "role": "Embedded TCP/IP & SOME/IP Stack for TSN Ethernet"
+          "role": "Embedded TCP/IP stack for the Ethernet interface"
         },
         {
           "name": "abs_esc_clamping_controller",
           "version": "3.4.0",
-          "role": "Receives SOME/IP braking demand, executes wheel-slip PID loop, and sends all four wheel clamping force values in each CAN-FD command frame (ID 0x040)",
+          "role": "Processes SOME/IP braking demand over lwIP, executes wheel-slip PID loop, and sends all four wheel clamping force values in each CAN-FD command frame (ID 0x040)",
           "security_configuration": {
             "secoc_freshness_counter_enabled": false,
             "uds_0x27_seed_entropy_bits": 8,
@@ -252,7 +251,7 @@
       "type": "Smart_Actuator_Node",
       "trust_zone": "Wheel_End_Actuator_Zone",
       "asil_level": "ASIL-D",
-      "hardware": "Infineon MOTIX TLE9879QXA40 (3-Phase BLDC Gate Driver + ARM Cortex-M3)",
+      "hardware": "CAN-FD-capable automotive MCU with an external 48V-rated three-phase BLDC motor-driver stage; specific parts not selected",
       "os": {
         "name": "Bare-Metal Motor Control Firmware",
         "version": "2.0.0"
@@ -265,12 +264,34 @@
           "security_configuration": {
             "command_authentication_mac": false,
             "max_clamping_current_limiter_overrideable_via_uds": true,
-            "wheel_harness_physical_shielding": "Unshielded wheel-well twisted pair (accessible without cabin entry)"
+            "wheel_harness_physical_shielding": "Unshielded wheel-well twisted pair (accessible without cabin entry)",
+            "secoc_freshness_counter_enabled": false
+          },
+          "operational_parameters": {
+            "initial_clamping_force_kn": 0,
+            "command_force_range": "Zero to the configured maximum clamping force",
+            "command_acceptance": "Accept a correctly formatted CAN ID 0x040 frame when the assigned wheel value is within the configured force range; the last accepted value becomes the force target and updates local monotonic reception time",
+            "command_timeout": "Configured maximum time since the last accepted command",
+            "on_invalid_command": "Reject without changing the force target or refreshing the command timer",
+            "on_command_timeout": "Record a communication fault and retain the last accepted force target",
+            "on_command_recovery": "Resume tracking the next accepted command and clear the communication fault",
+            "force_control": "The servo regulates force under the active motor-current limit; retaining a force target does not command continuous maximum motor current"
           }
         }
       ],
       "interfaces": [
         "INT-CANFD-ACTUATOR"
+      ],
+      "diagnostic_services": [
+        {
+          "operation": "Manufacturer-specific UDS motor-current-limit adjustment",
+          "request_connection": "CONN-BRK-04",
+          "target_scope": "The addressed COMP-EMBA instance",
+          "security_access_required": false,
+          "vehicle_speed_interlock_enabled": false,
+          "effect": "Adjust the active motor-current limit",
+          "vdcm_diagnostic_forwarding": "Not modeled"
+        }
       ]
     }
   ],
@@ -282,20 +303,21 @@
       "target_component": "COMP-VDCM",
       "medium": "Bluetooth Low Energy (BLE 5.0) & Physical OBD-II Port (ISO 15765-4)",
       "protocol": "GATT / L2CAP (BLE) & UDS on CAN (0x7E0 / 0x7DF)",
-      "encrypted": false,
-      "authenticated": "BLE diagnostic service requires pairing with static PIN 0000; OBD-II requires physical connection. VDCM UDS 0x2F requires no additional application authorization.",
+      "authenticated": "BLE diagnostic service requires pairing with fixed passkey 000000; OBD-II requires physical connection. VDCM UDS 0x2F requires no additional application authorization.",
       "entry_points": [
         {
           "interface_id": "INT-BLE-DIAG",
           "medium": "Bluetooth Low Energy (BLE 5.0)",
           "protocol": "Workshop diagnostic requests over GATT / L2CAP",
-          "access_requirement": "Wireless proximity and pairing with the static PIN 0000 for normal diagnostic service access"
+          "access_requirement": "Wireless proximity and pairing with the fixed six-digit passkey 000000 for normal diagnostic service access",
+          "encrypted": true
         },
         {
           "interface_id": "INT-OBD2-CAN",
           "medium": "Physical OBD-II CAN connector",
           "protocol": "UDS on CAN (0x7E0 / 0x7DF)",
-          "access_requirement": "Physical connection to the diagnostic connector; no additional client authentication for the VDCM brake override service"
+          "access_requirement": "Physical connection to the diagnostic connector; no additional client authentication for the VDCM brake override service",
+          "encrypted": false
         }
       ],
       "diagnostic_access": {
@@ -369,7 +391,7 @@
     },
     {
       "connection_id": "CONN-BRK-03",
-      "name": "Redundant Braking TSN Ethernet Link",
+      "name": "Braking TSN Ethernet Link",
       "source_component": "COMP-VDCM",
       "target_component": "COMP-EBCM",
       "medium": "100BASE-T1 Automotive Ethernet (IEEE 802.1Qbv TSN)",

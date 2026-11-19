@@ -30,7 +30,7 @@ System Boundary:
 - Internal Control Networks:
   * Chassis & Pedal Sensor CAN-FD Bus (CONN-BRK-02) linking COMP-BPSU, 
     COMP-VDCM, and the Regenerative Inverter Controller (COMP-RIC).
-  * Redundant Braking TSN Ethernet Link (CONN-BRK-03, 100BASE-T1) linking 
+  * Braking TSN Ethernet Link (CONN-BRK-03, 100BASE-T1) linking
     COMP-VDCM to the Electronic Brake Control Module (COMP-EBCM).
   * Wheel-End Brake Actuator CAN-FD Bus (CONN-BRK-04) routed from COMP-EBCM 
     into the 4 wheel wells to drive the Smart Electro-Mechanical Brake Caliper 
@@ -145,7 +145,8 @@ System Boundary:
      This fallback defines the requested torque, not the achieved deceleration.
   4. Workshop Diagnostics & IPC: `COMP-VDCM` uses `bluez` (v5.54) for BLE
      transport to the workshop diagnostic service. Normal BLE service access
-     requires wireless proximity and pairing with the static PIN `0000`.
+     requires wireless proximity and pairing with the fixed six-digit passkey
+     `000000`. The BLE diagnostic link is encrypted; OBD-II CAN is unencrypted.
      OBD-II access requires a physical connection to `INT-OBD2-CAN`.
      Both entry points submit diagnostic requests to VDCM. VDCM handles the
      supported requests; it does not forward arbitrary chassis CAN frames
@@ -161,7 +162,8 @@ System Boundary:
     v5.54, and `mosquitto` v2.0.10.
     The synthetic kernel baseline is unmodified upstream Linux v5.10.70.
   * Software versions on COMP-RIC: TI `sys/bios` v6.83.00.18.
-  * BLE workshop pairing uses a static 4-digit PIN (`0000`).
+  * BLE workshop pairing uses a fixed six-digit passkey (`000000`). Link
+    encryption does not add application authorization to diagnostic operations.
   * `brake_blending_coordinator` runs with root privileges (`runs_as_root: true`).
   * SOME/IP traffic over `CONN-BRK-03` is transmitted in plaintext without TLS, 
     IPsec, or MACsec (`someip_tls_or_ipsec_enabled: false`).
@@ -207,11 +209,12 @@ System Boundary:
   - COMP-EMBA-RR: rear-right wheel.
 
 - Functional Behavior & Data Flow:
-  1. SOME/IP Reception & ABS Loop: `COMP-EBCM` (NXP S32K344 running FreeRTOS 
-     v10.4.1 and `lwip` v2.1.2) receives the friction braking demand for SOME/IP
-     service `0x1020` on its configured UDP application port. It runs
-     `abs_esc_clamping_controller` (v3.4.0) to compute individual wheel clamping
-     forces.
+  1. SOME/IP Reception & ABS Loop: `COMP-EBCM` uses an NXP S32K344 with two
+     Cortex-M7 cores configured as one lockstep pair. It runs FreeRTOS v10.4.1
+     and `lwip` v2.1.2. The lwIP stack provides UDP/IP communication on the
+     configured application port. The EBCM application processes SOME/IP service
+     `0x1020`; `abs_esc_clamping_controller` (v3.4.0) computes individual wheel
+     clamping forces.
   2. Actuator Command Transmission: `COMP-EBCM` transmits one command frame
      (`CAN ID 0x040`, `Target_Clamping_Force_kN`, ASSET-BRK-03) containing four
      force values in kN. The fields map to actuator instances as follows:
@@ -222,10 +225,21 @@ System Boundary:
      All four actuators receive the frame on the shared CONN-BRK-04 bus.
      Each actuator uses only its assigned field.
      UDS diagnostic frames (`0x750`) also use this 2 Mbps CAN-FD sub-bus.
-  3. Mechanical Pad Clamping: Each wheel's `COMP-EMBA` (Infineon MOTIX 
-     TLE9879QXA40 running Bare-Metal Firmware v2.0.0 with `caliper_piston_servo_driver` 
-     v2.0.0) commutates its 48V BLDC ball-screw actuator to push the brake pads 
-     against the rotor.
+  3. Mechanical Pad Clamping: Each wheel's `COMP-EMBA` uses a CAN-FD-capable
+     automotive MCU and an external 48V-rated three-phase BLDC motor-driver
+     stage. Specific parts are not selected. Bare-Metal Firmware v2.0.0 with
+     `caliper_piston_servo_driver` v2.0.0 controls the 48V BLDC ball-screw
+     actuator to push the brake pads against the rotor.
+  4. Normal Command Reception: Each actuator starts with zero clamping demand.
+     It accepts correctly formatted `0x040` frames when its assigned value is
+     within zero and the configured maximum force. The last accepted value
+     becomes its force target and updates local monotonic reception time.
+     Invalid commands do not change the target or refresh the command timer.
+     At the configured timeout, the actuator records a communication fault and
+     retains its last accepted target. The next accepted command restores
+     tracking and clears that fault. The servo regulates force under the active
+     motor-current limit; holding a target does not command continuous maximum
+     motor current.
 
 - Current Security & Operational Parameters (As-Built Baseline):
   * Software versions on COMP-EBCM: `freertos` v10.4.1 and `lwip` v2.1.2.
@@ -248,8 +262,11 @@ System Boundary:
     apply to this routine; they do not authorize other diagnostic operations.
   * `CONN-BRK-04` and `COMP-EMBA` do not verify command MACs or freshness counters 
     (`command_authentication_mac: false`, `secoc_freshness_counter_enabled: false`).
-  * Maximum BLDC motor current limits on `COMP-EMBA` can be overridden via UDS 
-    (`max_clamping_current_limiter_overrideable_via_uds: true`).
+  * A manufacturer-specific UDS operation on `CONN-BRK-04` adjusts the active
+    motor-current limit of the addressed actuator
+    (`max_clamping_current_limiter_overrideable_via_uds: true`). It requires no
+    SecurityAccess unlock or vehicle-speed check. VDCM-to-actuator diagnostic
+    forwarding is not modeled.
   * Physical wiring for `CONN-BRK-04` uses unshielded twisted-pair cables
     accessible inside the exterior wheel wells without entering the cabin.
     Bus access requires physical contact with this wiring and a CAN-FD
