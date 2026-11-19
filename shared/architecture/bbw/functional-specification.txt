@@ -154,15 +154,28 @@ System Boundary:
 
 - Involved Components & Interfaces:
   COMP-EBCM -> [CONN-BRK-04: Wheel-End Actuator CAN-FD Bus (2 Mbps)] -> COMP-EMBA (x4).
+  The four instances share the COMP-EMBA hardware, software, interfaces, and
+  security settings:
+  - COMP-EMBA-FL: front-left wheel.
+  - COMP-EMBA-FR: front-right wheel.
+  - COMP-EMBA-RL: rear-left wheel.
+  - COMP-EMBA-RR: rear-right wheel.
 
 - Functional Behavior & Data Flow:
   1. SOME/IP Reception & ABS Loop: `COMP-EBCM` (NXP S32K344 running FreeRTOS 
      v10.4.1 and `lwip` v2.1.2 on UDP port 30490) receives the friction braking 
      demand and runs `abs_esc_clamping_controller` (v3.4.0) to compute 
      individual wheel clamping forces.
-  2. Actuator Command Transmission: `COMP-EBCM` transmits target clamping force 
-     frames (`CAN ID 0x040`, `Target_Clamping_Force_kN`, ASSET-BRK-03) and UDS 
-     diagnostic frames (`0x750`) over the private 2 Mbps CAN-FD sub-bus (`CONN-BRK-04`).
+  2. Actuator Command Transmission: `COMP-EBCM` transmits one command frame
+     (`CAN ID 0x040`, `Target_Clamping_Force_kN`, ASSET-BRK-03) containing four
+     force values in kN. The fields map to actuator instances as follows:
+     - `front_left`: COMP-EMBA-FL.
+     - `front_right`: COMP-EMBA-FR.
+     - `rear_left`: COMP-EMBA-RL.
+     - `rear_right`: COMP-EMBA-RR.
+     All four actuators receive the frame on the shared CONN-BRK-04 bus.
+     Each actuator uses only its assigned field.
+     UDS diagnostic frames (`0x750`) also use this 2 Mbps CAN-FD sub-bus.
   3. Mechanical Pad Clamping: Each wheel's `COMP-EMBA` (Infineon MOTIX 
      TLE9879QXA40 running Bare-Metal Firmware v2.0.0 with `caliper_piston_servo_driver` 
      v2.0.0) commutates its 48V BLDC ball-screw actuator to push the brake pads 

@@ -161,7 +161,7 @@
         {
           "name": "abs_esc_clamping_controller",
           "version": "3.4.0",
-          "role": "Receives SOME/IP braking demand, executes wheel-slip PID loop, and sends CAN-FD clamping force frames (ID 0x040) to the 4 wheel caliper actuators",
+          "role": "Receives SOME/IP braking demand, executes wheel-slip PID loop, and sends all four wheel clamping force values in each CAN-FD command frame (ID 0x040)",
           "security_configuration": {
             "secoc_freshness_counter_enabled": false,
             "uds_0x27_seed_entropy_bits": 8,
@@ -178,6 +178,24 @@
     {
       "component_id": "COMP-EMBA",
       "name": "Smart Electro-Mechanical Brake Caliper Actuator (EMBA x4)",
+      "instances": [
+        {
+          "instance_id": "COMP-EMBA-FL",
+          "wheel_position": "front-left"
+        },
+        {
+          "instance_id": "COMP-EMBA-FR",
+          "wheel_position": "front-right"
+        },
+        {
+          "instance_id": "COMP-EMBA-RL",
+          "wheel_position": "rear-left"
+        },
+        {
+          "instance_id": "COMP-EMBA-RR",
+          "wheel_position": "rear-right"
+        }
+      ],
       "type": "Smart_Actuator_Node",
       "trust_zone": "Wheel_End_Actuator_Zone",
       "asil_level": "ASIL-D",
@@ -190,7 +208,7 @@
         {
           "name": "caliper_piston_servo_driver",
           "version": "2.0.0",
-          "role": "Drives 48V BLDC ball-screw mechanism to push brake pads against disc rotor based on CAN ID 0x040",
+          "role": "Drives 48V BLDC ball-screw mechanism to push brake pads against disc rotor using only the clamping force field assigned to its wheel instance in CAN ID 0x040",
           "security_configuration": {
             "command_authentication_mac": false,
             "max_clamping_current_limiter_overrideable_via_uds": true,
@@ -242,6 +260,39 @@
       "name": "Wheel-End Brake Actuator CAN-FD Bus",
       "source_component": "COMP-EBCM",
       "target_component": "COMP-EMBA",
+      "target_instances": [
+        "COMP-EMBA-FL",
+        "COMP-EMBA-FR",
+        "COMP-EMBA-RL",
+        "COMP-EMBA-RR"
+      ],
+      "messages": [
+        {
+          "can_id": "0x040",
+          "name": "Target_Clamping_Force_kN",
+          "source_component": "COMP-EBCM",
+          "payload_unit": "kN",
+          "payload_fields": [
+            {
+              "name": "front_left",
+              "target_instance": "COMP-EMBA-FL"
+            },
+            {
+              "name": "front_right",
+              "target_instance": "COMP-EMBA-FR"
+            },
+            {
+              "name": "rear_left",
+              "target_instance": "COMP-EMBA-RL"
+            },
+            {
+              "name": "rear_right",
+              "target_instance": "COMP-EMBA-RR"
+            }
+          ],
+          "receiver_behavior": "Each actuator reads only the field assigned to its instance; hardware, software, interfaces, and security settings are shared through COMP-EMBA"
+        }
+      ],
       "medium": "Private CAN-FD Sub-bus routed to all 4 wheel wells (2 Mbps)",
       "protocol": "Raw CAN-FD Frames (CAN ID 0x040 Target_Clamping_Force_kN) & UDS (0x750)",
       "encrypted": false,
