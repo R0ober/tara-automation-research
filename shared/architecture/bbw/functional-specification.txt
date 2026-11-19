@@ -153,9 +153,10 @@ System Boundary:
      SOME/IP-to-MQTT telemetry.
 
 - Current Security & Operational Parameters (As-Built Baseline):
-  * Known Vulnerable Software on COMP-VDCM: `linux_kernel` v5.10.70, `bluez` 
+  * Software versions on COMP-VDCM: `linux_kernel` v5.10.70, `bluez`
     v5.54, and `mosquitto` v2.0.10.
-  * Known Vulnerable Software on COMP-RIC: TI `sys/bios` v6.83.00.18.
+    The synthetic kernel baseline is unmodified upstream Linux v5.10.70.
+  * Software versions on COMP-RIC: TI `sys/bios` v6.83.00.18.
   * BLE workshop pairing uses a static 4-digit PIN (`0000`).
   * `brake_blending_coordinator` runs with root privileges (`runs_as_root: true`).
   * SOME/IP traffic over `CONN-BRK-03` is transmitted in plaintext without TLS, 
@@ -223,7 +224,7 @@ System Boundary:
      against the rotor.
 
 - Current Security & Operational Parameters (As-Built Baseline):
-  * Known Vulnerable Software on COMP-EBCM: `freertos` v10.4.1 and `lwip` v2.1.2.
+  * Software versions on COMP-EBCM: `freertos` v10.4.1 and `lwip` v2.1.2.
   * EBCM permits programming only while stationary, in a programming session,
     after a successful UDS `0x27` SecurityAccess unlock. Access uses the existing
     diagnostic route from VDCM; forwarding alone does not authorize programming.
