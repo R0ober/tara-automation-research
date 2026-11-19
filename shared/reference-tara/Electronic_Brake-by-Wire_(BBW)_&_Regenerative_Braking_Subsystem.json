@@ -251,7 +251,7 @@
       "damage_scenarios": [
         {
           "damage_id": "DS-BRK-01",
-          "description": "Attacker spoofs 0% pedal travel during an emergency stop (loss of braking) or injects 100% pedal travel at highway speed (unintended full deceleration).",
+          "description": "Inability to decelerate during an emergency stop or unexpected full deceleration at highway speed, resulting in an unmitigated collision causing severe physical injury or fatalities.",
           "expected_sfop_impact": {
             "Safety": "Severe",
             "Financial": "Major",
@@ -277,7 +277,7 @@
       "damage_scenarios": [
         {
           "damage_id": "DS-BRK-02",
-          "description": "Attacker falsifies high regenerative braking torque achievement from COMP-RIC while zeroing friction torque to COMP-EBCM, resulting in sudden total loss of vehicle deceleration.",
+          "description": "Sudden and unexpected total loss of vehicle deceleration capability, leading to an unavoidable high-speed collision causing severe physical injury or fatalities.",
           "expected_sfop_impact": {
             "Safety": "Severe",
             "Financial": "Major",
@@ -302,7 +302,7 @@
       "damage_scenarios": [
         {
           "damage_id": "DS-BRK-03",
-          "description": "Asymmetric clamping force commands (e.g., 45 kN on front-left caliper and 0 kN on right calipers) cause violent yaw spin-out, or UDS pad-retraction command retracts pistons completely so pads cannot contact the rotor.",
+          "description": "Uncontrolled loss of directional stability (violent yaw spin-out) or complete loss of braking capability, leading to a severe collision resulting in physical injury or fatalities.",
           "expected_sfop_impact": {
             "Safety": "Severe",
             "Financial": "Major",
@@ -327,7 +327,7 @@
       "damage_scenarios": [
         {
           "damage_id": "DS-BRK-04",
-          "description": "Unauthorized UDS flashing or thermal current-limit override permanently damages the 48V BLDC caliper motors or disables ABS wheel-lock prevention.",
+          "description": "Permanent physical hardware damage to caliper actuators and permanent disablement of critical active safety functions (such as anti-lock braking), leading to compromised vehicle control and substantial repair costs.",
           "expected_sfop_impact": {
             "Safety": "Severe",
             "Financial": "Severe",
