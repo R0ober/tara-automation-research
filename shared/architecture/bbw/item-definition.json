@@ -178,8 +178,7 @@
           "name": "lwip",
           "version": "2.1.2",
           "cpe": "cpe:2.3:a:lwip_project:lwip:2.1.2:*:*:*:*:*:*:*",
-          "role": "Embedded TCP/IP & SOME/IP Stack for TSN Ethernet",
-          "listening_port": 30490
+          "role": "Embedded TCP/IP & SOME/IP Stack for TSN Ethernet"
         },
         {
           "name": "abs_esc_clamping_controller",
@@ -302,7 +301,7 @@
       "source_component": "COMP-VDCM",
       "target_component": "COMP-EBCM",
       "medium": "100BASE-T1 Automotive Ethernet (IEEE 802.1Qbv TSN)",
-      "protocol": "SOME/IP over UDP Port 30490 & DoIP over TCP Port 13400",
+      "protocol": "SOME/IP Service 0x1020 over UDP (configured application port on COMP-EBCM) & DoIP over TCP Port 13400",
       "encrypted": false,
       "authenticated": "None (Plaintext SOME/IP without MACsec, IPsec, or SecOC)"
     },

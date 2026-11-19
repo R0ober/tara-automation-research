@@ -126,7 +126,8 @@ System Boundary:
      use the same torque basis, with positive values representing braking.
      It sends the friction torque request (`BrakeTorqueRequest`, SOME/IP Service
      `0x1020`, ASSET-BRK-02) over 100BASE-T1 TSN Ethernet (`CONN-BRK-03`,
-     UDP port 30490) to `COMP-EBCM`.
+     UDP) to the configured application port on `COMP-EBCM`. SOME/IP service
+     discovery is outside the current model.
      - At startup, the credited regenerative contribution is zero.
      - Each correctly formatted feedback message that passes E2E CRC-8 updates
        the stored torque and local monotonic reception time.
@@ -192,9 +193,10 @@ System Boundary:
 
 - Functional Behavior & Data Flow:
   1. SOME/IP Reception & ABS Loop: `COMP-EBCM` (NXP S32K344 running FreeRTOS 
-     v10.4.1 and `lwip` v2.1.2 on UDP port 30490) receives the friction braking 
-     demand and runs `abs_esc_clamping_controller` (v3.4.0) to compute 
-     individual wheel clamping forces.
+     v10.4.1 and `lwip` v2.1.2) receives the friction braking demand for SOME/IP
+     service `0x1020` on its configured UDP application port. It runs
+     `abs_esc_clamping_controller` (v3.4.0) to compute individual wheel clamping
+     forces.
   2. Actuator Command Transmission: `COMP-EBCM` transmits one command frame
      (`CAN ID 0x040`, `Target_Clamping_Force_kN`, ASSET-BRK-03) containing four
      force values in kN. The fields map to actuator instances as follows:
