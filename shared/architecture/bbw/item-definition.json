@@ -13,13 +13,17 @@
       {
         "function_id": "FUNC-BRK-02",
         "name": "Brake Torque Blending & Dynamic Allocation",
-        "description": "Calculates total deceleration demand, blends regenerative braking torque (sent to the Inverter) with friction braking torque (sent to the EBCM), and computes per-wheel slip targets (ABS/ESC)."
+        "description": "Calculates total braking demand, coordinates regenerative torque with RIC, and sends the remaining friction torque request to EBCM."
       },
       {
         "function_id": "FUNC-BRK-03",
         "name": "Electro-Mechanical Friction Brake Actuation",
-        "description": "Translates target clamping force commands from the EBCM into 48V 3-phase BLDC motor currents at each wheel's Smart Brake Caliper Actuator to press the brake pads against the rotor."
+        "description": "EBCM calculates per-wheel clamping force commands from friction braking demand and wheel-slip control. Each EMBA converts its assigned command into motor actuation to press the brake pads against the rotor."
       }
+    ],
+    "modeling_assumptions": [
+      "This synthetic model describes the primary electronic braking path. Independent emergency braking paths are outside its scope; their availability must not be assumed.",
+      "Communication timeouts and the sensor-agreement tolerance are configurable. Their numeric calibration is outside this item definition."
     ]
   },
   "components": [
@@ -49,9 +53,10 @@
             "sensor_sampling_rate_hz": 1000,
             "sensor_travel_min_percent": 0,
             "sensor_travel_max_percent": 100,
-            "sensor_disagreement_threshold_percentage_points": 5,
-            "valid_demand_rule": "Both sensor readings are within 0 to 100 percent inclusive and their absolute difference is at most 5 percentage points; pedal travel demand is their arithmetic mean and demand_valid is true",
-            "invalid_demand_rule": "If either reading is outside the permitted range or their absolute difference exceeds the threshold, demand_valid is false; pedal_travel_percent has no meaning and neither sensor is selected as correct"
+            "valid_demand_rule": "Both sensor readings are within 0 to 100 percent inclusive and their absolute difference is within the configured agreement tolerance; pedal travel demand is their arithmetic mean and demand_valid is true",
+            "invalid_demand_rule": "If either reading is outside the permitted range or their absolute difference exceeds the configured tolerance, demand_valid is false; pedal_travel_percent has no meaning and neither sensor is selected as correct",
+            "sensor_agreement_tolerance": "Configured maximum difference between normalized travel readings",
+            "pedal_demand_transmission": "Send pedal demand and validity after each sensor sampling cycle, including when demand is invalid"
           }
         }
       ],
@@ -99,17 +104,27 @@
             "regen_feedback_e2e_crc_enabled": true,
             "regen_feedback_mac_verification_enabled": false,
             "regen_feedback_freshness_counter_verification_enabled": false,
-            "regen_feedback_independent_deceleration_check_enabled": false
+            "regen_feedback_independent_deceleration_check_enabled": false,
+            "pedal_demand_e2e_crc_enabled": true,
+            "pedal_demand_mac_verification_enabled": false,
+            "pedal_demand_freshness_counter_verification_enabled": false
           },
           "operational_parameters": {
             "braking_torque_basis": "Driver demand and reported regenerative contribution use the same torque basis, with positive values representing braking",
             "friction_torque_demand": "max(0, driver demand - credited regenerative contribution)",
-            "regen_feedback_timeout_ms": 30,
             "regen_feedback_initial_contribution": 0,
             "regen_feedback_acceptance": "Accept correctly formatted CAN ID 0x1A0 feedback that passes E2E CRC-8; store reported torque and local monotonic reception time on each accepted message",
             "regen_feedback_on_invalid_message": "Discard without updating stored torque or reception time; retain the previous contribution until timeout",
-            "regen_feedback_on_timeout": "When elapsed time since the last accepted message reaches the timeout, credit zero regenerative contribution and request the full driver braking demand through friction braking",
-            "regen_feedback_on_recovery": "Resume blending with the reported torque from the next accepted message"
+            "regen_feedback_on_timeout": "When elapsed time since the last accepted message reaches the timeout, credit zero regenerative contribution and request the available driver demand through friction braking; if pedal demand is unavailable, its contribution remains zero",
+            "regen_feedback_on_recovery": "Resume blending with the reported torque from the next accepted message",
+            "regen_feedback_timeout": "Configured maximum time since the last accepted feedback message",
+            "pedal_demand_acceptance": "Accept correctly formatted CAN ID 0x080 with valid E2E CRC-8, demand_valid true, and travel within 0 to 100 percent inclusive; the last accepted message replaces the stored demand and its local monotonic reception time",
+            "pedal_demand_initial_percent": 0,
+            "pedal_demand_timeout": "Configured maximum time since the last accepted valid demand",
+            "pedal_demand_on_invalid_or_missing": "Retain the last accepted demand only until its timeout; invalid messages do not update demand or its reception time",
+            "pedal_demand_on_timeout": "Mark driver demand unavailable and set the pedal-derived braking demand to zero",
+            "pedal_demand_on_recovery": "Resume using the next accepted demand immediately; a valid zero-percent message releases pedal-derived demand immediately",
+            "pedal_fallback_limitation": "The hold-then-zero response is a simplified primary-path model, not a production safety strategy. Loss of valid pedal input can remove pedal-derived braking demand; independent fallback braking is not modeled."
           }
         }
       ],
@@ -138,7 +153,7 @@
           "version": "4.1.2",
           "role": "Executes negative torque (regenerative braking) on traction motor and reports achieved regenerative torque to VDCM (CAN ID 0x1A0)",
           "operational_parameters": {
-            "regen_feedback_period_ms": 10
+            "regen_feedback_transmission": "Periodic CAN ID 0x1A0 feedback"
           }
         }
       ],
@@ -279,7 +294,7 @@
         }
       ],
       "encrypted": false,
-      "authenticated": "CRC-8 only (AUTOSAR SecOC disabled; vulnerable to frame injection and replay)"
+      "authenticated": "None (CRC-8 error detection only; AUTOSAR SecOC disabled)"
     },
     {
       "connection_id": "CONN-BRK-03",

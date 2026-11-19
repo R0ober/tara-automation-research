@@ -10,6 +10,10 @@ Target ASIL:        ASIL-D (Braking Actuation & Pedal Sensing Chain)
 
 1. SYSTEM OVERVIEW & ITEM BOUNDARY
 --------------------------------------------------------------------------------
+Model scope: This synthetic item describes the primary electronic braking path.
+Independent emergency braking paths are outside its scope and are not assumed.
+Sensor-agreement tolerance and communication timeouts are configurable; their
+numeric calibration is outside this item definition.
 The Electronic Brake-by-Wire (BBW) & Regenerative Braking Subsystem (AUTO-BBW-01) 
 is a function-level architecture responsible for capturing driver deceleration 
 intent at the brake pedal, blending regenerative electric motor braking with 
@@ -51,20 +55,36 @@ System Boundary:
      Hall-effect travel sensors at 1 kHz via `pedal_feel_and_travel_encoder`
      (v1.0.4).
      Both readings must be within 0-100% travel, inclusive. Their absolute
-     difference must be at most 5 percentage points. When both checks pass,
-     BPSU uses their arithmetic mean as pedal demand and sets `demand_valid`
-     to true. Otherwise, it sets `demand_valid` to false and does not select
-     either sensor as correct. The travel value has no meaning when invalid.
+     difference must be within the configured agreement tolerance. When both
+     checks pass, BPSU uses their arithmetic mean as pedal demand and sets
+     `demand_valid` to true. Otherwise, it sets `demand_valid` to false and does
+     not select either sensor as correct. The travel value has no meaning when invalid.
   2. Signal Transmission: BPSU sends CAN-FD message `0x080`
      (`Pedal_Travel_Demand`, ASSET-BRK-01) over `CONN-BRK-02` to `COMP-VDCM`.
      The message contains `pedal_travel_percent`, `demand_valid`, and an E2E
      CRC-8 covering both fields. Invalid demand is distinct from a valid 0%
-     reading, which represents a released pedal.
+     reading, which represents a released pedal. BPSU transmits after each
+     sampling cycle, including when demand is invalid.
+  3. Pedal Demand Reception & Fallback: VDCM accepts a correctly formatted
+     message with valid CRC-8, demand_valid true, and travel within 0-100%.
+     The last accepted message replaces the stored demand and its local
+     monotonic reception time. VDCM uses zero demand before the first accepted
+     message. Invalid or missing messages leave the last accepted demand in
+     use only until the configured timeout; they do not restart that interval.
+     At timeout, VDCM marks driver demand unavailable and sets pedal-derived
+     braking demand to zero. The next accepted message restores demand use.
+     A valid 0% message releases pedal-derived demand immediately.
+     This hold-then-zero response is a simplified primary-path model, not a
+     production safety strategy. Loss of valid input can remove pedal-derived
+     braking demand. Independent fallback braking is not modeled.
 
 - Current Security & Operational Parameters (As-Built Baseline):
   * End-to-End (E2E) CRC-8 safety checksums are enabled (`e2e_crc_enabled: true`), 
     but cryptographic message authentication (AUTOSAR SecOC MAC) is disabled 
-    (`secoc_mac_enabled: false`).
+    (`secoc_mac_enabled: false`). VDCM verifies CRC-8 on pedal demand
+    (`pedal_demand_e2e_crc_enabled: true`), but does not verify a MAC or
+    freshness counter (`pedal_demand_mac_verification_enabled: false`,
+    `pedal_demand_freshness_counter_verification_enabled: false`).
   * Hardware JTAG/SWD debug pins (`INT-SWD-HEADER`) are unlocked 
     (`jtag_swd_debug_port_locked: false`).
   * Pedal travel zero-point calibration EEPROM is not write-protected 
@@ -100,7 +120,7 @@ System Boundary:
      TI C2000 running TI-RTOS `sys/bios` v6.83.00.18 with `regen_torque_inverter_app` 
      v4.1.2) applies negative motor torque and reports actual achieved 
      regenerative torque to `COMP-VDCM` via CAN ID `0x1A0` over `CONN-BRK-02`.
-     The feedback period is 10 ms.
+     RIC transmits this feedback periodically.
   3. Friction Demand Transmission: `COMP-VDCM` calculates friction torque demand
      as max(0, driver demand - credited regenerative contribution). Both inputs
      use the same torque basis, with positive values representing braking.
@@ -112,9 +132,10 @@ System Boundary:
        the stored torque and local monotonic reception time.
      - Invalid messages are discarded without updating torque or reception time.
        The previous contribution remains in use until timeout.
-     - When 30 ms have elapsed since the last accepted message, VDCM credits
-       zero regenerative contribution and requests the full driver braking
-       demand through friction braking.
+     - When the configured reception timeout expires, VDCM credits zero
+       regenerative contribution and requests the full available driver braking
+       demand through friction braking. If pedal demand has also timed out,
+       its contribution is zero under the pedal fallback rule.
      - The next accepted message restores blending with its reported torque.
      This fallback defines the requested torque, not the achieved deceleration.
   4. Workshop Diagnostics & IPC: `COMP-VDCM` runs `bluez` (v5.54) for wireless 
