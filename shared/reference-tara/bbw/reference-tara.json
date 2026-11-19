@@ -825,7 +825,7 @@
       ],
       "associated_damage_scenario": {
         "damage_id": "DS-BRK-03",
-        "description": "Asymmetric clamping force commands (e.g., 45 kN on front-left caliper and 0 kN on right calipers) cause violent yaw spin-out, or UDS pad-retraction command retracts pistons completely so pads cannot contact the rotor.",
+        "description": "Uneven or insufficient wheel braking can cause loss of directional control or increased stopping distance. This can cause a collision and serious injury or death.",
         "impact_ratings": {
           "Safety": {
             "rating": "Severe",
@@ -1159,7 +1159,7 @@
       ],
       "associated_damage_scenario": {
         "damage_id": "DS-BRK-04",
-        "description": "Unauthorized UDS flashing or thermal current-limit override permanently damages the 48V BLDC caliper motors or disables ABS wheel-lock prevention.",
+        "description": "Loss of anti-lock braking or damage to brake actuators can reduce braking performance and vehicle stability. This can cause a collision and serious injury or death. Damaged actuators can require replacement and prevent vehicle use.",
         "impact_ratings": {
           "Safety": {
             "rating": "Severe",

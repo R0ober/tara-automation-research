@@ -315,7 +315,7 @@
       "damage_scenarios": [
         {
           "damage_id": "DS-BRK-03",
-          "description": "Uncontrolled loss of directional stability (violent yaw spin-out) or complete loss of braking capability, leading to a severe collision resulting in physical injury or fatalities.",
+          "description": "Uneven or insufficient wheel braking can cause loss of directional control or increased stopping distance. This can cause a collision and serious injury or death.",
           "expected_sfop_impact": {
             "Safety": "Severe",
             "Financial": "Major",
@@ -340,7 +340,7 @@
       "damage_scenarios": [
         {
           "damage_id": "DS-BRK-04",
-          "description": "Permanent physical hardware damage to caliper actuators and permanent disablement of critical active safety functions (such as anti-lock braking), leading to compromised vehicle control and substantial repair costs.",
+          "description": "Loss of anti-lock braking or damage to brake actuators can reduce braking performance and vehicle stability. This can cause a collision and serious injury or death. Damaged actuators can require replacement and prevent vehicle use.",
           "expected_sfop_impact": {
             "Safety": "Severe",
             "Financial": "Severe",

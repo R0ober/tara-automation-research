@@ -187,14 +187,14 @@ System Boundary:
     - ASSET-BRK-03 (Wheel Caliper Clamping Force Command - CAN ID 0x040)
     - ASSET-BRK-04 (EBCM & Caliper Actuator Control Firmware)
   * Security Properties: Integrity, Authenticity, Availability
-  * Damage Scenario (DS-BRK-03): Asymmetric clamping force commands (e.g., 
-    45 kN on front-left caliper and 0 kN on right calipers) cause violent yaw 
-    spin-out, or a UDS pad-retraction routine retracts pistons completely while 
-    driving so brake pads cannot contact the rotor.
+  * Damage Scenario (DS-BRK-03): Uneven or insufficient wheel braking can cause
+    loss of directional control or increased stopping distance. This can cause
+    a collision and serious injury or death.
     Impact — Safety: Severe, Financial: Major, Operational: Severe, Privacy: Negligible.
-  * Damage Scenario (DS-BRK-04): Unauthorized UDS flashing or thermal 
-    current-limit override permanently damages the 48V BLDC caliper motors or 
-    disables ABS wheel-lock prevention.
+  * Damage Scenario (DS-BRK-04): Loss of anti-lock braking or damage to brake
+    actuators can reduce braking performance and vehicle stability. This can
+    cause a collision and serious injury or death. Damaged actuators can
+    require replacement and prevent vehicle use.
     Impact — Safety: Severe, Financial: Severe, Operational: Severe, Privacy: Negligible.
 
 
