@@ -7,8 +7,8 @@
     "functions": [
       {
         "function_id": "FUNC-BRK-01",
-        "name": "Driver Pedal Travel & Force Sensing",
-        "description": "Reads redundant Hall-effect pedal travel and pressure sensors at 1 kHz and transmits driver braking intent frames via SENT/PSI5 and Chassis CAN-FD to the Vehicle Motion & Chassis Domain Controller."
+        "name": "Driver Pedal Travel Sensing",
+        "description": "Samples two redundant Hall-effect pedal travel sensors at 1 kHz in COMP-BPSU and transmits driver pedal demand over Chassis CAN-FD to COMP-VDCM."
       },
       {
         "function_id": "FUNC-BRK-02",
@@ -38,7 +38,7 @@
         {
           "name": "pedal_feel_and_travel_encoder",
           "version": "1.0.4",
-          "role": "Samples dual Hall sensors and packages CAN ID 0x080 (Pedal_Travel_Demand)",
+          "role": "Samples two redundant Hall-effect pedal travel sensors at 1 kHz and packages CAN ID 0x080 (Pedal_Travel_Demand)",
           "security_configuration": {
             "e2e_crc_enabled": true,
             "secoc_mac_enabled": false,

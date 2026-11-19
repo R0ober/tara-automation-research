@@ -36,19 +36,20 @@ System Boundary:
 2. FUNCTIONAL SPECIFICATIONS
 --------------------------------------------------------------------------------
 
-2.1. FUNC-BRK-01: Driver Pedal Travel & Force Sensing
+2.1. FUNC-BRK-01: Driver Pedal Travel Sensing
 -----------------------------------------------------
 - Objective:
-  Measure physical driver brake pedal displacement and force at 1 kHz and 
-  transmit braking demand signals to the chassis domain controller.
+  Sample two redundant Hall-effect pedal travel sensors at 1 kHz and transmit
+  driver pedal demand over CAN-FD to the chassis domain controller.
 
 - Involved Components & Interfaces:
   COMP-BPSU -> [CONN-BRK-02: Chassis CAN-FD Bus (500 kbps / 2 Mbps)] -> COMP-VDCM.
 
 - Functional Behavior & Data Flow:
   1. Sensor Sampling: The Brake Pedal Sensor Unit (COMP-BPSU, Infineon TLE4998S 
-     + NXP S32K116 running Bare-Metal Firmware v1.0.4) samples redundant 
-     Hall-effect travel sensors via `pedal_feel_and_travel_encoder` (v1.0.4).
+     + NXP S32K116 running Bare-Metal Firmware v1.0.4) samples two redundant
+     Hall-effect travel sensors at 1 kHz via `pedal_feel_and_travel_encoder`
+     (v1.0.4).
   2. Signal Transmission: The encoded pedal demand is packaged into CAN-FD 
      frames with CAN ID `0x080` (`Pedal_Travel_Demand`, ASSET-BRK-01) and 
      transmitted over `CONN-BRK-02` to `COMP-VDCM`.
