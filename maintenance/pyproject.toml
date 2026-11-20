@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tara-maintenance-bbw"
+version = "0.0.0"
+description = "Deterministic baseline and Pi agent tool for automotive TARA maintenance"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+tara-maintenance = "tara_maintenance.cli:entrypoint"
+
+[tool.setuptools.packages.find]
+where = ["src"]

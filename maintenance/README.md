@@ -4,29 +4,291 @@ Contributors: Hongbin, Zeren
 
 ## Scope
 
-This subproject keeps a TARA up to date when new information becomes available:
+This subproject keeps an existing TARA under review when new vulnerability
+reports or component information becomes available. The current implementation
+is a deterministic baseline for change triage. It does not call an LLM or an
+external vulnerability service.
 
-- Vulnerability and threat-intelligence processing.
-- TARA change detection.
-- Review recommendations.
+The baseline:
 
-## Current status
+- matches vulnerabilities to architecture components by component ID or exact
+  CPE;
+- finds related threat scenarios, attack-tree steps, and existing CVE
+  references;
+- compares before/after component states;
+- emits review recommendations with source and architecture/TARA evidence;
+- uses `unresolved` when applicability cannot be established.
 
-Not started. No implementation exists.
+## Requirements
 
-## Planned implementation
+- Python 3.10 or newer for the deterministic core; no third-party Python
+  runtime dependencies.
+- Node.js 22 or newer and Pi for the agent interface. Pi 1.5.2 is the tested
+  version. A configured model provider is required only for model-generated
+  explanations and follow-up.
 
-Not yet defined. Record important technical decisions as ADRs in
-[`docs/decisions/`](docs/decisions/). Use the [ADR template](../docs/adr-template.md).
+Run all commands from `maintenance/`.
 
-## Setup
+## Local setup
 
-Not yet defined.
+The current environment is already initialized. To recreate it without
+overwriting existing local configuration:
+
+```bash
+./scripts/bootstrap.sh
+```
+
+The script creates `.venv/`, installs this package in editable mode, creates
+missing local files, and creates `output/`. The installed CLI is
+`.venv/bin/tara-maintenance`. Optional shell activation:
+
+```bash
+source .venv/bin/activate
+```
+
+## Configuration: examples versus local work
+
+| File or directory | Purpose | Git status |
+| --- | --- | --- |
+| `.env.example` | Shell-environment template | Tracked |
+| `config/maintenance.example.json` | Path-configuration template | Tracked |
+| `examples/changes.json` | Synthetic demonstration input | Tracked |
+| `.env` | Current shell configuration and optional secrets | Ignored |
+| `config/maintenance.json` | Current artifact and working-file paths | Ignored |
+| `data/changes.json` | Current working change set | Ignored |
+| `.venv/` | Editable Python environment | Ignored |
+| `output/` | Generated local reports | Ignored |
+
+Edit `.env`, `config/maintenance.json`, and `data/changes.json` directly for
+local work. Put API keys only in `.env` or Pi's external credential store;
+never put real credentials in tracked examples. `scripts/pi.sh` loads `.env`.
+
+Configuration paths are resolved relative to `maintenance/`. Explicit CLI paths
+are resolved relative to the caller's working directory. Precedence is:
+
+1. `--tara`, `--architecture`, `--changes`, and `--output`;
+2. `--config` or `TARA_MAINTENANCE_CONFIG`;
+3. `config/maintenance.json` when it exists.
+
+Use `--stdout` to override a configured output file.
+
+## Pi agent (recommended)
+
+The agent uses a Pi extension and custom `tara_maintenance` tool rather than a
+fixed workflow. One typed tool calls the Python implementation; the prompt
+template reads the local configuration. This supports analyst follow-up without
+duplicating decision logic in TypeScript or an LLM prompt.
+
+Start Pi through the local launcher:
+
+```bash
+./scripts/pi.sh
+```
+
+Run with the actual configured change file, or explicitly select the synthetic
+example:
+
+```text
+/tara-maintenance
+/tara-maintenance examples/changes.json output/example-pi-report.json
+```
+
+Pi loads `.pi/extensions/tara-maintenance/` and `.pi/prompts/` automatically
+after project trust. The runner auto-detects `.venv`. Large results are
+truncated in model context; the tool returns a path to the complete JSON.
+Review project-local extensions before trusting them: Pi extensions execute
+with the user's operating-system permissions.
+
+## Python CLI
+
+Run the actual local configuration (the initial local change set is empty):
+
+```bash
+.venv/bin/tara-maintenance
+```
+
+This reads `data/changes.json` and writes `output/report.json` by default. Run
+the synthetic example explicitly:
+
+```bash
+.venv/bin/tara-maintenance \
+  --config config/maintenance.example.json \
+  --changes examples/changes.json \
+  --output output/example-report.json
+```
+
+The example's two `CVE-2026-9xxxx` identifiers are placeholders, not claims
+about real vulnerabilities. Its expected summary is:
+
+```json
+{
+  "total": 4,
+  "review_required": 2,
+  "no_review": 1,
+  "unresolved": 1
+}
+```
+
+Invalid input produces a diagnostic on standard error and exit status 2. A
+report is written only after all inputs pass validation.
+
+## Input contract
+
+The TARA and architecture must describe the same non-empty
+`tara_metadata.item_id` / `item_definition.item_id` when both fields are
+present. The change file is a JSON object with a `changes` array. Every change
+requires a unique `change_id`, a `type`, and a non-empty `source`. `source_url`
+is optional.
+
+### Vulnerability
+
+```json
+{
+  "change_id": "VULN-001",
+  "type": "vulnerability",
+  "cve_id": "CVE-2026-0001",
+  "affected_components": ["COMP-VDCM"],
+  "affected_cpes": [],
+  "source": "internal vulnerability feed",
+  "source_url": "https://example.invalid/CVE-2026-0001",
+  "summary": "Optional human-readable context"
+}
+```
+
+`affected_components` and `affected_cpes` are optional string arrays, but at
+least one array must contain a value. CPE matching is exact and case-sensitive.
+The baseline does not infer applicability from `summary`.
+
+### Component change
+
+```json
+{
+  "change_id": "COMPONENT-001",
+  "type": "component_change",
+  "component_id": "COMP-VDCM",
+  "before": {"security_configuration": {"secoc_enabled": false}},
+  "after": {"security_configuration": {"secoc_enabled": true}},
+  "source": "component snapshot 2026-11-20"
+}
+```
+
+`before` and `after` are required and may contain any JSON values. For objects,
+the report lists changed top-level fields, including fields added or removed
+with a `null` value. Nested differences are reported under their top-level
+field. Non-object differences use the field name `value`.
+
+## Decision rules
+
+| Input condition | Decision | Reason |
+| --- | --- | --- |
+| New CVE matches at least one known component | `review_required` | The item is affected and the TARA does not reference the CVE. |
+| Existing TARA CVE matches at least one known component | `no_review` | The baseline suppresses an already represented CVE. |
+| No supplied component ID or exact CPE matches the architecture | `unresolved` | Item applicability is unknown. |
+| Known component has different before/after states | `review_required` | Existing and missing attack chains may need review. |
+| Known component has identical before/after states | `no_review` | There is no effective state change. |
+| Changed component is absent from the architecture | `unresolved` | Its relationship to the item is unknown. |
+
+A known match still controls the decision when other supplied identifiers are
+unknown. Those unresolved identifiers remain in the evidence instead of being
+silently discarded.
+
+## Output contract
+
+The report contains:
+
+- `schema_version`: currently `1.0`;
+- `tara`: source document ID, version, and item ID;
+- `summary`: total and per-decision counts;
+- `recommendations`: one entry per input change, in input order.
+
+Each recommendation includes `decision`, `rationale`, and `evidence`. Evidence
+can include the source, matched components/software, unresolved identifiers,
+related threat scenarios and attack steps, existing CVE references, and
+before/after component states. Output has no timestamp or random field, so
+identical inputs produce identical JSON.
+
+## Python API
+
+```python
+from tara_maintenance import evaluate_changes, load_json
+
+report = evaluate_changes(
+    load_json("tara.json"),
+    load_json("architecture.json"),
+    load_json("changes.json"),
+)
+```
+
+`InputError` reports unreadable, malformed, or contract-violating input.
 
 ## Tests
 
-Not yet defined. Planned test types: vulnerability-data parsing tests.
+```bash
+.venv/bin/python -m unittest discover -s tests -v
+node --test tests/test_pi_runner.mjs
+```
+
+The Python suite covers decision rules, malformed input, configuration loading
+and precedence, explicit example-data selection, shared BBW integration, and
+CLI behavior. The Node suite executes the real Python CLI through the Pi
+runner, including configured artifact paths, `@`-prefixed attachment paths,
+report files, and errors.
+
+To check Pi resource loading without a model call:
+
+```bash
+./scripts/pi.sh --no-session --help
+```
+
+For a model-backed smoke test, configure a valid provider and run:
+
+```bash
+./scripts/pi.sh \
+  --tools tara_maintenance --print --no-session \
+  '/tara-maintenance examples/changes.json /tmp/tara-pi-agent-report.json'
+```
+
+## Project layout
+
+```text
+.pi/extensions/tara-maintenance/  Pi custom tool and Python runner
+.pi/prompts/                     Reusable /tara-maintenance command
+config/maintenance.example.json  Tracked configuration template
+examples/changes.json            Tracked synthetic change set
+scripts/                         Bootstrap and Pi launchers
+src/tara_maintenance/            Decision engine, configuration, and CLI
+tests/                           Python unit/config/CLI and Node runner tests
+data/                            Ignored local working changes
+output/                          Ignored generated reports
+docs/decisions/                  Architecture Decision Records
+CHANGELOG.md                     Notable changes
+agent.md                         Development conventions for coding agents
+```
+
+## Evaluation use
+
+Use manually labeled change sets to calculate detection recall and false-positive
+rate from the decisions. Treat `unresolved` separately rather than silently
+counting it as either review outcome. Check `evidence` against the source and
+reference artifacts when calculating evidence support rate. Record the Git
+commit, artifact versions, configuration, and result location with each
+experiment.
 
 ## Known limitations
 
-Not yet defined.
+- Exact CPE matching does not process CPE ranges, wildcard semantics, or product
+  aliases.
+- Existing-CVE suppression ignores new severity, exploitability, patch, and
+  description information.
+- Any effective change to a known component is flagged; the baseline does not
+  prove that risk changed.
+- New components and unmapped vulnerabilities remain unresolved until the
+  architecture or mapping data is extended.
+- Natural-language threat intelligence and automatic NVD/CVE ingestion are not
+  implemented.
+- Recommendations are triage decisions, not updated risk ratings or proof that
+  an attack is feasible.
+
+See [ADR 0001](docs/decisions/0001-deterministic-maintenance-baseline.md) for
+the rules and [ADR 0002](docs/decisions/0002-pi-extension-for-maintenance-agent.md)
+for the agent-interface rationale.

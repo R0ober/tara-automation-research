@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0",
+  "tara_path": "../shared/reference-tara/TARA_AUTO_BBW_01_Attack_Trees_and_Risk_Treatment.json",
+  "architecture_path": "../shared/reference-tara/Electronic_Brake-by-Wire_(BBW)_&_Regenerative_Braking_Subsystem.json",
+  "changes_path": "data/changes.json",
+  "output_path": "output/report.json"
+}
