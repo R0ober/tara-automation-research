@@ -19,6 +19,36 @@ interface MaintenanceDetails {
 }
 
 export default function taraMaintenance(pi: ExtensionAPI) {
+	const pendingInvocations = new Set<string>();
+	const completedInvocations = new Set<string>();
+
+	pi.on("session_start", () => {
+		pendingInvocations.clear();
+		completedInvocations.clear();
+	});
+	pi.on("tool_call", (event) => {
+		if (event.toolName !== "tara_maintenance") return;
+		const signature = JSON.stringify(
+			Object.entries(event.input).sort(([left], [right]) => left.localeCompare(right)),
+		);
+		if (pendingInvocations.has(signature) || completedInvocations.has(signature)) {
+			return {
+				block: true,
+				reason:
+					"This identical TARA analysis already ran or is running. Do not retry it; summarize the existing tool result.",
+			};
+		}
+		pendingInvocations.add(signature);
+	});
+	pi.on("tool_result", (event) => {
+		if (event.toolName !== "tara_maintenance") return;
+		const signature = JSON.stringify(
+			Object.entries(event.input).sort(([left], [right]) => left.localeCompare(right)),
+		);
+		pendingInvocations.delete(signature);
+		if (!event.isError) completedInvocations.add(signature);
+	});
+
 	pi.registerTool({
 		name: "tara_maintenance",
 		label: "TARA maintenance",
@@ -84,6 +114,8 @@ export default function taraMaintenance(pi: ExtensionAPI) {
 				text +=
 					`\n\n[Report truncated to ${truncation.outputLines} lines and ` +
 					`${formatSize(truncation.outputBytes)}. Complete report: ${outputPath}]`;
+			} else if (outputPath) {
+				text += `\n\n[Complete report: ${outputPath}]`;
 			}
 			const details: MaintenanceDetails = {
 				summary: result.report.summary,

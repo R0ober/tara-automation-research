@@ -38,6 +38,11 @@ Pi spawns Python with an argument array and does not invoke a shell. Large tool
 results are truncated in model context; the complete report is retained at a
 returned file path. Report writes participate in Pi's file-mutation queue.
 
+Identical in-flight or successful calls are deduplicated within a Pi session to
+prevent repeated model invocations. Different inputs and retries after failure
+are not blocked. Actual and synthetic prompt commands are separate so model
+argument interpretation cannot substitute local data for examples.
+
 The runner auto-detects the editable-install virtual environment. Tracked
 example configuration and synthetic changes are separate from ignored local
 configuration, working data, credentials, and generated reports.

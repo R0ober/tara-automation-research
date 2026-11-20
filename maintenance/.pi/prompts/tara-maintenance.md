@@ -1,26 +1,20 @@
 ---
-description: Triage changes using the local maintenance configuration
-argument-hint: "[changes.json] [report.json]"
+description: Triage the actual change set from local maintenance configuration
 ---
-Use the `tara_maintenance` tool once. Let it read `config/maintenance.json`
-(or `TARA_MAINTENANCE_CONFIG`) for the TARA and architecture paths. Do not
-replace those configured paths with the shared examples unless the user asks.
+Call the `tara_maintenance` tool exactly once with no path arguments. It must
+read `config/maintenance.json` or `TARA_MAINTENANCE_CONFIG` and use the actual
+configured local change set. Do not substitute any file from `examples/`.
 
-- When `$1` is supplied, set `changes_path` to `$1`. Otherwise omit it and use
-  the configured local change file.
-- When `$2` is supplied, set `output_path` to `$2`; otherwise omit it.
-- Set `config_path`, `tara_path`, or `architecture_path` only when the user
-  explicitly requests an override.
+After the tool returns:
 
-Do not replace the tool with a shell script or a second implementation of the
-rules. After the tool returns:
-
-1. State the total and the count for each decision.
-2. List every `review_required` and `unresolved` change with its rationale and
-   the most relevant evidence. Include `no_review` items in a compact list.
-3. Never convert `unresolved` into `no_review`. Explain which component ID or
-   CPE mapping is missing.
-4. Preserve the tool's decisions. Do not infer new risk ratings or claim that
-   the synthetic example CVEs are real vulnerabilities.
-5. When an output path was supplied, confirm the actual path returned by the
-   tool. If output was truncated, point to the complete report path.
+1. Give one small table with the total and each decision count.
+2. If there are no changes, state that the configured change set is empty and
+   stop. Do not speculate about why it is empty.
+3. Otherwise, give exactly one Markdown table containing all changes, with
+   columns `change_id`, `subject`, `decision`, and `key_evidence`. Copy
+   identifiers, decisions, and `matched_by` values verbatim. Include complete
+   CPE strings or omit them. Never convert `unresolved` into `no_review`.
+4. State a report path only when the tool returns one. Do not discuss output
+   truncation unless the tool explicitly reports that truncation occurred.
+5. Do not add other sections, corrections, alternatives, editorial comments,
+   risk ratings, or unsupported claims.

@@ -1,0 +1,144 @@
+{
+  "dataset_id": "synthetic-bbw-maintenance-v1",
+  "synthetic": true,
+  "description": "Rule-boundary smoke benchmark. Not real vulnerability intelligence and not evidence of real-world performance.",
+  "cases": [
+    {
+      "expected_decision": "review_required",
+      "expected_components": ["COMP-VDCM"],
+      "change": {
+        "change_id": "SYN-VULN-NEW-COMPONENT",
+        "type": "vulnerability",
+        "cve_id": "CVE-2026-91001",
+        "affected_components": ["COMP-VDCM"],
+        "source": "Synthetic benchmark"
+      }
+    },
+    {
+      "expected_decision": "no_review",
+      "expected_components": ["COMP-VDCM"],
+      "change": {
+        "change_id": "SYN-VULN-EXISTING-BLUEZ",
+        "type": "vulnerability",
+        "cve_id": "CVE-2020-12351",
+        "affected_components": ["COMP-VDCM"],
+        "source": "Synthetic benchmark"
+      }
+    },
+    {
+      "expected_decision": "unresolved",
+      "expected_components": [],
+      "change": {
+        "change_id": "SYN-VULN-UNKNOWN-COMPONENT",
+        "type": "vulnerability",
+        "cve_id": "CVE-2026-91002",
+        "affected_components": ["COMP-UNKNOWN"],
+        "source": "Synthetic benchmark"
+      }
+    },
+    {
+      "expected_decision": "review_required",
+      "expected_components": ["COMP-VDCM"],
+      "change": {
+        "change_id": "SYN-VULN-NEW-CPE",
+        "type": "vulnerability",
+        "cve_id": "CVE-2026-91003",
+        "affected_cpes": ["cpe:2.3:a:eclipse:mosquitto:2.0.10:*:*:*:*:*:*:*"],
+        "source": "Synthetic benchmark"
+      }
+    },
+    {
+      "expected_decision": "review_required",
+      "expected_components": ["COMP-EBCM"],
+      "change": {
+        "change_id": "SYN-VULN-NEW-LWIP",
+        "type": "vulnerability",
+        "cve_id": "CVE-2026-91004",
+        "affected_cpes": ["cpe:2.3:a:lwip_project:lwip:2.1.2:*:*:*:*:*:*:*"],
+        "source": "Synthetic benchmark"
+      }
+    },
+    {
+      "expected_decision": "no_review",
+      "expected_components": ["COMP-VDCM"],
+      "change": {
+        "change_id": "SYN-VULN-EXISTING-KERNEL",
+        "type": "vulnerability",
+        "cve_id": "CVE-2022-0847",
+        "affected_components": ["COMP-VDCM"],
+        "source": "Synthetic benchmark"
+      }
+    },
+    {
+      "expected_decision": "review_required",
+      "expected_components": ["COMP-VDCM", "COMP-UNKNOWN"],
+      "change": {
+        "change_id": "SYN-VULN-MIXED-MAPPING",
+        "type": "vulnerability",
+        "cve_id": "CVE-2026-91005",
+        "affected_components": ["COMP-VDCM", "COMP-UNKNOWN"],
+        "source": "Synthetic benchmark"
+      }
+    },
+    {
+      "expected_decision": "review_required",
+      "expected_components": ["COMP-VDCM"],
+      "change": {
+        "change_id": "SYN-COMPONENT-SECURITY-CHANGE",
+        "type": "component_change",
+        "component_id": "COMP-VDCM",
+        "before": {"security_configuration": {"diagnostic_override": true}},
+        "after": {"security_configuration": {"diagnostic_override": false}},
+        "source": "Synthetic benchmark"
+      }
+    },
+    {
+      "expected_decision": "no_review",
+      "expected_components": ["COMP-VDCM"],
+      "change": {
+        "change_id": "SYN-COMPONENT-NO-CHANGE",
+        "type": "component_change",
+        "component_id": "COMP-VDCM",
+        "before": {"version": "2.3.1"},
+        "after": {"version": "2.3.1"},
+        "source": "Synthetic benchmark"
+      }
+    },
+    {
+      "expected_decision": "review_required",
+      "expected_components": ["COMP-EBCM"],
+      "change": {
+        "change_id": "SYN-COMPONENT-VERSION-CHANGE",
+        "type": "component_change",
+        "component_id": "COMP-EBCM",
+        "before": {"version": "3.4.0"},
+        "after": {"version": "3.5.0"},
+        "source": "Synthetic benchmark"
+      }
+    },
+    {
+      "expected_decision": "unresolved",
+      "expected_components": [],
+      "change": {
+        "change_id": "SYN-COMPONENT-UNKNOWN",
+        "type": "component_change",
+        "component_id": "COMP-UNKNOWN",
+        "before": {"version": "1.0"},
+        "after": {"version": "2.0"},
+        "source": "Synthetic benchmark"
+      }
+    },
+    {
+      "expected_decision": "no_review",
+      "expected_components": ["COMP-VDCM"],
+      "change": {
+        "change_id": "SYN-COMPONENT-IDENTICAL-NESTED",
+        "type": "component_change",
+        "component_id": "COMP-VDCM",
+        "before": {"security_configuration": {"enabled": true, "level": 2}},
+        "after": {"security_configuration": {"enabled": true, "level": 2}},
+        "source": "Synthetic benchmark"
+      }
+    }
+  ]
+}

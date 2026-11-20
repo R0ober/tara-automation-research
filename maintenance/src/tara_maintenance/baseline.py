@@ -332,7 +332,7 @@ class MaintenanceBaseline:
             if not inventory:
                 unknown_cpes.append(cpe)
             for software in inventory:
-                matched[software["component_id"]].add(f"cpe:{cpe}")
+                matched[software["component_id"]].add("affected_cpes")
                 matched_software.append(software)
 
         return (

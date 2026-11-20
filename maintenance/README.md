@@ -61,7 +61,9 @@ source .venv/bin/activate
 
 Edit `.env`, `config/maintenance.json`, and `data/changes.json` directly for
 local work. Put API keys only in `.env` or Pi's external credential store;
-never put real credentials in tracked examples. `scripts/pi.sh` loads `.env`.
+never put real credentials in tracked examples. `scripts/pi.sh` loads `.env`,
+including `TARA_MAINTENANCE_PROVIDER`, `TARA_MAINTENANCE_MODEL`, and provider
+credentials such as `DEEPSEEK_API_KEY`.
 
 Configuration paths are resolved relative to `maintenance/`. Explicit CLI paths
 are resolved relative to the caller's working directory. Precedence is:
@@ -85,19 +87,19 @@ Start Pi through the local launcher:
 ./scripts/pi.sh
 ```
 
-Run with the actual configured change file, or explicitly select the synthetic
-example:
+Run the actual configured change file or the separate synthetic example:
 
 ```text
 /tara-maintenance
-/tara-maintenance examples/changes.json output/example-pi-report.json
+/tara-maintenance-example
 ```
 
 Pi loads `.pi/extensions/tara-maintenance/` and `.pi/prompts/` automatically
-after project trust. The runner auto-detects `.venv`. Large results are
-truncated in model context; the tool returns a path to the complete JSON.
-Review project-local extensions before trusting them: Pi extensions execute
-with the user's operating-system permissions.
+after project trust. The runner auto-detects `.venv`. Duplicate identical calls
+in one session are blocked; different inputs and retries after failure remain
+available. Large results are truncated in model context, with a complete-report
+path returned. Review project-local extensions before trusting them: Pi
+extensions execute with the user's operating-system permissions.
 
 ## Python CLI
 
@@ -229,10 +231,10 @@ node --test tests/test_pi_runner.mjs
 ```
 
 The Python suite covers decision rules, malformed input, configuration loading
-and precedence, explicit example-data selection, shared BBW integration, and
-CLI behavior. The Node suite executes the real Python CLI through the Pi
-runner, including configured artifact paths, `@`-prefixed attachment paths,
-report files, and errors.
+and precedence, labeled evaluation, explicit example-data selection, shared BBW
+integration, and Pi response quality gates. The Node suite executes the real
+Python CLI through the Pi runner, including configured artifact paths,
+`@`-prefixed attachment paths, report files, and errors.
 
 To check Pi resource loading without a model call:
 
@@ -243,10 +245,11 @@ To check Pi resource loading without a model call:
 For a model-backed smoke test, configure a valid provider and run:
 
 ```bash
-./scripts/pi.sh \
-  --tools tara_maintenance --print --no-session \
-  '/tara-maintenance examples/changes.json /tmp/tara-pi-agent-report.json'
+.venv/bin/python experiments/pi_smoke.py --runs 3
 ```
+
+See [experiments/README.md](experiments/README.md) for DeepSeek configuration,
+the iteration record, and metric definitions.
 
 ## Project layout
 
@@ -254,6 +257,7 @@ For a model-backed smoke test, configure a valid provider and run:
 .pi/extensions/tara-maintenance/  Pi custom tool and Python runner
 .pi/prompts/                     Reusable /tara-maintenance command
 config/maintenance.example.json  Tracked configuration template
+experiments/                    Synthetic datasets, metrics, and Pi smoke runner
 examples/changes.json            Tracked synthetic change set
 scripts/                         Bootstrap and Pi launchers
 src/tara_maintenance/            Decision engine, configuration, and CLI
@@ -267,12 +271,19 @@ agent.md                         Development conventions for coding agents
 
 ## Evaluation use
 
-Use manually labeled change sets to calculate detection recall and false-positive
-rate from the decisions. Treat `unresolved` separately rather than silently
-counting it as either review outcome. Check `evidence` against the source and
-reference artifacts when calculating evidence support rate. Record the Git
-commit, artifact versions, configuration, and result location with each
-experiment.
+Run the labeled synthetic baseline experiment:
+
+```bash
+.venv/bin/tara-maintenance-evaluate \
+  --config config/maintenance.example.json \
+  --dataset experiments/datasets/synthetic-maintenance.json \
+  --output output/synthetic-baseline-evaluation.json
+```
+
+Treat `unresolved` separately rather than silently counting it as either review
+outcome. The automatic evidence metric is structural; semantic evidence support
+still requires analyst review. Record the Git commit, artifact versions,
+configuration, and ignored result location with each experiment.
 
 ## Known limitations
 

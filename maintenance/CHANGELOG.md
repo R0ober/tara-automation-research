@@ -27,3 +27,23 @@ version.
 - Python unit/reference-data/CLI tests and Node tests for the real Pi runner.
 - Usage, evaluation, limitations, and agent development documentation.
 - ADR 0001 for the deterministic baseline and ADR 0002 for the Pi extension.
+
+- Twelve-case labeled synthetic benchmark with decision accuracy, detection
+  recall, false-positive rate, unresolved counts, and structural evidence
+  support metrics.
+- Repeatable DeepSeek/Pi experiment runner and response quality gates.
+
+### Changed
+
+- Separate `/tara-maintenance` actual analysis from
+  `/tara-maintenance-example` synthetic evaluation.
+- Simplify CPE `matched_by` evidence to `affected_cpes`.
+- Constrain model summaries to compact, row-verifiable evidence tables.
+
+### Fixed
+
+- Explicit DeepSeek provider selection avoids ambiguous model resolution.
+- Session-level guards prevent duplicate identical Pi tool executions while
+  allowing different inputs and failure retries.
+- Regression gates detect corrected CVE IDs, incomplete CPEs, false CPE
+  matching claims, and unsupported truncation statements.

@@ -35,30 +35,32 @@ Check Pi resource loading without a model:
 ./scripts/pi.sh --no-session --help
 ```
 
-With a valid model provider, smoke-test the actual agent command:
+With a valid model provider, run the synthetic agent experiment:
 
 ```bash
-./scripts/pi.sh \
-  --tools tara_maintenance --print --no-session \
-  '/tara-maintenance examples/changes.json /tmp/tara-pi-agent-report.json'
+.venv/bin/python experiments/pi_smoke.py --runs 3
 ```
+
+Use `/tara-maintenance-example` for synthetic data and `/tara-maintenance` for
+the ignored local change set. Do not pass example paths to the actual command.
 
 ## Structure
 
-- `.pi/extensions/tara-maintenance/index.ts`: Pi tool registration, output
-  truncation, and queued report writes.
+- `.pi/extensions/tara-maintenance/index.ts`: Pi tool registration, duplicate
+  invocation guard, output truncation, and queued report writes.
 - `.pi/extensions/tara-maintenance/runner.ts`: argument-array Python subprocess
   adapter. It must not contain maintenance decision rules.
-- `.pi/prompts/tara-maintenance.md`: configuration-driven agent entry point.
+- `.pi/prompts/`: separate actual and synthetic agent entry points.
 - `src/tara_maintenance/baseline.py`: input validation, reference indexes,
   deterministic rules, and report construction.
 - `src/tara_maintenance/cli.py`: configuration precedence, argument parsing,
   JSON rendering, and exit behavior.
-- `src/tara_maintenance/config.py`: local config discovery and validation.
+- `src/tara_maintenance/evaluate.py`: labeled decision and evidence metrics.
 - `tests/test_baseline.py`: decision boundaries and shared-data integration.
 - `tests/test_cli.py`: real subprocess CLI behavior.
 - `tests/test_configuration.py`: config precedence and example/local separation.
 - `tests/test_pi_runner.mjs`: real Python execution through the Pi adapter.
+- `tests/test_pi_smoke.py`: tool arguments and final-response quality gates.
 - `docs/decisions/`: meaningful architectural decisions.
 - `README.md`: public input/output contract and operating instructions.
 - `CHANGELOG.md`: user-visible changes.
@@ -85,6 +87,10 @@ With a valid model provider, smoke-test the actual agent command:
   `.venv/`. Keep their tracked examples free of real credentials and data.
 - The actual default input is `data/changes.json`; synthetic data must be
   selected explicitly as `examples/changes.json`.
+- Keep model credentials only in ignored `.env` or Pi's external auth store.
+  Set both provider and model to avoid ambiguous model resolution.
+- Run `experiments/pi_smoke.py` after changing Pi prompts or invocation guards;
+  inspect final responses manually as well as relying on automatic gates.
 
 ## Change checklist
 
