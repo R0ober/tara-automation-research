@@ -87,7 +87,8 @@
           "Very Low": 1
         }
       }
-    }
+    },
+    "item_definition_version": "1.0.0"
   },
   "threat_scenarios_and_attack_trees": [
     {
@@ -195,7 +196,13 @@
                       },
                       "total_score": 8,
                       "feasibility_rating": "High"
-                    }
+                    },
+                    "target_interfaces": [
+                      "INT-BLE-DIAG"
+                    ],
+                    "referenced_cves": [
+                      "CVE-2020-12351"
+                    ]
                   },
                   {
                     "node_id": "AT-BRK-01-B1-1B",
@@ -228,7 +235,10 @@
                       },
                       "total_score": 1,
                       "feasibility_rating": "High"
-                    }
+                    },
+                    "target_interfaces": [
+                      "INT-BLE-DIAG"
+                    ]
                   }
                 ]
               },
@@ -263,7 +273,10 @@
                   },
                   "total_score": 7,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [
+                  "INT-CAN-CHASSIS"
+                ]
               }
             ]
           },
@@ -307,7 +320,10 @@
                   },
                   "total_score": 4,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [
+                  "INT-OBD2-CAN"
+                ]
               },
               {
                 "node_id": "AT-BRK-01-B2-2",
@@ -340,7 +356,11 @@
                   },
                   "total_score": 8,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [],
+                "target_connections": [
+                  "CONN-BRK-02"
+                ]
               }
             ]
           },
@@ -384,7 +404,10 @@
                   },
                   "total_score": 15,
                   "feasibility_rating": "Low"
-                }
+                },
+                "target_interfaces": [
+                  "INT-SWD-HEADER"
+                ]
               },
               {
                 "node_id": "AT-BRK-01-B3-2",
@@ -417,7 +440,10 @@
                   },
                   "total_score": 15,
                   "feasibility_rating": "Low"
-                }
+                },
+                "target_interfaces": [
+                  "INT-SWD-HEADER"
+                ]
               }
             ]
           }
@@ -442,8 +468,12 @@
         "cybersecurity_requirements": [
           {
             "requirement_id": "CSR-BRK-01.1",
-            "target_component": "COMP-BPSU & COMP-VDCM",
-            "description": "Enable AUTOSAR SecOC (AES-128-CMAC with 24-bit truncated MAC and monotonic freshness counter) on CAN ID 0x080 over CONN-BRK-02 in addition to E2E CRC-8."
+            "target_component": "COMP-BPSU",
+            "description": "Enable AUTOSAR SecOC (AES-128-CMAC with 24-bit truncated MAC and monotonic freshness counter) on CAN ID 0x080 over CONN-BRK-02 in addition to E2E CRC-8.",
+            "target_components": [
+              "COMP-BPSU",
+              "COMP-VDCM"
+            ]
           },
           {
             "requirement_id": "CSR-BRK-01.2",
@@ -540,7 +570,7 @@
                 "node_type": "LEAF_ATTACK_STEP",
                 "title": "Gain Access to Chassis CAN-FD Bus (CONN-BRK-02) via OBD-II or Compromised BLE Service",
                 "target_component": "COMP-VDCM",
-                "target_interface": "CONN-BRK-01 / CONN-BRK-02",
+                "target_interface": "CONN-BRK-01",
                 "vulnerability_reference": "CONN-BRK-01: Static BLE PIN (0000) / CVE-2020-12351 / Direct OBD-II access",
                 "technical_detail": "Use wireless BLE RCE/pairing on COMP-VDCM or physical OBD-II connection to transmit frames onto CONN-BRK-02.",
                 "attack_potential": {
@@ -566,13 +596,21 @@
                   },
                   "total_score": 1,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [],
+                "target_connections": [
+                  "CONN-BRK-01",
+                  "CONN-BRK-02"
+                ],
+                "referenced_cves": [
+                  "CVE-2020-12351"
+                ]
               },
               {
                 "node_id": "AT-BRK-02-B1-2",
                 "node_type": "LEAF_ATTACK_STEP",
                 "title": "Inject Falsified CAN ID 0x1A0 Reporting 100% Regen Torque Without SecOC or IMU Plausibility Check",
-                "target_component": "COMP-RIC / COMP-VDCM",
+                "target_component": "COMP-RIC",
                 "target_interface": "CONN-BRK-02",
                 "vulnerability_reference": "Architectural Flaw 1: secoc_mac_verification: false & plausibility_check_on_regen_drop: false",
                 "technical_detail": "Transmit CAN ID 0x1A0 frames indicating achieved negative motor torque equals driver demand; COMP-VDCM lacks IMU longitudinal deceleration plausibility check and reduces friction torque to zero.",
@@ -599,7 +637,15 @@
                   },
                   "total_score": 7,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_components": [
+                  "COMP-RIC",
+                  "COMP-VDCM"
+                ],
+                "target_interfaces": [],
+                "target_connections": [
+                  "CONN-BRK-02"
+                ]
               }
             ]
           },
@@ -617,7 +663,7 @@
                 "node_type": "LEAF_ATTACK_STEP",
                 "title": "Connect to Diagnostic Session on COMP-VDCM via BLE (PIN 0000) or OBD-II (0x7E0)",
                 "target_component": "COMP-VDCM",
-                "target_interface": "INT-BLE-DIAG / INT-OBD2-CAN",
+                "target_interface": "INT-BLE-DIAG",
                 "vulnerability_reference": "CONN-BRK-01: Static 4-digit BLE PIN (0000) & exposed UDS 0x7E0",
                 "technical_detail": "Establish wireless GATT/L2CAP or CAN diagnostic channel to COMP-VDCM.",
                 "attack_potential": {
@@ -643,7 +689,11 @@
                   },
                   "total_score": 1,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [
+                  "INT-BLE-DIAG",
+                  "INT-OBD2-CAN"
+                ]
               },
               {
                 "node_id": "AT-BRK-02-B2-2",
@@ -676,7 +726,11 @@
                   },
                   "total_score": 4,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [],
+                "target_connections": [
+                  "CONN-BRK-01"
+                ]
               }
             ]
           },
@@ -720,7 +774,13 @@
                   },
                   "total_score": 8,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [
+                  "INT-BLE-DIAG"
+                ],
+                "referenced_cves": [
+                  "CVE-2020-12351"
+                ]
               },
               {
                 "node_id": "AT-BRK-02-B3-2",
@@ -753,7 +813,13 @@
                   },
                   "total_score": 3,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [
+                  "INT-ETH-TSN-BRAKE"
+                ],
+                "referenced_cves": [
+                  "CVE-2022-0847"
+                ]
               }
             ]
           }
@@ -778,8 +844,12 @@
         "cybersecurity_requirements": [
           {
             "requirement_id": "CSR-BRK-02.1",
-            "target_component": "COMP-RIC & COMP-VDCM",
-            "description": "Enable AUTOSAR SecOC MAC verification on CAN ID 0x1A0 (Regen Torque Status) and implement an independent closed-loop IMU/wheel-speed deceleration plausibility monitor in COMP-VDCM and COMP-EBCM that immediately falls back to 100% friction braking if measured vehicle deceleration deviates from reported regenerative torque for > 30 ms."
+            "target_component": "COMP-RIC",
+            "description": "Enable AUTOSAR SecOC MAC verification on CAN ID 0x1A0 (Regen Torque Status) and implement an independent closed-loop IMU/wheel-speed deceleration plausibility monitor in COMP-VDCM and COMP-EBCM that immediately falls back to 100% friction braking if measured vehicle deceleration deviates from reported regenerative torque for > 30 ms.",
+            "target_components": [
+              "COMP-RIC",
+              "COMP-VDCM"
+            ]
           },
           {
             "requirement_id": "CSR-BRK-02.2",
@@ -788,8 +858,12 @@
           },
           {
             "requirement_id": "CSR-BRK-02.3",
-            "target_component": "COMP-VDCM & COMP-EBCM",
-            "description": "Protect SOME/IP Service 0x1020 over CONN-BRK-03 (100BASE-T1 TSN Ethernet) using IEEE 802.1AE MACsec (or IPsec/SecOC) to guarantee message authenticity and replay protection."
+            "target_component": "COMP-VDCM",
+            "description": "Protect SOME/IP Service 0x1020 over CONN-BRK-03 (100BASE-T1 TSN Ethernet) using IEEE 802.1AE MACsec (or IPsec/SecOC) to guarantee message authenticity and replay protection.",
+            "target_components": [
+              "COMP-VDCM",
+              "COMP-EBCM"
+            ]
           },
           {
             "requirement_id": "CSR-BRK-02.4",
@@ -874,7 +948,7 @@
                 "node_type": "LEAF_ATTACK_STEP",
                 "title": "Attach Vampire-Tap CAN-FD Transceiver to Unshielded Wheel-Well Harness (CONN-BRK-04)",
                 "target_component": "COMP-EMBA",
-                "target_interface": "INT-CANFD-ACTUATOR (CONN-BRK-04)",
+                "target_interface": "INT-CANFD-ACTUATOR",
                 "vulnerability_reference": "Architectural Flaw 3: wheel_harness_physical_shielding: Unshielded wheel-well twisted pair (accessible without cabin entry)",
                 "technical_detail": "Reach into the exterior wheel well of a parked vehicle and clip an inductive/insulation-displacement CAN-FD implant onto CONN-BRK-04 in under 60 seconds.",
                 "attack_potential": {
@@ -900,7 +974,13 @@
                   },
                   "total_score": 7,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [
+                  "INT-CANFD-ACTUATOR"
+                ],
+                "target_connections": [
+                  "CONN-BRK-04"
+                ]
               },
               {
                 "node_id": "AT-BRK-03-B1-2",
@@ -933,7 +1013,11 @@
                   },
                   "total_score": 8,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [],
+                "target_connections": [
+                  "CONN-BRK-04"
+                ]
               }
             ]
           },
@@ -950,8 +1034,8 @@
                 "node_id": "AT-BRK-03-B2-1",
                 "node_type": "LEAF_ATTACK_STEP",
                 "title": "Establish Diagnostic Session via Workshop BLE Interface (PIN 0000) or OBD-II",
-                "target_component": "COMP-VDCM / COMP-EBCM",
-                "target_interface": "INT-BLE-DIAG / INT-OBD2-CAN",
+                "target_component": "COMP-VDCM",
+                "target_interface": "INT-BLE-DIAG",
                 "vulnerability_reference": "CONN-BRK-01: Static BLE PIN (0000) & DoIP/UDS routing to COMP-EBCM",
                 "technical_detail": "Pair to BLE workshop diagnostics using PIN 0000 or connect to OBD-II port to route UDS requests to COMP-EBCM / COMP-EMBA (0x750).",
                 "attack_potential": {
@@ -977,14 +1061,22 @@
                   },
                   "total_score": 1,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_components": [
+                  "COMP-VDCM",
+                  "COMP-EBCM"
+                ],
+                "target_interfaces": [
+                  "INT-BLE-DIAG",
+                  "INT-OBD2-CAN"
+                ]
               },
               {
                 "node_id": "AT-BRK-03-B2-2",
                 "node_type": "LEAF_ATTACK_STEP",
                 "title": "Send Unauthenticated UDS 0x31 Pad Retraction Command Without Vehicle Speed Interlock",
-                "target_component": "COMP-EBCM & COMP-EMBA",
-                "target_interface": "CONN-BRK-03 / CONN-BRK-04",
+                "target_component": "COMP-EBCM",
+                "target_interface": "CONN-BRK-03",
                 "vulnerability_reference": "Architectural Flaw 2: uds_0x31_bleed_routine_speed_interlock_enabled: false",
                 "technical_detail": "Trigger UDS 0x31 routine to wind back all 4 caliper ball-screw pistons to maximum service clearance while driving, creating a multi-second mechanical air gap where pads cannot touch the discs.",
                 "attack_potential": {
@@ -1010,7 +1102,16 @@
                   },
                   "total_score": 4,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_components": [
+                  "COMP-EBCM",
+                  "COMP-EMBA"
+                ],
+                "target_interfaces": [],
+                "target_connections": [
+                  "CONN-BRK-03",
+                  "CONN-BRK-04"
+                ]
               }
             ]
           },
@@ -1054,14 +1155,20 @@
                   },
                   "total_score": 8,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [
+                  "INT-BLE-DIAG"
+                ],
+                "referenced_cves": [
+                  "CVE-2020-12351"
+                ]
               },
               {
                 "node_id": "AT-BRK-03-B3-2",
                 "node_type": "LEAF_ATTACK_STEP",
                 "title": "Exploit LwIP 2.1.2 Buffer Overflow (CVE-2020-22283) on COMP-EBCM via CONN-BRK-03",
                 "target_component": "COMP-EBCM",
-                "target_interface": "INT-ETH-TSN-BRAKE (UDP 30490)",
+                "target_interface": "INT-ETH-TSN-BRAKE",
                 "vulnerability_reference": "CVE-2020-22283 (LwIP 2.1.2 Urgent11-style buffer overflow)",
                 "technical_detail": "Send crafted TCP/IP packets from COMP-VDCM over 100BASE-T1 Ethernet (CONN-BRK-03) to overflow LwIP 2.1.2 buffers on COMP-EBCM and hijack abs_esc_clamping_controller.",
                 "attack_potential": {
@@ -1087,7 +1194,14 @@
                   },
                   "total_score": 11,
                   "feasibility_rating": "Medium"
-                }
+                },
+                "target_interfaces": [
+                  "INT-ETH-TSN-BRAKE"
+                ],
+                "target_interface_note": "UDP 30490",
+                "referenced_cves": [
+                  "CVE-2020-22283"
+                ]
               }
             ]
           }
@@ -1112,18 +1226,32 @@
         "cybersecurity_requirements": [
           {
             "requirement_id": "CSR-BRK-03.1",
-            "target_component": "COMP-EBCM & COMP-EMBA",
-            "description": "Implement hardware-accelerated AUTOSAR SecOC (AES-128-CMAC + 32-bit monotonic freshness counter) on CAN ID 0x040 over CONN-BRK-04 using SHE/HSM modules inside COMP-EBCM and COMP-EMBA."
+            "target_component": "COMP-EBCM",
+            "description": "Implement hardware-accelerated AUTOSAR SecOC (AES-128-CMAC + 32-bit monotonic freshness counter) on CAN ID 0x040 over CONN-BRK-04 using SHE/HSM modules inside COMP-EBCM and COMP-EMBA.",
+            "target_components": [
+              "COMP-EBCM",
+              "COMP-EMBA"
+            ]
           },
           {
             "requirement_id": "CSR-BRK-03.2",
-            "target_component": "COMP-EBCM & COMP-EMBA",
-            "description": "Enforce dual-independent vehicle speed interlocks (verified by both COMP-EBCM wheel-speed sensors and COMP-EMBA local rotor back-EMF/Hall movement detection) that reject UDS 0x31 piston retraction commands whenever wheel rotation > 0 RPM."
+            "target_component": "COMP-EBCM",
+            "description": "Enforce dual-independent vehicle speed interlocks (verified by both COMP-EBCM wheel-speed sensors and COMP-EMBA local rotor back-EMF/Hall movement detection) that reject UDS 0x31 piston retraction commands whenever wheel rotation > 0 RPM.",
+            "target_components": [
+              "COMP-EBCM",
+              "COMP-EMBA"
+            ]
           },
           {
             "requirement_id": "CSR-BRK-03.3",
-            "target_component": "CONN-BRK-04 & COMP-EMBA",
-            "description": "Redesign CONN-BRK-04 from a single shared 4-wheel bus into isolated point-to-point or dual-diagonal star links with armored braided conduit in the wheel wells and CAN signal guardian (active bus-off protection) transceivers."
+            "target_component": "COMP-EMBA",
+            "description": "Redesign CONN-BRK-04 from a single shared 4-wheel bus into isolated point-to-point or dual-diagonal star links with armored braided conduit in the wheel wells and CAN signal guardian (active bus-off protection) transceivers.",
+            "target_components": [
+              "COMP-EMBA"
+            ],
+            "target_connections": [
+              "CONN-BRK-04"
+            ]
           },
           {
             "requirement_id": "CSR-BRK-03.4",
@@ -1208,7 +1336,7 @@
                 "node_type": "LEAF_ATTACK_STEP",
                 "title": "Brute-Force 8-Bit UDS 0x27 SecurityAccess Seed (256 Keyspace) on COMP-EBCM",
                 "target_component": "COMP-EBCM",
-                "target_interface": "CONN-BRK-01 -> CONN-BRK-03 (DoIP Port 13400)",
+                "target_interface": "CONN-BRK-01",
                 "vulnerability_reference": "COMP-EBCM: uds_0x27_seed_entropy_bits: 8",
                 "technical_detail": "Issue UDS 0x27 RequestSeed commands over DoIP/OBD-II; because seed entropy is only 8 bits (256 possible values), attacker brute-forces or pre-computes the key in < 1 minute.",
                 "attack_potential": {
@@ -1234,7 +1362,13 @@
                   },
                   "total_score": 4,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [],
+                "target_connections": [
+                  "CONN-BRK-01",
+                  "CONN-BRK-03"
+                ],
+                "target_interface_note": "DoIP Port 13400"
               },
               {
                 "node_id": "AT-BRK-04-B1-2",
@@ -1267,7 +1401,11 @@
                   },
                   "total_score": 5,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [],
+                "target_connections": [
+                  "CONN-BRK-03"
+                ]
               }
             ]
           },
@@ -1285,7 +1423,7 @@
                 "node_type": "LEAF_ATTACK_STEP",
                 "title": "Send UDS Command (0x750) to COMP-EMBA to Override Max Clamping Current Limiter",
                 "target_component": "COMP-EMBA",
-                "target_interface": "CONN-BRK-04 (UDS 0x750)",
+                "target_interface": "CONN-BRK-04",
                 "vulnerability_reference": "COMP-EMBA: max_clamping_current_limiter_overrideable_via_uds: true",
                 "technical_detail": "Transmit UDS WriteDataByIdentifier / RoutineControl frame to COMP-EMBA (ID 0x750) disabling the 48V BLDC motor thermal over-current cutoff in caliper_piston_servo_driver v2.0.0.",
                 "attack_potential": {
@@ -1311,7 +1449,12 @@
                   },
                   "total_score": 8,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [],
+                "target_connections": [
+                  "CONN-BRK-04"
+                ],
+                "target_interface_note": "UDS 0x750"
               },
               {
                 "node_id": "AT-BRK-04-B2-2",
@@ -1344,7 +1487,11 @@
                   },
                   "total_score": 7,
                   "feasibility_rating": "High"
-                }
+                },
+                "target_interfaces": [],
+                "target_connections": [
+                  "CONN-BRK-04"
+                ]
               }
             ]
           }
@@ -1374,8 +1521,12 @@
           },
           {
             "requirement_id": "CSR-BRK-04.2",
-            "target_component": "COMP-EBCM & COMP-EMBA",
-            "description": "Enforce Secure Boot with asymmetric signature verification (ECDSA P-256 / RSA-3072) and hardware monotonic anti-rollback counters in OTP/eFuse memory (bootloader_rollback_protection = true)."
+            "target_component": "COMP-EBCM",
+            "description": "Enforce Secure Boot with asymmetric signature verification (ECDSA P-256 / RSA-3072) and hardware monotonic anti-rollback counters in OTP/eFuse memory (bootloader_rollback_protection = true).",
+            "target_components": [
+              "COMP-EBCM",
+              "COMP-EMBA"
+            ]
           },
           {
             "requirement_id": "CSR-BRK-04.3",

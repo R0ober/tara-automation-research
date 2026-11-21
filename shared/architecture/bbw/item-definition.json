@@ -24,7 +24,9 @@
     "modeling_assumptions": [
       "This synthetic model describes the primary electronic braking path. Independent emergency braking paths are outside its scope; their availability must not be assumed.",
       "Communication timeouts and the sensor-agreement tolerance are configurable. Their numeric calibration is outside this item definition."
-    ]
+    ],
+    "version": "1.0.0",
+    "valid_as_of": "2026-11-18"
   },
   "components": [
     {
@@ -36,7 +38,8 @@
       "hardware": "Infineon TLE4998S Hall Sensor + NXP S32K116 Cortex-M0+ MCU",
       "os": {
         "name": "Bare-Metal Firmware",
-        "version": "1.0.4"
+        "version": "1.0.4",
+        "in_house": true
       },
       "hosted_software": [
         {
@@ -57,7 +60,8 @@
             "invalid_demand_rule": "If either reading is outside the permitted range or their absolute difference exceeds the configured tolerance, demand_valid is false; pedal_travel_percent has no meaning and neither sensor is selected as correct",
             "sensor_agreement_tolerance": "Configured maximum difference between normalized travel readings",
             "pedal_demand_transmission": "Send pedal demand and validity after each sensor sampling cycle, including when demand is invalid"
-          }
+          },
+          "in_house": true
         }
       ],
       "interfaces": [
@@ -132,7 +136,8 @@
             "pedal_demand_on_timeout": "Mark driver demand unavailable and set the pedal-derived braking demand to zero",
             "pedal_demand_on_recovery": "Resume using the next accepted demand immediately; a valid zero-percent message releases pedal-derived demand immediately",
             "pedal_fallback_limitation": "The hold-then-zero response is a simplified primary-path model, not a production safety strategy. Loss of valid pedal input can remove pedal-derived braking demand; independent fallback braking is not modeled."
-          }
+          },
+          "in_house": true
         }
       ],
       "interfaces": [
@@ -161,7 +166,8 @@
           "role": "Executes negative torque (regenerative braking) on traction motor and reports achieved regenerative torque to VDCM (CAN ID 0x1A0)",
           "operational_parameters": {
             "regen_feedback_transmission": "Periodic CAN ID 0x1A0 feedback"
-          }
+          },
+          "in_house": true
         }
       ],
       "interfaces": [
@@ -196,7 +202,8 @@
             "uds_0x27_seed_entropy_bits": 8,
             "uds_0x31_bleed_routine_speed_interlock_enabled": false,
             "bootloader_rollback_protection": false
-          }
+          },
+          "in_house": true
         }
       ],
       "interfaces": [
@@ -254,7 +261,8 @@
       "hardware": "CAN-FD-capable automotive MCU with an external 48V-rated three-phase BLDC motor-driver stage; specific parts not selected",
       "os": {
         "name": "Bare-Metal Motor Control Firmware",
-        "version": "2.0.0"
+        "version": "2.0.0",
+        "in_house": true
       },
       "hosted_software": [
         {
@@ -276,7 +284,8 @@
             "on_command_timeout": "Record a communication fault and retain the last accepted force target",
             "on_command_recovery": "Resume tracking the next accepted command and clear the communication fault",
             "force_control": "The servo regulates force under the active motor-current limit; retaining a force target does not command continuous maximum motor current"
-          }
+          },
+          "in_house": true
         }
       ],
       "interfaces": [
@@ -550,6 +559,72 @@
           }
         }
       ]
+    }
+  ],
+  "interfaces": [
+    {
+      "interface_id": "INT-BLE-DIAG",
+      "name": "BLE Workshop Diagnostic Interface",
+      "connection_id": "CONN-BRK-01",
+      "exposure": "external_wireless",
+      "endpoints": [
+        "COMP-VDCM"
+      ]
+    },
+    {
+      "interface_id": "INT-OBD2-CAN",
+      "name": "OBD-II Diagnostic Port",
+      "connection_id": "CONN-BRK-01",
+      "exposure": "external_wired",
+      "endpoints": [
+        "COMP-VDCM"
+      ]
+    },
+    {
+      "interface_id": "INT-CAN-CHASSIS",
+      "name": "Chassis & Pedal Sensor CAN-FD Bus",
+      "connection_id": "CONN-BRK-02",
+      "exposure": "internal_bus",
+      "endpoints": [
+        "COMP-BPSU",
+        "COMP-VDCM",
+        "COMP-RIC"
+      ]
+    },
+    {
+      "interface_id": "INT-ETH-TSN-BRAKE",
+      "name": "Redundant Braking TSN Ethernet Link",
+      "connection_id": "CONN-BRK-03",
+      "exposure": "internal_bus",
+      "endpoints": [
+        "COMP-VDCM",
+        "COMP-EBCM"
+      ]
+    },
+    {
+      "interface_id": "INT-CANFD-ACTUATOR",
+      "name": "Wheel-End Brake Actuator CAN-FD Bus",
+      "connection_id": "CONN-BRK-04",
+      "exposure": "internal_bus",
+      "endpoints": [
+        "COMP-EBCM",
+        "COMP-EMBA"
+      ]
+    },
+    {
+      "interface_id": "INT-SWD-HEADER",
+      "name": "BPSU SWD Debug Header",
+      "connection_id": null,
+      "exposure": "debug_port",
+      "endpoints": [
+        "COMP-BPSU"
+      ]
+    }
+  ],
+  "external_actors": [
+    {
+      "actor_id": "EXTERNAL_ATTACKER_SURFACE",
+      "description": "Sentinel endpoint in connections used for externally reachable links; not a component of the item."
     }
   ]
 }
