@@ -104,6 +104,9 @@ to the actual command.
   notice. Use offline snapshots in tests; do not require network access.
 - Review `ROADMAP.md` before expanding applicability, NVD Boolean semantics,
   incremental feeds, or OpenCTI integration.
+- Before implementing full NVD applicability, read
+  `docs/specs/nvd-configuration-semantics.md`. Do not introduce a `children`
+  field or other semantics absent from the official API 2.0 schema.
 
 ## Change checklist
 

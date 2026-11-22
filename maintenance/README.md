@@ -158,6 +158,10 @@ converted changes, and manually reviewed labels under `experiments/datasets/nvd-
 The NVD adapter preserves vulnerable CPEs, numeric version ranges, timestamps,
 descriptions, and available CISA fields.
 
+The draft [NVD configuration-semantics specification](docs/specs/nvd-configuration-semantics.md)
+defines the next implementation contract and acceptance tests; full
+configuration evaluation is not implemented yet.
+
 **NVD notice:** This product uses data from the NVD API but is not endorsed or
 certified by the NVD.
 

@@ -47,3 +47,6 @@ Unit tests cover range boundaries, numeric ordering, wildcards, escaped CPE
 characters, and unsupported versions. Offline integration tests use eight real
 NVD snapshots and manual labels. DeepSeek/Pi experiments validate tool
 arguments, decisions, and response evidence. Remaining work is in `ROADMAP.md`.
+
+The full configuration follow-up is specified in
+`../specs/nvd-configuration-semantics.md`; it remains unimplemented.

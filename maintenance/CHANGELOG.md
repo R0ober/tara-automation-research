@@ -43,6 +43,8 @@ version.
 - Optional `--tara-output` writer carrying `maintenance_review` in a complete
   TARA copy with real-file round-trip and in-place-write protection.
 - Scenario coverage matrix and measured iteration log.
+- Draft NVD configuration-semantics specification with official-schema data
+  shape, three-valued logic, evidence contract, and 28 acceptance tests.
 
 ### Changed
 

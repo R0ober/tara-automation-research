@@ -112,10 +112,16 @@ with CVE-2020-12351. Content-update detection remains open.
 
 ### Preserve NVD configuration semantics
 
-- Represent nested nodes, AND/OR operators, and negation instead of flattening
-  all vulnerable CPEs into one list.
+- Represent configurations, nodes, AND/OR operators, and negation instead of
+  flattening all vulnerable CPEs into one list.
 - Separate vulnerable products from platform/environment requirements.
 - Add adversarial fixtures where flattening creates a false applicability match.
+
+Specification: [NVD configuration semantics](docs/specs/nvd-configuration-semantics.md)
+defines the official configurations/nodes/cpeMatch structure, three-valued
+operators, open/closed inventories, evidence, decision mapping, and 28
+acceptance tests. The official API 2.0 schema has no node `children` field;
+do not implement invented child-node semantics.
 
 ### Detect updates to existing CVEs
 

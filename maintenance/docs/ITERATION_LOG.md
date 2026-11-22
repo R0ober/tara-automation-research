@@ -86,3 +86,15 @@ external-ID deduplication, unresolved/punctuated CPE citations, stale Pi
 capability text, and incomplete output-overwrite protection. All six were
 corrected with focused regression tests. This increased direct decision and
 safety coverage without changing the eight-record expected labels.
+
+## Iteration 5: NVD configuration-semantics specification
+
+- Added `docs/specs/nvd-configuration-semantics.md` as a draft implementation
+  contract, not an implementation claim.
+- Verified the official NVD API 2.0 `config`, `node`, and `cpe_match` schema
+  definitions. Corrected the roadmap assumption about child nodes: the current
+  official schema has configurations, nodes, and CPE matches, but no `children`.
+- Specified three-valued logic, configuration/node operators and negation,
+  platform versus vulnerable CPEs, open/closed inventories, evidence ordering,
+  decision mapping, malformed-input behavior, and 28 acceptance tests.
+- No behavior or metric changed in this documentation-only iteration.

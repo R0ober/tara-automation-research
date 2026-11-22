@@ -34,6 +34,6 @@ real records do not cover.
 | Wrong agent input substitution | Agent event stream | Fail experiment | Covered |
 | Incomplete/misattributed CPE summary | Agent event stream | Fail experiment | Covered |
 | TARA output preserves original content | Real BBW round-trip comparison | Original JSON unchanged outside review overlay | Covered |
-| Nested NVD AND/OR/negation applicability | Dedicated NVD fixtures | Full Boolean evaluation | Roadmap, not covered |
+| Configuration/node AND/OR/negation applicability | Spec fixtures + real NVD regression | Full three-valued evaluation | Specified; implementation open |
 | Existing CVE description/CVSS update | Snapshot pairs | Policy-based review | Roadmap, not covered |
 | OpenCTI relationship context | OpenCTI test instance | Provenance-preserving adapter evaluation | Roadmap, not covered |
