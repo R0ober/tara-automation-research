@@ -111,9 +111,22 @@
           "role": "Routes Diagnostics over IP (DoIP) from Ethernet to CAN-FD buses",
           "security_configuration": {
             "vlan_isolation_enabled": false,
-            "uds_0x27_security_access_required_for_routing": false,
-            "firewall_rules": "ALLOW_ALL from COMP-TCU to CAN-SAFETY"
+            "uds_0x27_security_access_required_for_routing": false
           }
+        }
+      ],
+      "forwarding_rules": [
+        {
+          "input_connection": "CONN-03",
+          "output_connection": "CONN-04",
+          "request_scope": "Diagnostic requests supported by COMP-EBCM",
+          "client_authorization_required_for_forwarding": false,
+          "raw_can_forwarding_enabled": false
+        },
+        {
+          "input_connection": "CONN-05",
+          "output_connection": "CONN-04",
+          "request_scope": "AEB deceleration request"
         }
       ],
       "firmware_programming": {

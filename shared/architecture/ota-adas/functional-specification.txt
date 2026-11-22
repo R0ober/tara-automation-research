@@ -68,8 +68,10 @@ System Boundary:
     (`verify_firmware_signature: false`).
   * For its own firmware, COMP-CGW accepts a programming request only after
     it verifies the fixed UDS SecurityAccess credential held by the TCU OTA agent.
-  * DoIP routing on COMP-CGW does not enforce VLAN isolation or UDS 0x27 
-    authentication prior to forwarding frames to `INT-CAN-SAFETY`.
+  * COMP-CGW forwards supported EBCM diagnostic requests from the TCU on
+    CONN-03 to CONN-04 without checking the client's authority to use the
+    requested service. The target ECU applies its own programming rules.
+    VLAN isolation is disabled.
   * COMP-EBCM accepts a forwarded programming request without checking a
     programming credential (`uds_flash_programming_locked: false`).
 
@@ -136,8 +138,8 @@ System Boundary:
      valves in response. Achieved deceleration depends on brake and road conditions.
 
 - Current Security & Operational Parameters (As-Built Baseline):
-  * Central Gateway firewall rules permit unrestricted traffic from COMP-TCU 
-    to `INT-CAN-SAFETY` (`ALLOW_ALL from COMP-TCU to CAN-SAFETY`).
+  * COMP-CGW relays AEB requests from the ADAS input on CONN-05. The TCU
+    diagnostic input on CONN-03 has no raw CAN forwarding service.
   * AUTOSAR Secure Onboard Communication (SecOC) message authentication codes 
     (MAC) are disabled on CONN-04 and COMP-EBCM (`secoc_mac_verification: false`).
 
