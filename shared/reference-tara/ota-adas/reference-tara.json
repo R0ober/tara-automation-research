@@ -1,0 +1,479 @@
+{
+  "tara_metadata": {
+    "document_id": "TARA-AUTO-OTA-ADAS-01",
+    "version": "1.0.0",
+    "date": "2026-11-22",
+    "standard_reference": "ISO/SAE 21434:2021 (Clauses 15.3 - 15.9)",
+    "item_id": "AUTO-OTA-ADAS-01",
+    "item_name": "Telematics, OTA Update & ADAS Actuation Subsystem",
+    "target_asil": "Up to ASIL-D (COMP-EBCM)",
+    "methodology": {
+      "impact_rating_method": "ISO/SAE 21434 Annex F (Safety, Financial, Operational, Privacy - SFOP)",
+      "impact_levels": [
+        "Negligible",
+        "Moderate",
+        "Major",
+        "Severe"
+      ],
+      "attack_feasibility_method": "Attack Potential-based Approach (ISO/SAE 21434 Annex G.4 / ISO/IEC 18045)",
+      "attack_potential_parameters": {
+        "elapsed_time": {
+          "<=1d": 0,
+          "<=1w": 1,
+          "<=1m": 4,
+          "<=3m": 10,
+          "<=6m": 17,
+          ">6m": 19
+        },
+        "specialist_expertise": {
+          "Layman": 0,
+          "Proficient": 3,
+          "Expert": 6,
+          "Multiple_Experts": 8
+        },
+        "knowledge_of_item": {
+          "Public": 0,
+          "Restricted": 3,
+          "Confidential": 7,
+          "Strictly_Confidential": 11
+        },
+        "window_of_opportunity": {
+          "Unlimited": 0,
+          "Easy": 1,
+          "Moderate": 4,
+          "Difficult_None": 10
+        },
+        "equipment": {
+          "Standard": 0,
+          "Specialized": 4,
+          "Bespoke": 7,
+          "Multiple_Bespoke": 9
+        }
+      },
+      "feasibility_mapping": {
+        "0-9": "High",
+        "10-13": "Medium",
+        "14-19": "Low",
+        "20-24": "Very Low",
+        ">=25": "Very Low"
+      },
+      "tree_aggregation_rules": {
+        "AND_gate": "For a complete path, assess all required conditions together. Assign one value to each of the five attack potential factors and sum those values once.",
+        "OR_gate": "Use the lowest score among supported complete paths. If none can be scored, leave the score and feasibility null."
+      },
+      "risk_matrix": {
+        "Severe": {
+          "High": 5,
+          "Medium": 5,
+          "Low": 4,
+          "Very Low": 3
+        },
+        "Major": {
+          "High": 4,
+          "Medium": 4,
+          "Low": 3,
+          "Very Low": 2
+        },
+        "Moderate": {
+          "High": 3,
+          "Medium": 2,
+          "Low": 2,
+          "Very Low": 1
+        },
+        "Negligible": {
+          "High": 1,
+          "Medium": 1,
+          "Low": 1,
+          "Very Low": 1
+        }
+      }
+    },
+    "assessment_status": "Initial manual reference for review. The item supplies the impact ratings. Feasibility estimates depend on the stated actor and access assumptions. Residual risk awaits control verification."
+  },
+  "threat_scenarios_and_attack_trees": [
+    {
+      "threat_scenario_id": "TS-OTA-01",
+      "threat_scenario_name": "Activation of an altered OTA firmware image",
+      "targeted_asset": {
+        "asset_id": "ASSET-01",
+        "asset_name": "OTA Firmware Binary Image",
+        "parent_component": "COMP-TCU",
+        "associated_connections": [
+          "CONN-01",
+          "CONN-03",
+          "CONN-04"
+        ],
+        "compromised_properties": [
+          "Integrity",
+          "Authenticity"
+        ]
+      },
+      "stride_classification": [
+        "Tampering"
+      ],
+      "associated_damage_scenario": {
+        "damage_id": "DS-01",
+        "description": "Loss of gateway or brake ECU function can prevent emergency braking when needed. A resulting collision can cause serious injury or death. Loss of ECU function can also prevent vehicle use.",
+        "impact_ratings": {
+          "Safety": {
+            "rating": "Severe",
+            "justification": "Loss of gateway or brake ECU function can impair automatic emergency braking and contribute to a fatal collision."
+          },
+          "Financial": {
+            "rating": "Major",
+            "justification": "A collision or ECU repair can cause property and service costs."
+          },
+          "Operational": {
+            "rating": "Severe",
+            "justification": "An unavailable ECU can prevent vehicle use."
+          },
+          "Privacy": {
+            "rating": "Negligible",
+            "justification": "DS-01 identifies no disclosure of personal data."
+          },
+          "overall_impact_rating": "Severe"
+        }
+      },
+      "attack_tree": {
+        "node_id": "AT-OTA-01-ROOT",
+        "node_type": "ROOT_GOAL",
+        "gate": "OR",
+        "title": "Activation of an altered OTA firmware image",
+        "aggregated_attack_potential_score": null,
+        "aggregated_attack_feasibility": null,
+        "critical_attack_path": [],
+        "children": [
+          {
+            "node_id": "AT-OTA-01-B1",
+            "node_type": "LEAF_ATTACK_STEP",
+            "title": "Altered image presented to a target ECU",
+            "target_component": "COMP-TCU",
+            "target_interface": "INT-ETH-INTERNAL",
+            "vulnerability_reference": "The TCU OTA agent forwards a staged image without verifying its signature.",
+            "technical_detail": "The agent runs as root. The gateway uses a fixed credential for its own programming. It forwards supported brake diagnostics without checking client authority, and the brake ECU permits programming without a credential. Each target independently rejects incomplete images, wrong-target images and images without a valid trusted signature.",
+            "attack_potential": null
+          }
+        ]
+      },
+      "risk_determination": {
+        "overall_impact_rating": "Severe",
+        "aggregated_attack_feasibility": null,
+        "minimum_attack_potential_score": null,
+        "inherent_risk_value": null,
+        "inherent_risk_level": null,
+        "risk_determination_rationale": "The proposed image substitution is stopped at activation on both targets. The item establishes neither a failure of this check nor loss of ECU function during rejected or interrupted programming. DS-01 has Severe impact if it occurs. Feasibility and inherent risk remain open."
+      },
+      "proposed_risk_treatment": {
+        "risk_treatment_option": "Reduce",
+        "cybersecurity_goals": [
+          {
+            "goal_id": "CG-OTA-01",
+            "description": "Reject unauthorized images before forwarding and restrict firmware programming."
+          }
+        ],
+        "cybersecurity_requirements": [
+          {
+            "requirement_id": "CSR-OTA-01.1",
+            "target_component": "COMP-TCU",
+            "description": "Verify the image signature before forwarding a staged update."
+          },
+          {
+            "requirement_id": "CSR-OTA-01.2",
+            "target_component": "COMP-CGW",
+            "description": "Use individually authorized programming credentials for gateway updates."
+          },
+          {
+            "requirement_id": "CSR-OTA-01.3",
+            "target_component": "COMP-EBCM",
+            "description": "Verify client authority before accepting brake ECU programming requests."
+          }
+        ],
+        "target_residual_feasibility": null,
+        "target_residual_risk_value": null,
+        "target_residual_risk_level": null,
+        "residual_risk_status": "Unassessed pending verification of the proposed controls."
+      }
+    },
+    {
+      "threat_scenario_id": "TS-OTA-02",
+      "threat_scenario_name": "Incorrect or unavailable automatic emergency braking request",
+      "targeted_asset": {
+        "asset_id": "ASSET-02",
+        "asset_name": "AEB Deceleration Request",
+        "parent_component": "COMP-EBCM",
+        "associated_connections": [
+          "CONN-05",
+          "CONN-04"
+        ],
+        "compromised_properties": [
+          "Integrity",
+          "Authenticity",
+          "Availability"
+        ]
+      },
+      "stride_classification": [
+        "Spoofing",
+        "Tampering",
+        "Denial of Service"
+      ],
+      "associated_damage_scenario": {
+        "damage_id": "DS-02",
+        "description": "Unintended automatic braking at highway speed can cause a rear-end collision. If automatic emergency braking is unavailable when needed, the vehicle may collide at a higher speed. Either outcome can cause serious injury or death.",
+        "impact_ratings": {
+          "Safety": {
+            "rating": "Severe",
+            "justification": "Unintended braking or loss of AEB when needed can contribute to serious or fatal injury."
+          },
+          "Financial": {
+            "rating": "Major",
+            "justification": "A collision can cause vehicle damage and repair costs."
+          },
+          "Operational": {
+            "rating": "Severe",
+            "justification": "The vehicle may brake unexpectedly or lose automatic braking assistance."
+          },
+          "Privacy": {
+            "rating": "Negligible",
+            "justification": "DS-02 identifies no disclosure of personal data."
+          },
+          "overall_impact_rating": "Severe"
+        }
+      },
+      "attack_tree": {
+        "node_id": "AT-OTA-02-ROOT",
+        "node_type": "ROOT_GOAL",
+        "gate": "OR",
+        "title": "Incorrect or unavailable automatic emergency braking request",
+        "aggregated_attack_potential_score": null,
+        "aggregated_attack_feasibility": null,
+        "critical_attack_path": [],
+        "children": [
+          {
+            "node_id": "AT-OTA-02-B1",
+            "node_type": "LEAF_ATTACK_STEP",
+            "title": "Unauthorized request accepted by the brake ECU",
+            "target_component": "COMP-EBCM",
+            "target_interface": "INT-CAN-SAFETY",
+            "vulnerability_reference": "The brake ECU checks request format and range but has command MAC verification disabled.",
+            "technical_detail": "COMP-ADAS originates the normal request on CONN-05. COMP-CGW relays it on CONN-04. The TCU diagnostic input provides no raw CAN forwarding. The item establishes no unauthorized sender on either AEB link.",
+            "attack_potential": null
+          },
+          {
+            "node_id": "AT-OTA-02-B2",
+            "node_type": "LEAF_ATTACK_STEP",
+            "title": "Interruption of a required AEB request",
+            "target_component": "COMP-EBCM",
+            "target_interface": "INT-CAN-SAFETY",
+            "vulnerability_reference": "Automatic braking depends on timely requests from the ADAS controller.",
+            "technical_detail": "The gateway relays each request once. The brake ECU holds the last accepted demand until its configured timeout, then clears only AEB demand. A subsequent accepted request restores control. The item identifies no attacker capability to interrupt this flow.",
+            "attack_potential": null
+          }
+        ]
+      },
+      "risk_determination": {
+        "overall_impact_rating": "Severe",
+        "aggregated_attack_feasibility": null,
+        "minimum_attack_potential_score": null,
+        "inherent_risk_value": null,
+        "inherent_risk_level": null,
+        "risk_determination_rationale": "Both loss of assistance and unintended actuation have defined effects. Access to a local TCU service alone does not establish control over the AEB flow. Feasibility remains open until evidence identifies an actor with the required access."
+      },
+      "proposed_risk_treatment": {
+        "risk_treatment_option": "Reduce",
+        "cybersecurity_goals": [
+          {
+            "goal_id": "CG-OTA-02",
+            "description": "Protect the source, integrity and availability of the AEB demand."
+          }
+        ],
+        "cybersecurity_requirements": [
+          {
+            "requirement_id": "CSR-OTA-02.1",
+            "target_component": "COMP-EBCM",
+            "description": "Verify the source, integrity and freshness of AEB requests before applying them."
+          },
+          {
+            "requirement_id": "CSR-OTA-02.2",
+            "target_component": "COMP-CGW",
+            "description": "Detect interruption of the AEB input and report loss of the relay function."
+          }
+        ],
+        "target_residual_feasibility": null,
+        "target_residual_risk_value": null,
+        "target_residual_risk_level": null,
+        "residual_risk_status": "Unassessed pending verification of the proposed controls."
+      }
+    },
+    {
+      "threat_scenario_id": "TS-OTA-03",
+      "threat_scenario_name": "Unauthorized disclosure of timestamped vehicle location reports",
+      "targeted_asset": {
+        "asset_id": "ASSET-03",
+        "asset_name": "Vehicle GPS & Telemetry Logs",
+        "parent_component": "COMP-TCU",
+        "associated_connections": [
+          "CONN-01"
+        ],
+        "compromised_properties": [
+          "Confidentiality",
+          "Privacy"
+        ]
+      },
+      "stride_classification": [
+        "Information Disclosure"
+      ],
+      "associated_damage_scenario": {
+        "damage_id": "DS-03",
+        "description": "Disclosure of timestamped GPS coordinates can reveal where the vehicle was at a given time. If the vehicle can be linked to a person, multiple reports can reveal that person’s travel patterns and the places they visit.",
+        "impact_ratings": {
+          "Safety": {
+            "rating": "Negligible",
+            "justification": "The item assigns negligible direct safety impact to disclosure."
+          },
+          "Financial": {
+            "rating": "Moderate",
+            "justification": "The item assigns Moderate financial impact. Its cost threshold and monetary loss are unspecified."
+          },
+          "Operational": {
+            "rating": "Negligible",
+            "justification": "Location disclosure alone need not impair vehicle operation."
+          },
+          "Privacy": {
+            "rating": "Major",
+            "justification": "Disclosed reports reveal vehicle locations. Reports linked to a person may reveal travel patterns and places visited."
+          },
+          "overall_impact_rating": "Major"
+        }
+      },
+      "attack_tree": {
+        "node_id": "AT-OTA-03-ROOT",
+        "node_type": "ROOT_GOAL",
+        "gate": "OR",
+        "title": "Unauthorized disclosure of timestamped vehicle location reports",
+        "aggregated_attack_potential_score": 7,
+        "aggregated_attack_feasibility": "High",
+        "critical_attack_path": [
+          "AT-OTA-03-ROOT",
+          "AT-OTA-03-B1"
+        ],
+        "children": [
+          {
+            "node_id": "AT-OTA-03-B1",
+            "node_type": "LEAF_ATTACK_STEP",
+            "title": "Misuse of an authorized support reader role",
+            "target_component": "COMP-CLOUD",
+            "target_interface": null,
+            "vulnerability_reference": "Authorized OEM support staff can read received reports containing timestamped GPS positions.",
+            "technical_detail": "Actor assumption for this branch: an assigned support reader discloses information already visible to them outside the authorized diagnostic purpose. The staff access interface is unspecified. CONN-01 carries the vehicle upload. Multiple reports and a vehicle-to-person association are required to infer personal travel patterns.",
+            "attack_potential": {
+              "elapsed_time": {
+                "label": "<=1d",
+                "score": 0
+              },
+              "specialist_expertise": {
+                "label": "Layman",
+                "score": 0
+              },
+              "knowledge_of_item": {
+                "label": "Restricted",
+                "score": 3
+              },
+              "window_of_opportunity": {
+                "label": "Moderate",
+                "score": 4
+              },
+              "equipment": {
+                "label": "Standard",
+                "score": 0
+              },
+              "total_score": 7,
+              "feasibility_rating": "High"
+            },
+            "scoring_basis": "Estimate for an existing support reader. A disclosure during an assigned access window is assumed to take at most a day with ordinary user skill and standard equipment. Internal report knowledge is restricted. Access to relevant reports is assumed to present a moderate opportunity. This estimate applies only to insider misuse."
+          },
+          {
+            "node_id": "AT-OTA-03-B2",
+            "node_type": "LEAF_ATTACK_STEP",
+            "title": "Unauthorized reading of the local telemetry queue",
+            "target_component": "COMP-TCU",
+            "target_interface": "INT-WIFI-AP",
+            "vulnerability_reference": "Pending reports are readable by the TCU telemetry account and root.",
+            "technical_detail": "Acknowledged reports leave the persistent queue. The oldest pending report is discarded when full. Cabin Wi-Fi membership does not grant report access, SSH root login requires a separate workshop key, and the physical serial session has no queue read access. The baseline establishes no unauthorized reader.",
+            "attack_potential": null
+          }
+        ]
+      },
+      "risk_determination": {
+        "overall_impact_rating": "Major",
+        "aggregated_attack_feasibility": "High",
+        "minimum_attack_potential_score": 7,
+        "inherent_risk_value": 4,
+        "inherent_risk_level": "4 / 5",
+        "risk_determination_rationale": "For the stated insider the estimate is 7 (High feasibility). The supplied Major privacy impact gives risk 4 in the project matrix. An external reader acquiring the same access is a separate, unresolved case."
+      },
+      "proposed_risk_treatment": {
+        "risk_treatment_option": "Reduce",
+        "cybersecurity_goals": [
+          {
+            "goal_id": "CG-OTA-03",
+            "description": "Limit disclosure of location history during diagnostic support."
+          }
+        ],
+        "cybersecurity_requirements": [
+          {
+            "requirement_id": "CSR-OTA-03.1",
+            "target_component": "COMP-CLOUD",
+            "description": "Limit support access to reports needed for an assigned case and audit access to identifiable location data."
+          }
+        ],
+        "target_residual_feasibility": null,
+        "target_residual_risk_value": null,
+        "target_residual_risk_level": null,
+        "residual_risk_status": "Unassessed pending verification of the proposed controls."
+      }
+    }
+  ],
+  "traceability_and_risk_summary": [
+    {
+      "threat_scenario_id": "TS-OTA-01",
+      "asset_id": "ASSET-01",
+      "damage_id": "DS-01",
+      "primary_vulnerabilities_exploited": [],
+      "inherent_impact": "Severe",
+      "inherent_feasibility": null,
+      "inherent_risk": null,
+      "assessment_basis": "Target checks reject the candidate image. ECU availability during programming is unspecified.",
+      "treatment_decision": "Reduce (CG-OTA-01)",
+      "residual_feasibility": null,
+      "residual_risk": null
+    },
+    {
+      "threat_scenario_id": "TS-OTA-02",
+      "asset_id": "ASSET-02",
+      "damage_id": "DS-02",
+      "primary_vulnerabilities_exploited": [],
+      "inherent_impact": "Severe",
+      "inherent_feasibility": null,
+      "inherent_risk": null,
+      "assessment_basis": "Receiver weakness and timeout behavior are established. An unauthorized path to change or interrupt the demand remains open.",
+      "treatment_decision": "Reduce (CG-OTA-02)",
+      "residual_feasibility": null,
+      "residual_risk": null
+    },
+    {
+      "threat_scenario_id": "TS-OTA-03",
+      "asset_id": "ASSET-03",
+      "damage_id": "DS-03",
+      "primary_vulnerabilities_exploited": [
+        "Authorized OEM support staff can read received reports containing timestamped GPS positions."
+      ],
+      "inherent_impact": "Major",
+      "inherent_feasibility": "High",
+      "inherent_risk": "4 / 5",
+      "assessment_basis": "Score applies to misuse by an authorized support reader. External access to queued or uploaded reports remains unresolved.",
+      "treatment_decision": "Reduce (CG-OTA-03)",
+      "residual_feasibility": null,
+      "residual_risk": null
+    }
+  ]
+}
