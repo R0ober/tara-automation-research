@@ -4,8 +4,6 @@ import requests
 
 DB_PATH = "./mitre_attack.db"
 
-FetchedCSVs = 10
-
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row  # Allows dictionary-like access to rows
@@ -59,7 +57,7 @@ def check_component_cves(cpe_string: str, nvd_api_key: str = None):
 
     cves = []
     vulnerabilities = data.get("vulnerabilities", [])
-    for v in vulnerabilities[:FetchedCSVs]:
+    for v in vulnerabilities:
         cve_data = v.get("cve", {})
         descriptions = cve_data.get("descriptions", [])
         desc_value = descriptions[0].get("value") if descriptions else None
