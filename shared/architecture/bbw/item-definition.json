@@ -210,7 +210,8 @@
           "security_access_required": false,
           "vehicle_speed_interlock_enabled": false,
           "execution_connection": "CONN-BRK-04",
-          "execution_behavior": "EBCM issues piston-retraction requests to the wheel actuators over the actuator bus"
+          "execution_behavior": "EBCM requests pad-service entry or explicit exit for the selected wheel actuators over the actuator bus",
+          "target_selection": "The request identifies selected COMP-EMBA wheel instances"
         }
       ],
       "diagnostic_programming": {
@@ -275,7 +276,16 @@
             "on_invalid_command": "Reject without changing the force target or refreshing the command timer",
             "on_command_timeout": "Record a communication fault and retain the last accepted force target",
             "on_command_recovery": "Resume tracking the next accepted command and clear the communication fault",
-            "force_control": "The servo regulates force under the active motor-current limit; retaining a force target does not command continuous maximum motor current"
+            "force_control": "The servo regulates force under the active motor-current limit; retaining a force target does not command continuous maximum motor current",
+            "initial_mode": "normal",
+            "command_processing_scope": "The normal-command acceptance and timeout rules apply in normal mode; pre-service normal commands are not restored after pad-service exit",
+            "pad_service_mode": {
+              "entry": "On an EBCM pad-service entry request targeting this instance, retract the piston to its configured service position",
+              "normal_command_priority": "Normal CAN ID 0x040 commands do not change the target in pad-service mode and are not saved for use after exit",
+              "completion": "Remain in pad-service mode after retraction completes until an explicit service-exit request",
+              "exit": "Restore normal command processing and discard the pre-service normal target and reception time; wait at the service position for the next newly accepted 0x040 command",
+              "other_instances": "Actuators not targeted by the request continue their existing operation"
+            }
           }
         }
       ],
@@ -384,6 +394,22 @@
               ]
             }
           ]
+        },
+        {
+          "can_id": "0x1A0",
+          "name": "Regen_Torque_Status",
+          "source_component": "COMP-RIC",
+          "target_component": "COMP-VDCM",
+          "payload_fields": [
+            {
+              "name": "achieved_regenerative_torque",
+              "meaning": "Braking torque the RIC reports it has delivered"
+            },
+            {
+              "name": "e2e_crc",
+              "type": "CRC-8"
+            }
+          ]
         }
       ],
       "encrypted": false,
@@ -477,7 +503,7 @@
     },
     {
       "asset_id": "ASSET-BRK-02",
-      "name": "Blended Friction & Regenerative Torque Command (SOME/IP 0x1020 & CAN ID 0x1A0)",
+      "name": "Regenerative Torque Feedback and Friction Torque Request (CAN ID 0x1A0 and SOME/IP 0x1020)",
       "parent_component": "COMP-VDCM",
       "associated_connections": [
         "CONN-BRK-02",

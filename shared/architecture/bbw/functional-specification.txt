@@ -184,7 +184,7 @@ System Boundary:
     (`regen_feedback_independent_deceleration_check_enabled: false`).
 
 - Associated Cybersecurity Goals & Damage Scenarios:
-  * Protected Asset: ASSET-BRK-02 (Blended Friction & Regenerative Torque Command)
+  * Protected Asset: ASSET-BRK-02 (Regenerative Torque Feedback and Friction Torque Request)
   * Security Properties: Integrity, Authenticity, Availability
   * Damage Scenario (DS-BRK-02): Insufficient combined regenerative and friction
     braking can prevent the vehicle from achieving the required deceleration.
@@ -230,7 +230,8 @@ System Boundary:
      stage. Specific parts are not selected. Bare-Metal Firmware v2.0.0 with
      `caliper_piston_servo_driver` v2.0.0 controls the 48V BLDC ball-screw
      actuator to push the brake pads against the rotor.
-  4. Normal Command Reception: Each actuator starts with zero clamping demand.
+  4. Normal Command Reception: Each actuator starts in normal mode with zero
+     clamping demand. The following rules apply in normal mode.
      It accepts correctly formatted `0x040` frames when its assigned value is
      within zero and the configured maximum force. The last accepted value
      becomes its force target and updates local monotonic reception time.
@@ -240,6 +241,15 @@ System Boundary:
      tracking and clears that fault. The servo regulates force under the active
      motor-current limit; holding a target does not command continuous maximum
      motor current.
+  5. Pad-Service Priority: The EBCM routine request identifies the selected wheel
+     instances. EBCM sends entry or explicit exit requests over `CONN-BRK-04`.
+     On entry, each selected actuator retracts its piston to the configured
+     service position. Normal `0x040` commands do not change its target and are
+     not saved for later use. Completing retraction does not end service mode;
+     an explicit service-exit request is required. On exit, the actuator discards
+     its pre-service normal target and reception time and restores normal
+     processing. It waits at the service position for a new accepted `0x040`
+     command. Untargeted actuators continue their existing operation.
 
 - Current Security & Operational Parameters (As-Built Baseline):
   * Software versions on COMP-EBCM: `freertos` v10.4.1 and `lwip` v2.1.2.
@@ -257,9 +267,9 @@ System Boundary:
     accepted after programming authorization if its signature is valid.
   * EBCM accepts the UDS `0x31` pad-retraction routine without a SecurityAccess
     unlock and without a vehicle speed check
-    (`uds_0x31_bleed_routine_speed_interlock_enabled: false`). It issues piston-
-    retraction requests to the wheel actuators over `CONN-BRK-04`. These rules
-    apply to this routine; they do not authorize other diagnostic operations.
+    (`uds_0x31_bleed_routine_speed_interlock_enabled: false`). The service-mode
+    rules above define its priority and recovery. These permissions apply to
+    this routine; they do not authorize other diagnostic operations.
   * `CONN-BRK-04` and `COMP-EMBA` do not verify command MACs or freshness counters 
     (`command_authentication_mac: false`, `secoc_freshness_counter_enabled: false`).
   * A manufacturer-specific UDS operation on `CONN-BRK-04` adjusts the active
@@ -275,8 +285,9 @@ System Boundary:
 - Associated Cybersecurity Goals & Damage Scenarios:
   * Protected Assets:
     - ASSET-BRK-03 (Wheel Caliper Clamping Force Command - CAN ID 0x040)
+      Security Properties: Integrity, Authenticity, Availability
     - ASSET-BRK-04 (EBCM & Caliper Actuator Control Firmware)
-  * Security Properties: Integrity, Authenticity, Availability
+      Security Properties: Integrity, Authenticity
   * Damage Scenario (DS-BRK-03): Uneven or insufficient wheel braking can cause
     loss of directional control or increased stopping distance. This can cause
     a collision and serious injury or death.
