@@ -1,0 +1,148 @@
+================================================================================
+FUNCTIONAL SPECIFICATION & ITEM DEFINITION
+================================================================================
+Document ID:        FS-AUTO-OTA-ADAS-01
+Item Name:          Telematics, OTA Update & ADAS Actuation Subsystem
+Item ID:            AUTO-OTA-ADAS-01
+Standard Reference: ISO/SAE 21434:2021 (Road vehicles — Cybersecurity engineering)
+Target ASIL:        Up to ASIL-D (Electronic Brake Control Module)
+================================================================================
+
+1. SYSTEM OVERVIEW & ITEM BOUNDARY
+--------------------------------------------------------------------------------
+The Telematics, OTA Update & ADAS Actuation Subsystem (AUTO-OTA-ADAS-01) 
+provides external wireless connectivity, over-the-air software update 
+distribution, remote diagnostics, and internal communication routing for 
+safety-critical braking actuation.
+
+System Boundary:
+- External Interfaces: 4G LTE / 5G Cellular WAN (INT-CELLULAR-WAN), In-Cabin 
+  IEEE 802.11ac Wi-Fi AP (INT-WIFI-AP), and physical UART/OBD-II maintenance 
+  ports (INT-OBD2-DEBUG) terminated at the Telematics Control Unit (COMP-TCU).
+- Internal Backbone: 100BASE-T1 Automotive Ethernet link (CONN-03) connecting 
+  the TCU to the Central Gateway ECU (COMP-CGW).
+- Safety-Critical Network: Chassis & Safety CAN-FD Bus (CONN-04) operating at 
+  500 kbps / 2 Mbps, connecting the Central Gateway to the Electronic Brake 
+  Control Module (COMP-EBCM).
+- External Actor: OEM OTA & Telemetry Cloud Backend (COMP-CLOUD) residing in 
+  the Untrusted External trust zone.
+
+
+2. FUNCTIONAL SPECIFICATIONS
+--------------------------------------------------------------------------------
+
+2.1. FUNC-01: Over-the-Air (OTA) Firmware Update
+------------------------------------------------
+- Objective:
+  Download firmware update packages from the OEM Cloud Backend and flash target 
+  in-vehicle ECUs via the Central Gateway.
+
+- Involved Components & Interfaces:
+  COMP-CLOUD -> [CONN-01: HTTPS/TLS 1.2] -> COMP-TCU -> [CONN-03: DoIP/TCP 13400] 
+  -> COMP-CGW -> [CONN-04: UDS on CAN (ISO 15765-2)] -> COMP-EBCM.
+
+- Functional Behavior & Data Flow:
+  1. Connection Initiation: The TCU's OTA agent (`ota_agent_daemon` v1.1.0) 
+     polls the OEM Cloud API Gateway (`nginx` v1.22.0) over 4G/5G cellular 
+     (CONN-01) or Wi-Fi (CONN-02) using `openssl` v3.0.4 on port 443.
+  2. Package Download: The firmware binary image (ASSET-01) is downloaded and 
+     staged locally on the TCU filesystem at `/tmp/ota_update.bin`.
+  3. Diagnostic Routing: `ota_agent_daemon` initiates a Diagnostics over IP 
+     (DoIP, ISO 13400) session over 100BASE-T1 Ethernet (CONN-03, TCP port 13400) 
+     to the Central Gateway's `doip_uds_router` (v2.0.1).
+  4. ECU Flashing: The Central Gateway translates DoIP frames into UDS on CAN 
+     (ISO 14229 / ISO 15765-2) frames over the Safety CAN-FD bus (CONN-04) to 
+     unlock and reprogram the target ECU (COMP-CGW or COMP-EBCM).
+
+- Current Security & Operational Parameters (As-Built Baseline):
+  * `ota_agent_daemon` executes with root privileges (`runs_as_root: true`).
+  * Cryptographic signature verification on `/tmp/ota_update.bin` is disabled 
+    (`verify_firmware_signature: false`).
+  * UDS SecurityAccess (Service 0x27) uses a static, hardcoded seed/key pair 
+    (`0xDEADBEEF`).
+  * DoIP routing on COMP-CGW does not enforce VLAN isolation or UDS 0x27 
+    authentication prior to forwarding frames to `INT-CAN-SAFETY`.
+  * Flash programming on COMP-EBCM is unlocked (`uds_flash_programming_locked: false`).
+
+- Associated Cybersecurity Goals & Damage Scenarios:
+  * Protected Asset: ASSET-01 (OTA Firmware Binary Image)
+  * Security Properties: Integrity, Authenticity
+  * Damage Scenario (DS-01): Malicious or corrupted firmware flashed onto the 
+    Gateway or Brake ECU leads to loss of vehicle control or ECU bricking 
+    (Safety: Severe, Financial: Major, Operational: Severe, Privacy: Negligible).
+
+
+2.2. FUNC-02: Remote Diagnostics & Telemetry
+--------------------------------------------
+- Objective:
+  Collect real-time vehicle health logs, diagnostic trouble codes (DTCs), and 
+  GPS coordinates, and transmit them to the OEM Cloud Backend while providing 
+  local Wi-Fi hotspot and maintenance access.
+
+- Involved Components & Interfaces:
+  COMP-TCU <-> [CONN-01: Cellular WAN / CONN-02: Wi-Fi & OBD-II] <-> COMP-CLOUD.
+
+- Functional Behavior & Data Flow:
+  1. Telemetry Aggregation: The TCU running Automotive Grade Linux (Kernel 
+     5.15.32) collects vehicle operational logs and GPS location data (ASSET-03).
+  2. Cloud Uplink: Data is transmitted to `COMP-CLOUD` over HTTPS (CONN-01).
+  3. Cabin Connectivity & Maintenance: The TCU manages cabin Wi-Fi connections 
+     via `wpa_supplicant` (v2.9) and provides DHCP/DNS services via `dnsmasq` 
+     (v2.82, UDP/TCP port 53). Physical diagnostic access is provided via 
+     UART/OBD-II (CONN-02).
+
+- Current Security & Operational Parameters (As-Built Baseline):
+  * CONN-01 uses Server-only TLS 1.2 (no mutual TLS client certificate 
+    authentication).
+  * CONN-02 exposes SSH on TCP Port 22 with root login enabled, WPA2-PSK on 
+    Wi-Fi, and unauthenticated serial access on UART.
+
+- Associated Cybersecurity Goals & Damage Scenarios:
+  * Protected Asset: ASSET-03 (Vehicle GPS & Telemetry Logs)
+  * Security Properties: Confidentiality, Privacy
+  * Damage Scenario (DS-03): Exfiltration of real-time vehicle location and 
+    driver behavior history via a compromised TCU (Safety: Negligible, 
+    Financial: Moderate, Operational: Negligible, Privacy: Major).
+
+
+2.3. FUNC-03: Autonomous Emergency Braking (AEB) Request
+--------------------------------------------------------
+- Objective:
+  Transmit real-time deceleration torque commands over the safety-critical 
+  CAN-FD bus to actuate the hydraulic braking system.
+
+- Involved Components & Interfaces:
+  COMP-CGW -> [CONN-04: Chassis & Safety CAN-FD Bus] -> COMP-EBCM.
+
+- Functional Behavior & Data Flow:
+  1. Command Transmission: Deceleration requests are transmitted over the 
+     Safety CAN-FD bus (CONN-04) using CAN ID `0x120` (ASSET-02).
+  2. Brake Actuation: The Electronic Brake Control Module (COMP-EBCM, NXP S32K3 
+     running FreeRTOS v10.4.1) receives CAN ID `0x120` via the 
+     `brake_torque_controller` task (v3.4.0) and actuates the hydraulic brake 
+     valves accordingly.
+
+- Current Security & Operational Parameters (As-Built Baseline):
+  * Central Gateway firewall rules permit unrestricted traffic from COMP-TCU 
+    to `INT-CAN-SAFETY` (`ALLOW_ALL from COMP-TCU to CAN-SAFETY`).
+  * AUTOSAR Secure Onboard Communication (SecOC) message authentication codes 
+    (MAC) are disabled on CONN-04 and COMP-EBCM (`secoc_mac_verification: false`).
+
+- Associated Cybersecurity Goals & Damage Scenarios:
+  * Protected Asset: ASSET-02 (AEB Deceleration CAN Command - CAN ID 0x120)
+  * Security Properties: Integrity, Authenticity, Availability
+  * Damage Scenario (DS-02): Spoofed braking commands trigger unintended 
+    emergency braking at highway speeds, or DoS bus flooding prevents legitimate 
+    braking actuation (Safety: Severe, Financial: Major, Operational: Severe, 
+    Privacy: Negligible).
+
+
+3. COMPONENT & INTERFACE TRACEABILITY MATRIX
+--------------------------------------------------------------------------------
+Component ID | Component Name                  | Trust Zone              | Functions
+-------------|---------------------------------|-------------------------|----------------
+COMP-CLOUD   | OEM OTA & Telemetry Cloud       | Untrusted_External      | FUNC-01, FUNC-02
+COMP-TCU     | Telematics Control Unit (TCU)   | DMZ_Connectivity        | FUNC-01, FUNC-02
+COMP-CGW     | Central Gateway ECU (CGW)       | Internal_Backbone       | FUNC-01, FUNC-03
+COMP-EBCM    | Electronic Brake Control (EBCM) | Safety_Critical_Chassis | FUNC-01, FUNC-03
+================================================================================

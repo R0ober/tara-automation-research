@@ -1,0 +1,241 @@
+{
+  "item_definition": {
+    "item_id": "AUTO-OTA-ADAS-01",
+    "name": "Telematics, OTA Update & ADAS Actuation Subsystem",
+    "standard_reference": "ISO/SAE 21434:2021",
+    "system_boundary": "Includes external wireless interfaces on the Telematics Control Unit (TCU), internal Ethernet routing through the Central Gateway (CGW), and CAN-FD actuation commands to the Electronic Brake Control Module (EBCM).",
+    "functions": [
+      {
+        "function_id": "FUNC-01",
+        "name": "Over-the-Air (OTA) Firmware Update",
+        "description": "Downloads firmware packages from the OEM Cloud via 4G/Wi-Fi to the TCU and flashes target ECUs via the Central Gateway using UDS (ISO 14229)."
+      },
+      {
+        "function_id": "FUNC-02",
+        "name": "Remote Diagnostics & Telemetry",
+        "description": "Collects vehicle health logs and GPS coordinates and transmits them to the OEM backend."
+      },
+      {
+        "function_id": "FUNC-03",
+        "name": "Autonomous Emergency Braking (AEB) Request",
+        "description": "Transmits deceleration torque requests over the Safety CAN-FD bus to the brake controller."
+      }
+    ]
+  },
+  "components": [
+    {
+      "component_id": "COMP-CLOUD",
+      "name": "OEM OTA & Telemetry Cloud Backend",
+      "type": "External_Server",
+      "trust_zone": "Untrusted_External",
+      "os": {
+        "name": "Ubuntu Server",
+        "version": "22.04 LTS"
+      },
+      "hosted_software": [
+        {
+          "name": "nginx",
+          "version": "1.22.0",
+          "cpe": "cpe:2.3:a:f5:nginx:1.22.0:*:*:*:*:*:*:*",
+          "role": "HTTPS API Gateway"
+        }
+      ],
+      "interfaces": ["INT-CELLULAR-WAN"]
+    },
+    {
+      "component_id": "COMP-TCU",
+      "name": "Telematics Control Unit (TCU)",
+      "type": "ECU_Linux",
+      "trust_zone": "DMZ_Connectivity",
+      "hardware": "NXP i.MX8QuadXPlus (ARM Cortex-A35)",
+      "os": {
+        "name": "Automotive Grade Linux (Yocto Kirkstone)",
+        "kernel_version": "5.15.32",
+        "cpe": "cpe:2.3:o:linux:linux_kernel:5.15.32:*:*:*:*:*:*:*"
+      },
+      "hosted_software": [
+        {
+          "name": "openssl",
+          "version": "3.0.4",
+          "cpe": "cpe:2.3:a:openssl:openssl:3.0.4:*:*:*:*:*:*:*",
+          "role": "TLS Termination & Package Signature Check",
+          "listening_port": 443
+        },
+        {
+          "name": "dnsmasq",
+          "version": "2.82",
+          "cpe": "cpe:2.3:a:thekelleys:dnsmasq:2.82:*:*:*:*:*:*:*",
+          "role": "In-Vehicle Wi-Fi Hotspot DHCP/DNS Server",
+          "listening_port": 53
+        },
+        {
+          "name": "wpa_supplicant",
+          "version": "2.9",
+          "cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:2.9:*:*:*:*:*:*:*",
+          "role": "Wi-Fi Client & Access Point Manager"
+        },
+        {
+          "name": "ota_agent_daemon",
+          "version": "1.1.0",
+          "role": "Downloads firmware to /tmp/ota_update.bin and forwards via DoIP to CGW",
+          "security_configuration": {
+            "runs_as_root": true,
+            "verify_firmware_signature": false,
+            "hardcoded_uds_seed_key": "0xDEADBEEF"
+          }
+        }
+      ],
+      "interfaces": ["INT-CELLULAR-WAN", "INT-WIFI-AP", "INT-OBD2-DEBUG", "INT-ETH-INTERNAL"]
+    },
+    {
+      "component_id": "COMP-CGW",
+      "name": "Central Gateway ECU (CGW)",
+      "type": "ECU_Microcontroller",
+      "trust_zone": "Internal_Backbone",
+      "hardware": "Infineon AURIX TC397",
+      "os": {
+        "name": "AUTOSAR Classic",
+        "version": "R20-11"
+      },
+      "hosted_software": [
+        {
+          "name": "doip_uds_router",
+          "version": "2.0.1",
+          "role": "Routes Diagnostics over IP (DoIP) from Ethernet to CAN-FD buses",
+          "security_configuration": {
+            "vlan_isolation_enabled": false,
+            "uds_0x27_security_access_required_for_routing": false,
+            "firewall_rules": "ALLOW_ALL from COMP-TCU to CAN-SAFETY"
+          }
+        }
+      ],
+      "interfaces": ["INT-ETH-INTERNAL", "INT-CAN-SAFETY"]
+    },
+    {
+      "component_id": "COMP-EBCM",
+      "name": "Electronic Brake Control Module (EBCM)",
+      "type": "ECU_Safety_Critical",
+      "trust_zone": "Safety_Critical_Chassis",
+      "asil_level": "ASIL-D",
+      "hardware": "NXP S32K3",
+      "os": {
+        "name": "FreeRTOS",
+        "version": "10.4.1",
+        "cpe": "cpe:2.3:o:amazon:freertos:10.4.1:*:*:*:*:*:*:*"
+      },
+      "hosted_software": [
+        {
+          "name": "brake_torque_controller",
+          "version": "3.4.0",
+          "role": "Actuates hydraulic brake valves based on CAN ID 0x120 deceleration messages",
+          "security_configuration": {
+            "secoc_mac_verification": false,
+            "uds_flash_programming_locked": false
+          }
+        }
+      ],
+      "interfaces": ["INT-CAN-SAFETY"]
+    }
+  ],
+  "connections": [
+    {
+      "connection_id": "CONN-01",
+      "name": "Cellular OTA & Telemetry Link",
+      "source_component": "COMP-CLOUD",
+      "target_component": "COMP-TCU",
+      "medium": "4G LTE / 5G Cellular",
+      "protocol": "HTTPS / TLS 1.2",
+      "encrypted": true,
+      "authenticated": "Server-only TLS (No mTLS client certificate authentication)"
+    },
+    {
+      "connection_id": "CONN-02",
+      "name": "Cabin Wi-Fi & OBD-II Maintenance Access",
+      "source_component": "EXTERNAL_ATTACKER_SURFACE",
+      "target_component": "COMP-TCU",
+      "medium": "IEEE 802.11ac Wi-Fi & Physical UART/OBD-II Port",
+      "protocol": "TCP/IP, DHCP, DNS, SSH (Port 22 open with root login enabled)",
+      "encrypted": false,
+      "authenticated": "WPA2 Pre-Shared Key (Wi-Fi) / None on UART"
+    },
+    {
+      "connection_id": "CONN-03",
+      "name": "In-Vehicle Automotive Ethernet Link",
+      "source_component": "COMP-TCU",
+      "target_component": "COMP-CGW",
+      "medium": "100BASE-T1 Automotive Ethernet",
+      "protocol": "DoIP (ISO 13400) over TCP Port 13400",
+      "encrypted": false,
+      "authenticated": "None (Plaintext TCP/IP without MACsec or IPsec)"
+    },
+    {
+      "connection_id": "CONN-04",
+      "name": "Chassis & Safety CAN-FD Bus",
+      "source_component": "COMP-CGW",
+      "target_component": "COMP-EBCM",
+      "medium": "CAN-FD (500 kbps / 2 Mbps)",
+      "protocol": "Raw CAN Frames (ID 0x120) & UDS on CAN (ISO 15765-2)",
+      "encrypted": false,
+      "authenticated": "None (AUTOSAR SecOC disabled)"
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "ASSET-01",
+      "name": "OTA Firmware Binary Image",
+      "parent_component": "COMP-TCU",
+      "associated_connections": ["CONN-01", "CONN-03"],
+      "cybersecurity_properties": ["Integrity", "Authenticity"],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-01",
+          "description": "Malicious or corrupted firmware is flashed onto the Gateway or Brake ECU, causing loss of vehicle control or bricking the ECU.",
+          "expected_sfop_impact": {
+            "Safety": "Severe",
+            "Financial": "Major",
+            "Operational": "Severe",
+            "Privacy": "Negligible"
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": "ASSET-02",
+      "name": "AEB Deceleration CAN Command (CAN ID 0x120)",
+      "parent_component": "COMP-EBCM",
+      "associated_connections": ["CONN-04"],
+      "cybersecurity_properties": ["Integrity", "Authenticity", "Availability"],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-02",
+          "description": "Spoofed braking commands trigger unintended emergency braking at highway speeds, or DoS flooding prevents legitimate braking.",
+          "expected_sfop_impact": {
+            "Safety": "Severe",
+            "Financial": "Major",
+            "Operational": "Severe",
+            "Privacy": "Negligible"
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": "ASSET-03",
+      "name": "Vehicle GPS & Telemetry Logs",
+      "parent_component": "COMP-TCU",
+      "associated_connections": ["CONN-01", "CONN-02"],
+      "cybersecurity_properties": ["Confidentiality", "Privacy"],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-03",
+          "description": "Exfiltration of real-time vehicle location and driver behavior history via compromised TCU.",
+          "expected_sfop_impact": {
+            "Safety": "Negligible",
+            "Financial": "Moderate",
+            "Operational": "Negligible",
+            "Privacy": "Major"
+          }
+        }
+      ]
+    }
+  ]
+}
