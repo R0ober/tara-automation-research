@@ -8,7 +8,7 @@
       {
         "function_id": "FUNC-01",
         "name": "Over-the-Air (OTA) Firmware Update",
-        "description": "Downloads firmware packages from the OEM Cloud via 4G/Wi-Fi to the TCU and flashes target ECUs via the Central Gateway using UDS (ISO 14229)."
+        "description": "The TCU downloads firmware from the OEM cloud via cellular or Wi-Fi and sends it to the CGW over CONN-03. A CGW update ends at the gateway. For an EBCM update, the gateway forwards the image over CONN-04 to the EBCM."
       },
       {
         "function_id": "FUNC-02",
@@ -58,8 +58,7 @@
           "name": "openssl",
           "version": "3.0.4",
           "cpe": "cpe:2.3:a:openssl:openssl:3.0.4:*:*:*:*:*:*:*",
-          "role": "TLS Termination & Package Signature Check",
-          "listening_port": 443
+          "role": "Provides TLS for the OTA agent connection to the OEM cloud on TCP port 443"
         },
         {
           "name": "dnsmasq",
@@ -109,6 +108,12 @@
           }
         }
       ],
+      "firmware_activation": {
+        "complete_image_required": true,
+        "target_identity_match_required": true,
+        "trusted_firmware_signature_required": true,
+        "on_check_failure": "Reject activation of the candidate image"
+      },
       "interfaces": ["INT-ETH-INTERNAL", "INT-CAN-SAFETY"]
     },
     {
@@ -134,6 +139,12 @@
           }
         }
       ],
+      "firmware_activation": {
+        "complete_image_required": true,
+        "target_identity_match_required": true,
+        "trusted_firmware_signature_required": true,
+        "on_check_failure": "Reject activation of the candidate image"
+      },
       "interfaces": ["INT-CAN-SAFETY"]
     }
   ],
@@ -184,12 +195,12 @@
       "asset_id": "ASSET-01",
       "name": "OTA Firmware Binary Image",
       "parent_component": "COMP-TCU",
-      "associated_connections": ["CONN-01", "CONN-03"],
+      "associated_connections": ["CONN-01", "CONN-03", "CONN-04"],
       "cybersecurity_properties": ["Integrity", "Authenticity"],
       "damage_scenarios": [
         {
           "damage_id": "DS-01",
-          "description": "Malicious or corrupted firmware is flashed onto the Gateway or Brake ECU, causing loss of vehicle control or bricking the ECU.",
+          "description": "Loss of gateway or brake ECU function can prevent emergency braking when needed. A resulting collision can cause serious injury or death. Loss of ECU function can also prevent vehicle use.",
           "expected_sfop_impact": {
             "Safety": "Severe",
             "Financial": "Major",

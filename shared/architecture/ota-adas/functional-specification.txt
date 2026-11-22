@@ -38,8 +38,10 @@ System Boundary:
   in-vehicle ECUs via the Central Gateway.
 
 - Involved Components & Interfaces:
-  COMP-CLOUD -> [CONN-01: HTTPS/TLS 1.2] -> COMP-TCU -> [CONN-03: DoIP/TCP 13400] 
-  -> COMP-CGW -> [CONN-04: UDS on CAN (ISO 15765-2)] -> COMP-EBCM.
+  Cellular download: COMP-CLOUD -> [CONN-01: HTTPS/TLS 1.2] -> COMP-TCU.
+  Gateway update: COMP-TCU -> [CONN-03: DoIP] -> COMP-CGW.
+  Brake ECU update: COMP-TCU -> [CONN-03: DoIP] -> COMP-CGW
+    -> [CONN-04: UDS on CAN] -> COMP-EBCM.
 
 - Functional Behavior & Data Flow:
   1. Connection Initiation: The TCU's OTA agent (`ota_agent_daemon` v1.1.0) 
@@ -50,13 +52,17 @@ System Boundary:
   3. Diagnostic Routing: `ota_agent_daemon` initiates a Diagnostics over IP 
      (DoIP, ISO 13400) session over 100BASE-T1 Ethernet (CONN-03, TCP port 13400) 
      to the Central Gateway's `doip_uds_router` (v2.0.1).
-  4. ECU Flashing: The Central Gateway translates DoIP frames into UDS on CAN 
-     (ISO 14229 / ISO 15765-2) frames over the Safety CAN-FD bus (CONN-04) to 
-     unlock and reprogram the target ECU (COMP-CGW or COMP-EBCM).
+  4. Target programming: For a gateway update, the transfer ends at COMP-CGW
+     for local programming. For a brake ECU update, COMP-CGW forwards the
+     transfer over CONN-04 to COMP-EBCM for programming.
+  5. Image activation: The target ECU (COMP-CGW or COMP-EBCM) checks that the
+     image is complete, is intended for that ECU, and has a valid signature
+     from a trusted firmware signer. If any check fails, the target ECU
+     rejects activation of the candidate image.
 
 - Current Security & Operational Parameters (As-Built Baseline):
   * `ota_agent_daemon` executes with root privileges (`runs_as_root: true`).
-  * Cryptographic signature verification on `/tmp/ota_update.bin` is disabled 
+  * The TCU OTA agent forwards the staged image without checking its signature
     (`verify_firmware_signature: false`).
   * UDS SecurityAccess (Service 0x27) uses a static, hardcoded seed/key pair 
     (`0xDEADBEEF`).
@@ -67,9 +73,10 @@ System Boundary:
 - Associated Cybersecurity Goals & Damage Scenarios:
   * Protected Asset: ASSET-01 (OTA Firmware Binary Image)
   * Security Properties: Integrity, Authenticity
-  * Damage Scenario (DS-01): Malicious or corrupted firmware flashed onto the 
-    Gateway or Brake ECU leads to loss of vehicle control or ECU bricking 
-    (Safety: Severe, Financial: Major, Operational: Severe, Privacy: Negligible).
+  * Damage Scenario (DS-01): Loss of gateway or brake ECU function can prevent
+    emergency braking when needed. A resulting collision can cause serious
+    injury or death. Loss of ECU function can also prevent vehicle use.
+    Impact — Safety: Severe, Financial: Major, Operational: Severe, Privacy: Negligible.
 
 
 2.2. FUNC-02: Remote Diagnostics & Telemetry
