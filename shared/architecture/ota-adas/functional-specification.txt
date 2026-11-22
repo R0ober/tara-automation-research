@@ -26,6 +26,8 @@ System Boundary:
   Control Module (COMP-EBCM).
 - External Actor: OEM OTA & Telemetry Cloud Backend (COMP-CLOUD) residing in 
   the Untrusted External trust zone.
+- The in-vehicle ADAS controller (COMP-ADAS) is outside the item boundary.
+  It supplies the AEB request to COMP-CGW over CONN-05.
 
 
 2. FUNCTIONAL SPECIFICATIONS
@@ -64,11 +66,12 @@ System Boundary:
   * `ota_agent_daemon` executes with root privileges (`runs_as_root: true`).
   * The TCU OTA agent forwards the staged image without checking its signature
     (`verify_firmware_signature: false`).
-  * UDS SecurityAccess (Service 0x27) uses a static, hardcoded seed/key pair 
-    (`0xDEADBEEF`).
+  * For its own firmware, COMP-CGW accepts a programming request only after
+    it verifies the fixed UDS SecurityAccess credential held by the TCU OTA agent.
   * DoIP routing on COMP-CGW does not enforce VLAN isolation or UDS 0x27 
     authentication prior to forwarding frames to `INT-CAN-SAFETY`.
-  * Flash programming on COMP-EBCM is unlocked (`uds_flash_programming_locked: false`).
+  * COMP-EBCM accepts a forwarded programming request without checking a
+    programming credential (`uds_flash_programming_locked: false`).
 
 - Associated Cybersecurity Goals & Damage Scenarios:
   * Protected Asset: ASSET-01 (OTA Firmware Binary Image)
@@ -115,19 +118,22 @@ System Boundary:
 2.3. FUNC-03: Autonomous Emergency Braking (AEB) Request
 --------------------------------------------------------
 - Objective:
-  Transmit real-time deceleration torque commands over the safety-critical 
-  CAN-FD bus to actuate the hydraulic braking system.
+  Relay the requested deceleration from the ADAS controller to the brake ECU.
 
 - Involved Components & Interfaces:
-  COMP-CGW -> [CONN-04: Chassis & Safety CAN-FD Bus] -> COMP-EBCM.
+  COMP-ADAS -> [CONN-05: ADAS request input] -> COMP-CGW
+    -> [CONN-04: Chassis & Safety CAN-FD Bus] -> COMP-EBCM.
 
 - Functional Behavior & Data Flow:
-  1. Command Transmission: Deceleration requests are transmitted over the 
-     Safety CAN-FD bus (CONN-04) using CAN ID `0x120` (ASSET-02).
-  2. Brake Actuation: The Electronic Brake Control Module (COMP-EBCM, NXP S32K3 
+  1. Request generation: COMP-ADAS uses forward-sensor information to decide
+     when automatic emergency braking is needed. It sends the requested
+     deceleration (ASSET-02) to COMP-CGW over CONN-05.
+  2. Request relay: COMP-CGW transmits the requested deceleration on CONN-04
+     using CAN ID `0x120`.
+  3. Brake Actuation: The Electronic Brake Control Module (COMP-EBCM, NXP S32K3
      running FreeRTOS v10.4.1) receives CAN ID `0x120` via the 
      `brake_torque_controller` task (v3.4.0) and actuates the hydraulic brake 
-     valves accordingly.
+     valves in response. Achieved deceleration depends on brake and road conditions.
 
 - Current Security & Operational Parameters (As-Built Baseline):
   * Central Gateway firewall rules permit unrestricted traffic from COMP-TCU 
@@ -136,7 +142,7 @@ System Boundary:
     (MAC) are disabled on CONN-04 and COMP-EBCM (`secoc_mac_verification: false`).
 
 - Associated Cybersecurity Goals & Damage Scenarios:
-  * Protected Asset: ASSET-02 (AEB Deceleration CAN Command - CAN ID 0x120)
+  * Protected Asset: ASSET-02 (AEB Deceleration Request)
   * Security Properties: Integrity, Authenticity, Availability
   * Damage Scenario (DS-02): Spoofed braking commands trigger unintended 
     emergency braking at highway speeds, or DoS bus flooding prevents legitimate 
@@ -149,6 +155,7 @@ System Boundary:
 Component ID | Component Name                  | Trust Zone              | Functions
 -------------|---------------------------------|-------------------------|----------------
 COMP-CLOUD   | OEM OTA & Telemetry Cloud       | Untrusted_External      | FUNC-01, FUNC-02
+COMP-ADAS    | ADAS Controller                 | ADAS_Domain             | FUNC-03
 COMP-TCU     | Telematics Control Unit (TCU)   | DMZ_Connectivity        | FUNC-01, FUNC-02
 COMP-CGW     | Central Gateway ECU (CGW)       | Internal_Backbone       | FUNC-01, FUNC-03
 COMP-EBCM    | Electronic Brake Control (EBCM) | Safety_Critical_Chassis | FUNC-01, FUNC-03

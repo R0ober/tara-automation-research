@@ -3,7 +3,7 @@
     "item_id": "AUTO-OTA-ADAS-01",
     "name": "Telematics, OTA Update & ADAS Actuation Subsystem",
     "standard_reference": "ISO/SAE 21434:2021",
-    "system_boundary": "Includes external wireless interfaces on the Telematics Control Unit (TCU), internal Ethernet routing through the Central Gateway (CGW), and CAN-FD actuation commands to the Electronic Brake Control Module (EBCM).",
+    "system_boundary": "Includes external wireless interfaces on the Telematics Control Unit (TCU), internal Ethernet routing through the Central Gateway (CGW), and CAN-FD actuation commands to the Electronic Brake Control Module (EBCM). The in-vehicle ADAS controller is outside the item boundary and supplies AEB requests to the CGW.",
     "functions": [
       {
         "function_id": "FUNC-01",
@@ -18,7 +18,7 @@
       {
         "function_id": "FUNC-03",
         "name": "Autonomous Emergency Braking (AEB) Request",
-        "description": "Transmits deceleration torque requests over the Safety CAN-FD bus to the brake controller."
+        "description": "COMP-ADAS determines the requested deceleration and sends it to COMP-CGW over CONN-05. COMP-CGW relays the request over CONN-04 to COMP-EBCM, which controls hydraulic braking."
       }
     ]
   },
@@ -41,6 +41,14 @@
         }
       ],
       "interfaces": ["INT-CELLULAR-WAN"]
+    },
+    {
+      "component_id": "COMP-ADAS",
+      "name": "Advanced Driver Assistance Systems (ADAS) Controller",
+      "type": "External_In_Vehicle_ECU",
+      "trust_zone": "ADAS_Domain",
+      "role": "Uses forward-sensor information to decide when automatic emergency braking is needed and request a deceleration.",
+      "interfaces": ["INT-ADAS-REQUEST"]
     },
     {
       "component_id": "COMP-TCU",
@@ -108,13 +116,17 @@
           }
         }
       ],
+      "firmware_programming": {
+        "credential_check_required": true,
+        "authorization_rule": "For its own firmware, COMP-CGW accepts the programming request only after it verifies the fixed programming credential held by the TCU OTA agent."
+      },
       "firmware_activation": {
         "complete_image_required": true,
         "target_identity_match_required": true,
         "trusted_firmware_signature_required": true,
         "on_check_failure": "Reject activation of the candidate image"
       },
-      "interfaces": ["INT-ETH-INTERNAL", "INT-CAN-SAFETY"]
+      "interfaces": ["INT-ETH-INTERNAL", "INT-CAN-SAFETY", "INT-ADAS-REQUEST"]
     },
     {
       "component_id": "COMP-EBCM",
@@ -139,6 +151,9 @@
           }
         }
       ],
+      "firmware_programming": {
+        "credential_check_required": false
+      },
       "firmware_activation": {
         "complete_image_required": true,
         "target_identity_match_required": true,
@@ -188,6 +203,13 @@
       "protocol": "Raw CAN Frames (ID 0x120) & UDS on CAN (ISO 15765-2)",
       "encrypted": false,
       "authenticated": "None (AUTOSAR SecOC disabled)"
+    },
+    {
+      "connection_id": "CONN-05",
+      "name": "ADAS deceleration request input",
+      "source_component": "COMP-ADAS",
+      "target_component": "COMP-CGW",
+      "interface_id": "INT-ADAS-REQUEST"
     }
   ],
   "assets": [
@@ -212,9 +234,9 @@
     },
     {
       "asset_id": "ASSET-02",
-      "name": "AEB Deceleration CAN Command (CAN ID 0x120)",
+      "name": "AEB Deceleration Request",
       "parent_component": "COMP-EBCM",
-      "associated_connections": ["CONN-04"],
+      "associated_connections": ["CONN-05", "CONN-04"],
       "cybersecurity_properties": ["Integrity", "Authenticity", "Availability"],
       "damage_scenarios": [
         {
