@@ -12,6 +12,7 @@ dependencies = []
 [project.scripts]
 tara-maintenance = "tara_maintenance.cli:entrypoint"
 tara-maintenance-evaluate = "tara_maintenance.evaluate:entrypoint"
+tara-maintenance-nvd = "tara_maintenance.nvd:entrypoint"
 
 [tool.setuptools.packages.find]
 where = ["src"]

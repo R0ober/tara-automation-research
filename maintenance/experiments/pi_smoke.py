@@ -1,4 +1,4 @@
-"""Run and validate the DeepSeek/Pi synthetic maintenance smoke experiment."""
+"""Run and validate DeepSeek/Pi synthetic and NVD maintenance experiments."""
 
 from __future__ import annotations
 
@@ -7,12 +7,13 @@ import json
 import re
 import subprocess
 import sys
+from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Sequence
+
+from tara_maintenance.baseline import JsonObject
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT_DIRECTORY = ROOT / "output" / "pi-example-experiment"
-REPORT_PATH = ROOT / "output" / "example-pi-report.json"
 EXPECTED_ARGUMENTS = {
     "config_path": "config/maintenance.example.json",
     "changes_path": "examples/changes.json",
@@ -26,7 +27,54 @@ EXPECTED_SUMMARY = {
 }
 
 
-def validate_example_run(events: list[dict[str, Any]], report: dict[str, Any]) -> list[str]:
+@dataclass(frozen=True)
+class Scenario:
+    prompt: str
+    arguments: JsonObject
+    expected_summary: JsonObject
+    output_directory: Path
+    report_path: Path
+    synthetic: bool
+
+
+SCENARIOS = {
+    "synthetic": Scenario(
+        prompt="/tara-maintenance-example",
+        arguments=EXPECTED_ARGUMENTS,
+        expected_summary=EXPECTED_SUMMARY,
+        output_directory=ROOT / "output" / "pi-example-experiment",
+        report_path=ROOT / "output" / "example-pi-report.json",
+        synthetic=True,
+    ),
+    "nvd": Scenario(
+        prompt="/tara-maintenance-nvd-example",
+        arguments={
+            "config_path": "config/maintenance.example.json",
+            "changes_path": "experiments/datasets/nvd-bbw/changes.json",
+            "output_path": "output/nvd-pi-report.json",
+        },
+        expected_summary={
+            "total": 4,
+            "review_required": 3,
+            "no_review": 1,
+            "unresolved": 0,
+        },
+        output_directory=ROOT / "output" / "pi-nvd-experiment",
+        report_path=ROOT / "output" / "nvd-pi-report.json",
+        synthetic=False,
+    ),
+}
+
+
+def validate_example_run(events: list[JsonObject], report: JsonObject) -> list[str]:
+    """Validate the original synthetic scenario through the generic gate."""
+
+    return validate_run(events, report, SCENARIOS["synthetic"])
+
+
+def validate_run(
+    events: list[JsonObject], report: JsonObject, scenario: Scenario
+) -> list[str]:
     """Return consumer-visible failures found in one Pi event stream."""
 
     errors = []
@@ -43,12 +91,14 @@ def validate_example_run(events: list[dict[str, Any]], report: dict[str, Any]) -
         and event.get("toolName") == "tara_maintenance"
     ]
     if len(starts) != 1 or len(ends) != 1:
-        return [f"Expected exactly one complete tool call, got {len(starts)} starts and {len(ends)} ends"]
-    if starts[0].get("args") != EXPECTED_ARGUMENTS:
+        return [
+            f"Expected exactly one complete tool call, got {len(starts)} starts and {len(ends)} ends"
+        ]
+    if starts[0].get("args") != scenario.arguments:
         errors.append(f"Incorrect tool arguments: {starts[0].get('args')}")
     if ends[0].get("result", {}).get("isError"):
         errors.append("The maintenance tool returned an error")
-    if report.get("summary") != EXPECTED_SUMMARY:
+    if report.get("summary") != scenario.expected_summary:
         errors.append(f"Incorrect report summary: {report.get('summary')}")
 
     final_text = _final_assistant_text(events)
@@ -63,10 +113,9 @@ def validate_example_run(events: list[dict[str, Any]], report: dict[str, Any]) -
         if not row:
             errors.append(f"Final response omitted the row for {change_id}")
             continue
-        for field in ("decision",):
-            value = recommendation[field]
-            if value not in row:
-                errors.append(f"Final response row for {change_id} omitted {field} {value}")
+        decision = recommendation["decision"]
+        if decision not in row:
+            errors.append(f"Final response row for {change_id} omitted decision {decision}")
         subject = recommendation.get("vulnerability_id") or recommendation.get("component_id")
         if subject and subject not in row:
             errors.append(f"Final response row for {change_id} omitted subject {subject}")
@@ -74,15 +123,16 @@ def validate_example_run(events: list[dict[str, Any]], report: dict[str, Any]) -
         if (
             not evidence.get("matched_software")
             and "matched by exact CPE" in row
-            and recommendation["decision"] != "unresolved"
+            and decision != "unresolved"
         ):
             errors.append(f"Final response row for {change_id} makes a false CPE matching claim")
     if re.search(r"CVE-\d{4}-\d{4,}\s*\?", final_text, re.IGNORECASE):
         errors.append("Final response contains a questioned CVE identifier")
     report_cpes = {
-        software.get("cpe")
+        item.get("cpe")
         for recommendation in report.get("recommendations", [])
-        for software in recommendation.get("evidence", {}).get("matched_software", [])
+        for field in ("matched_software", "matched_cpe_rules", "excluded_software")
+        for item in recommendation.get("evidence", {}).get(field, [])
     }
     for cpe in re.findall(r"cpe:2\.3:[^\s`|]+", final_text):
         if cpe not in report_cpes:
@@ -93,7 +143,7 @@ def validate_example_run(events: list[dict[str, Any]], report: dict[str, Any]) -
     return errors
 
 
-def _final_assistant_text(events: list[dict[str, Any]]) -> str:
+def _final_assistant_text(events: list[JsonObject]) -> str:
     for event in reversed(events):
         if (
             event.get("type") == "message_end"
@@ -108,15 +158,16 @@ def _final_assistant_text(events: list[dict[str, Any]]) -> str:
     return ""
 
 
-def run_experiment(runs: int) -> dict[str, Any]:
+def run_experiment(runs: int, scenario_name: str = "synthetic") -> JsonObject:
     """Execute independent Pi sessions and persist only ignored local outputs."""
 
-    OUTPUT_DIRECTORY.mkdir(parents=True, exist_ok=True)
+    scenario = SCENARIOS[scenario_name]
+    scenario.output_directory.mkdir(parents=True, exist_ok=True)
     run_results = []
     for run_number in range(1, runs + 1):
-        events_path = OUTPUT_DIRECTORY / f"run-{run_number}-events.jsonl"
-        response_path = OUTPUT_DIRECTORY / f"run-{run_number}-response.md"
-        error_path = OUTPUT_DIRECTORY / f"run-{run_number}-stderr.log"
+        events_path = scenario.output_directory / f"run-{run_number}-events.jsonl"
+        response_path = scenario.output_directory / f"run-{run_number}-response.md"
+        error_path = scenario.output_directory / f"run-{run_number}-stderr.log"
         with events_path.open("w", encoding="utf-8") as event_stream, error_path.open(
             "w", encoding="utf-8"
         ) as error_stream:
@@ -128,7 +179,7 @@ def run_experiment(runs: int) -> dict[str, Any]:
                     "--no-session",
                     "--tools",
                     "tara_maintenance",
-                    "/tara-maintenance-example",
+                    scenario.prompt,
                 ],
                 cwd=ROOT,
                 stdout=event_stream,
@@ -146,8 +197,8 @@ def run_experiment(runs: int) -> dict[str, Any]:
             for line in events_path.read_text(encoding="utf-8").splitlines()
             if line.strip()
         ]
-        report = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
-        failures = validate_example_run(events, report)
+        report = json.loads(scenario.report_path.read_text(encoding="utf-8"))
+        failures = validate_run(events, report, scenario)
         final_text = _final_assistant_text(events)
         response_path.write_text(final_text + "\n", encoding="utf-8")
         run_results.append(
@@ -161,8 +212,8 @@ def run_experiment(runs: int) -> dict[str, Any]:
         )
 
     return {
-        "experiment": "deepseek-pi-synthetic-maintenance",
-        "synthetic": True,
+        "experiment": f"deepseek-pi-{scenario_name}-maintenance",
+        "synthetic": scenario.synthetic,
         "runs": runs,
         "passed_runs": sum(item["passed"] for item in run_results),
         "all_passed": all(item["passed"] for item in run_results),
@@ -172,16 +223,17 @@ def run_experiment(runs: int) -> dict[str, Any]:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--scenario", choices=sorted(SCENARIOS), default="synthetic")
     parser.add_argument("--runs", type=int, default=1, help="Number of independent Pi sessions")
     args = parser.parse_args(argv)
     if args.runs < 1:
         parser.error("--runs must be at least 1")
     try:
-        summary = run_experiment(args.runs)
+        summary = run_experiment(args.runs, args.scenario)
     except (OSError, RuntimeError, subprocess.TimeoutExpired, json.JSONDecodeError) as exc:
         print(f"Pi experiment failed: {exc}", file=sys.stderr)
         return 1
-    summary_path = OUTPUT_DIRECTORY / "summary.json"
+    summary_path = SCENARIOS[args.scenario].output_directory / "summary.json"
     summary_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(summary, indent=2))
     return 0 if summary["all_passed"] else 1

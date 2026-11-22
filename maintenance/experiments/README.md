@@ -2,11 +2,12 @@
 
 ## Scope and data classification
 
-The tracked experiments are synthetic smoke benchmarks for the BBW reference
-case. They are not real vulnerability intelligence, an independent benchmark,
-or evidence of real-world detection performance. Local model events, generated
+The tracked experiments include synthetic smoke cases and a small set of real
+NVD snapshots for the BBW reference case. Neither is an independent benchmark
+or evidence of broad real-world performance. Local model events, generated
 reports, credentials, and working data remain under ignored `output/`, `data/`,
-and `.env` paths.
+and `.env` paths. Selected raw NVD records are tracked with their public-domain
+provenance; see the NVD notice below.
 
 Reference artifacts:
 
@@ -52,6 +53,56 @@ Observed result on 2026-11-20 with Python 3.14.10:
 
 These values demonstrate agreement with the rule-derived labels only.
 
+## Real NVD snapshot experiment
+
+`datasets/nvd-bbw/` contains raw NVD API 2.0 responses for CVE-2020-12351,
+CVE-2022-0847, CVE-2021-34434, and CVE-2020-22284, plus `manifest.json` source
+URLs, timestamps, and SHA-256 hashes. `changes.json` is the converted input and
+`labels.json` records this iteration's manual review. Labels are not
+independent.
+
+**NVD notice:** This product uses data from the NVD API but is not endorsed or
+certified by the NVD. NIST publications are in the public domain under Title
+17 U.S.C.
+
+Refresh selected snapshots (network access, sequential requests, six-second
+default delay):
+
+```bash
+.venv/bin/python experiments/nvd_fetch.py \
+  --output-directory experiments/datasets/nvd-bbw \
+  CVE-2020-12351 CVE-2022-0847 CVE-2021-34434 CVE-2020-22284
+```
+
+Convert and evaluate entirely offline:
+
+```bash
+.venv/bin/tara-maintenance-nvd \
+  experiments/datasets/nvd-bbw/CVE-2020-12351.json \
+  experiments/datasets/nvd-bbw/CVE-2022-0847.json \
+  experiments/datasets/nvd-bbw/CVE-2021-34434.json \
+  experiments/datasets/nvd-bbw/CVE-2020-22284.json \
+  --output experiments/datasets/nvd-bbw/changes.json
+
+.venv/bin/tara-maintenance-evaluate \
+  --config config/maintenance.example.json \
+  --dataset experiments/datasets/nvd-bbw/labels.json \
+  --changes experiments/datasets/nvd-bbw/changes.json \
+  --output output/nvd-evaluation.json
+```
+
+The initial exact-CPE-only run produced 1 `review_required` and 3 `unresolved`.
+After version-aware matching and existing-TARA conflict handling, the observed
+result on 2026-11-22 is:
+
+| Total | Correct | Accuracy | Detection recall | False-positive rate | Evidence support | Unresolved |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 4 | 4 | 1.0 | 1.0 | 0.0 | 1.0 | 0 |
+
+CVE-2020-12351 requires review because its TARA references conflict with the
+current same-product version exclusion. This is not a claim that the whole item
+is unaffected.
+
 ## DeepSeek + Pi agent experiment
 
 Local `.env` configuration uses an explicit provider to avoid ambiguous model
@@ -64,21 +115,23 @@ export DEEPSEEK_API_KEY="local-secret-only"
 ```
 
 Never commit the real key. `scripts/pi.sh` loads these values and selects Pi
-1.5.2. Run independent synthetic sessions:
+1.5.2. Run independent synthetic or real-NVD sessions:
 
 ```bash
-.venv/bin/python experiments/pi_smoke.py --runs 3
+.venv/bin/python experiments/pi_smoke.py --scenario synthetic --runs 3
+.venv/bin/python experiments/pi_smoke.py --scenario nvd --runs 3
 ```
 
-The runner invokes `/tara-maintenance-example`, which must call the tool once
-with literal example paths. `/tara-maintenance` is a separate command for the
-actual ignored local change set. Generated event streams, responses, and the
-summary are written under ignored `output/pi-example-experiment/`.
+The scenarios invoke `/tara-maintenance-example` or
+`/tara-maintenance-nvd-example` with literal tracked paths.
+`/tara-maintenance` is a separate command for the actual ignored local change
+set. Generated event streams, responses, and summaries are written under
+ignored `output/pi-example-experiment/` or `output/pi-nvd-experiment/`.
 
 Agent quality gates check:
 
 - exactly one completed `tara_maintenance` execution with the required paths;
-- the expected 4/2/1/1 report summary;
+- the scenario-specific report summary;
 - one final-response row per change, with its own subject and decision;
 - no questioned/corrected CVE identifiers;
 - complete, supported CPE evidence and no false CPE-matching claims;
@@ -99,11 +152,15 @@ and failed invocations can be retried.
 | Unsupported truncation descriptions appeared | Return explicit report path and constrain wording | Truncation-claim gate |
 | CPE wildcards were omitted | Require complete CPE evidence | CPE-membership gate |
 | Component matching was described as CPE matching | Simplified `matched_by` and row-specific checks | False-CPE-claim gate |
+| NVD gate rejected valid wildcard range CPEs | Include matched and excluded rule evidence in the CPE allowlist | Range-CPE gate test |
 
 Final observed synthetic run on 2026-11-20: **3/3 sessions passed all gates**,
 with manual review of all three responses. The actual `/tara-maintenance`
 command also completed one model-driven tool call and reported the configured
 empty set without substituting example data.
+
+Final observed NVD run on 2026-11-22: **3/3 sessions passed all gates**, with
+manual review of all three responses.
 
 ## Remaining validity limits
 
@@ -111,7 +168,8 @@ empty set without substituting example data.
   stable model wording.
 - The labels and structural evidence checks are aligned with the implemented
   rules; independent analyst-labeled cases are still required.
-- No real feed ingestion, CPE range evaluation, new attack-chain reasoning, or
-  risk recalculation is evaluated here.
+- NVD ingestion and numeric CPE ranges are covered; Boolean NVD configuration
+  semantics, nonnumeric versions, new attack-chain reasoning, and risk
+  recalculation remain unevaluated.
 - Model responses remain explanatory views of the JSON report. The deterministic
   report is authoritative.

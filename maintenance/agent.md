@@ -35,14 +35,17 @@ Check Pi resource loading without a model:
 ./scripts/pi.sh --no-session --help
 ```
 
-With a valid model provider, run the synthetic agent experiment:
+With a valid model provider, run both agent experiments:
 
 ```bash
-.venv/bin/python experiments/pi_smoke.py --runs 3
+.venv/bin/python experiments/pi_smoke.py --scenario synthetic --runs 3
+.venv/bin/python experiments/pi_smoke.py --scenario nvd --runs 3
 ```
 
-Use `/tara-maintenance-example` for synthetic data and `/tara-maintenance` for
-the ignored local change set. Do not pass example paths to the actual command.
+Use `/tara-maintenance-example` for synthetic data,
+`/tara-maintenance-nvd-example` for tracked real NVD snapshots, and
+`/tara-maintenance` for the ignored local change set. Do not pass example paths
+to the actual command.
 
 ## Structure
 
@@ -56,11 +59,15 @@ the ignored local change set. Do not pass example paths to the actual command.
 - `src/tara_maintenance/cli.py`: configuration precedence, argument parsing,
   JSON rendering, and exit behavior.
 - `src/tara_maintenance/evaluate.py`: labeled decision and evidence metrics.
+- `src/tara_maintenance/cpe.py`: CPE product and numeric range comparisons.
+- `src/tara_maintenance/nvd.py`: offline NVD snapshot conversion.
 - `tests/test_baseline.py`: decision boundaries and shared-data integration.
 - `tests/test_cli.py`: real subprocess CLI behavior.
 - `tests/test_configuration.py`: config precedence and example/local separation.
 - `tests/test_pi_runner.mjs`: real Python execution through the Pi adapter.
 - `tests/test_pi_smoke.py`: tool arguments and final-response quality gates.
+- `tests/test_cpe.py`: numeric range and wildcard boundaries.
+- `tests/test_nvd.py`: real NVD snapshots, ranges, and conflict decisions.
 - `docs/decisions/`: meaningful architectural decisions.
 - `README.md`: public input/output contract and operating instructions.
 - `CHANGELOG.md`: user-visible changes.
@@ -91,6 +98,10 @@ the ignored local change set. Do not pass example paths to the actual command.
   Set both provider and model to avoid ambiguous model resolution.
 - Run `experiments/pi_smoke.py` after changing Pi prompts or invocation guards;
   inspect final responses manually as well as relying on automatic gates.
+- Preserve raw NVD snapshots, source URLs, hashes, and the NVD non-endorsement
+  notice. Use offline snapshots in tests; do not require network access.
+- Review `ROADMAP.md` before expanding applicability, NVD Boolean semantics,
+  incremental feeds, or OpenCTI integration.
 
 ## Change checklist
 

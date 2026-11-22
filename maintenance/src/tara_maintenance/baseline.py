@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator
 
+from .cpe import product_key, rule_matches_version
+
 JsonObject = dict[str, Any]
 CVE_PATTERN = re.compile(r"CVE-\d{4}-\d{4,}", re.IGNORECASE)
 
@@ -79,6 +81,7 @@ class MaintenanceBaseline:
 
         self._component_names: dict[str, str] = {}
         self._cpe_inventory: dict[str, list[JsonObject]] = defaultdict(list)
+        self._cpe_products: dict[tuple[str, str, str], list[JsonObject]] = defaultdict(list)
         self._component_scenarios: dict[str, set[str]] = defaultdict(set)
         self._component_attacks: dict[str, list[AttackReference]] = defaultdict(list)
         self._cve_attacks: dict[str, list[AttackReference]] = defaultdict(list)
@@ -158,16 +161,18 @@ class MaintenanceBaseline:
                 cpe = software.get("cpe")
                 if not isinstance(cpe, str) or not cpe:
                     continue
-                self._cpe_inventory[cpe].append(
-                    {
-                        "component_id": component_id,
-                        "kind": kind,
-                        "name": software.get("name"),
-                        "version": software.get("version")
-                        or software.get("kernel_version"),
-                        "cpe": cpe,
-                    }
-                )
+                inventory_entry = {
+                    "component_id": component_id,
+                    "kind": kind,
+                    "name": software.get("name"),
+                    "version": software.get("version")
+                    or software.get("kernel_version"),
+                    "cpe": cpe,
+                }
+                self._cpe_inventory[cpe].append(inventory_entry)
+                key = product_key(cpe)
+                if key:
+                    self._cpe_products[key].append(inventory_entry)
 
     def _index_tara(self) -> None:
         scenarios = self.tara.get("threat_scenarios_and_attack_trees", [])
@@ -223,13 +228,15 @@ class MaintenanceBaseline:
             normalized["cve_id"] = cve_id.strip().upper()
             components = self._string_list(change, "affected_components")
             cpes = self._string_list(change, "affected_cpes")
-            if not components and not cpes:
+            ranges = self._cpe_range_list(change)
+            if not components and not cpes and not ranges:
                 raise InputError(
                     f"Change {change['change_id']}: vulnerability requires "
-                    "affected_components or affected_cpes"
+                    "affected_components, affected_cpes, or affected_cpe_ranges"
                 )
             normalized["affected_components"] = components
             normalized["affected_cpes"] = cpes
+            normalized["affected_cpe_ranges"] = ranges
             return normalized
 
         if change_type == "component_change":
@@ -259,8 +266,34 @@ class MaintenanceBaseline:
             raise InputError(f"Change {change['change_id']}: {field} must be a string array")
         return [item.strip() for item in value]
 
+    @staticmethod
+    def _cpe_range_list(change: JsonObject) -> list[JsonObject]:
+        value = change.get("affected_cpe_ranges", [])
+        if not isinstance(value, list):
+            raise InputError(
+                f"Change {change['change_id']}: affected_cpe_ranges must be an array"
+            )
+        for rule in value:
+            if not isinstance(rule, dict) or not isinstance(rule.get("cpe"), str):
+                raise InputError(
+                    f"Change {change['change_id']}: each CPE range requires a cpe string"
+                )
+            for field in (
+                "version_start_including",
+                "version_end_including",
+                "version_start_excluding",
+                "version_end_excluding",
+            ):
+                if field in rule and not isinstance(rule[field], str):
+                    raise InputError(
+                        f"Change {change['change_id']}: {field} must be a string"
+                    )
+        return value
+
     def _evaluate_vulnerability(self, change: JsonObject) -> JsonObject:
-        matched_components, matched_software, unknown = self._match_vulnerability(change)
+        matched_components, matched_software, unknown, range_evidence = (
+            self._match_vulnerability(change)
+        )
         evidence = self._base_evidence(change)
         evidence["matched_components"] = [
             {
@@ -270,32 +303,46 @@ class MaintenanceBaseline:
             }
             for component_id, matched_by in sorted(matched_components.items())
         ]
-        evidence["matched_software"] = sorted(
-            matched_software,
-            key=lambda item: (item["component_id"], item["cpe"], item["kind"]),
-        )
+        evidence["matched_software"] = matched_software
+        evidence["matched_cpe_rules"] = range_evidence["matched"]
+        evidence["excluded_software"] = range_evidence["excluded"]
         evidence["unresolved_identifiers"] = unknown
         evidence["related_threat_scenarios"] = self._related_scenarios(matched_components)
         evidence["related_attack_steps"] = self._related_attacks(matched_components)
 
-        if not matched_components:
-            decision = "unresolved"
+        existing_references = self._deduplicate_references(
+            self._cve_attacks.get(change["cve_id"], [])
+        )
+        if existing_references:
+            evidence["existing_vulnerability_references"] = [
+                reference.as_dict() for reference in existing_references
+            ]
+
+        if existing_references and range_evidence["excluded"]:
+            decision = "review_required"
             rationale = (
-                "No affected component or exact CPE could be linked to the reference "
-                "architecture; applicability to the item is unknown."
+                f"{change['cve_id']} is referenced by the TARA, but current version-range "
+                "evidence excludes the installed software. Review the conflicting reference."
             )
-        elif change["cve_id"] in self._cve_attacks:
+        elif not matched_components:
+            if range_evidence["excluded"]:
+                decision = "no_review"
+                rationale = (
+                    "The installed same-product software version is outside all supplied "
+                    "vulnerable ranges; no matching affected component was found."
+                )
+            else:
+                decision = "unresolved"
+                rationale = (
+                    "No affected component or CPE rule could be linked to the reference "
+                    "architecture; applicability to the item is unknown."
+                )
+        elif existing_references:
             decision = "no_review"
             rationale = (
                 f"{change['cve_id']} is already referenced by the existing TARA; "
                 "the baseline does not reassess severity or exploitability updates."
             )
-            evidence["existing_vulnerability_references"] = [
-                reference.as_dict()
-                for reference in self._deduplicate_references(
-                    self._cve_attacks[change["cve_id"]]
-                )
-            ]
         else:
             decision = "review_required"
             rationale = (
@@ -314,31 +361,83 @@ class MaintenanceBaseline:
 
     def _match_vulnerability(
         self, change: JsonObject
-    ) -> tuple[dict[str, list[str]], list[JsonObject], JsonObject]:
+    ) -> tuple[dict[str, list[str]], list[JsonObject], JsonObject, JsonObject]:
         matched: dict[str, set[str]] = defaultdict(set)
         matched_software: list[JsonObject] = []
+        matched_rules: list[JsonObject] = []
+        excluded_software: list[JsonObject] = []
         unknown_components = [
             component_id
             for component_id in change["affected_components"]
             if component_id not in self._component_names
         ]
         unknown_cpes: list[str] = []
+        range_rules: dict[str, list[JsonObject]] = defaultdict(list)
+        for rule in change["affected_cpe_ranges"]:
+            range_rules[rule["cpe"]].append(rule)
 
         for component_id in change["affected_components"]:
             if component_id in self._component_names:
                 matched[component_id].add("affected_components")
         for cpe in change["affected_cpes"]:
-            inventory = self._cpe_inventory.get(cpe, [])
-            if not inventory:
-                unknown_cpes.append(cpe)
-            for software in inventory:
-                matched[software["component_id"]].add("affected_cpes")
-                matched_software.append(software)
+            exact_inventory = self._cpe_inventory.get(cpe, [])
+            if exact_inventory:
+                for software in exact_inventory:
+                    matched[software["component_id"]].add("affected_cpes")
+                    matched_software.append(software)
+                continue
 
+            candidates = self._cpe_products.get(product_key(cpe) or (), [])
+            if not candidates:
+                unknown_cpes.append(cpe)
+                continue
+            rules = range_rules.get(cpe) or [{"cpe": cpe}]
+            cpe_has_unknown = False
+            for software in candidates:
+                outcomes = [rule_matches_version(rule, software["cpe"]) for rule in rules]
+                positive_rules = [
+                    rule for rule, outcome in zip(rules, outcomes, strict=True) if outcome is True
+                ]
+                if positive_rules:
+                    matched[software["component_id"]].add("affected_cpe_ranges")
+                    matched_software.append(software)
+                    for rule in positive_rules:
+                        matched_rules.append(
+                            {
+                                **rule,
+                                "component_id": software["component_id"],
+                                "installed_version": software["version"],
+                            }
+                        )
+                elif any(outcome is None for outcome in outcomes):
+                    cpe_has_unknown = True
+                else:
+                    for rule in rules:
+                        excluded_software.append(
+                            {
+                                **rule,
+                                "component_id": software["component_id"],
+                                "software": software["name"],
+                                "installed_version": software["version"],
+                            }
+                        )
+            if cpe_has_unknown and not any(
+                item["cpe"] == cpe for item in matched_rules
+            ):
+                unknown_cpes.append(cpe)
+
+        unique_software = {
+            (item["component_id"], item["cpe"], item["kind"]): item
+            for item in matched_software
+        }
         return (
             {key: sorted(value) for key, value in matched.items()},
-            matched_software,
+            sorted(
+                unique_software.values(),
+                key=lambda item: (item["component_id"], item["cpe"], item["kind"]),
+            ),
             {"components": unknown_components, "cpes": unknown_cpes},
+            {"matched": matched_rules, "excluded": excluded_software},
         )
 
     def _evaluate_component_change(self, change: JsonObject) -> JsonObject:
@@ -401,7 +500,13 @@ class MaintenanceBaseline:
         source: JsonObject = {"name": change["source"]}
         if change.get("source_url"):
             source["url"] = change["source_url"]
-        return {"source": source}
+        for field in ("published", "last_modified", "vulnerability_status"):
+            if field in change:
+                source[field] = change[field]
+        evidence: JsonObject = {"source": source}
+        if "cisa" in change:
+            evidence["cisa"] = change["cisa"]
+        return evidence
 
     def _related_scenarios(self, components: dict[str, list[str]]) -> list[str]:
         scenarios: set[str] = set()

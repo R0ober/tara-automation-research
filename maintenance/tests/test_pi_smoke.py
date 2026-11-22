@@ -109,6 +109,16 @@ class PiSmokeValidationTests(unittest.TestCase):
 
         self.assertTrue(any("false CPE matching claim" in failure for failure in failures))
 
+    def test_wildcard_cpe_from_range_evidence_is_accepted(self) -> None:
+        wildcard = "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*"
+        self.report["recommendations"][0]["evidence"] = {
+            "matched_cpe_rules": [{"cpe": wildcard}],
+            "matched_software": [],
+        }
+        self.events[2]["message"]["content"][0]["text"] += f"; rule {wildcard}"
+
+        self.assertEqual(validate_example_run(self.events, self.report), [])
+
 
 if __name__ == "__main__":
     unittest.main()

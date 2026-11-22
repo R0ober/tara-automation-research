@@ -134,6 +134,21 @@ about real vulnerabilities. Its expected summary is:
 Invalid input produces a diagnostic on standard error and exit status 2. A
 report is written only after all inputs pass validation.
 
+## Open vulnerability data
+
+The project includes four real NVD CVE API 2.0 snapshots, provenance hashes,
+converted changes, and manually reviewed labels under `experiments/datasets/nvd-bbw/`.
+The NVD adapter preserves vulnerable CPEs, numeric version ranges, timestamps,
+descriptions, and available CISA fields.
+
+**NVD notice:** This product uses data from the NVD API but is not endorsed or
+certified by the NVD.
+
+Use `tara-maintenance-nvd` to convert offline snapshots. Fetching, evaluation,
+and DeepSeek/Pi commands are documented in [experiments/README.md](experiments/README.md).
+Known limitations and planned OpenCTI integration are tracked in
+[ROADMAP.md](ROADMAP.md).
+
 ## Input contract
 
 The TARA and architecture must describe the same non-empty
@@ -157,9 +172,13 @@ is optional.
 }
 ```
 
-`affected_components` and `affected_cpes` are optional string arrays, but at
-least one array must contain a value. CPE matching is exact and case-sensitive.
-The baseline does not infer applicability from `summary`.
+`affected_components` and `affected_cpes` are optional string arrays.
+`affected_cpe_ranges` optionally adds rules with `cpe`, optional
+`match_criteria_id`, and the four snake-case version bounds. At least one
+applicability identifier or range is required. Matching supports exact CPEs,
+part/vendor/product wildcard matching, and numeric/dotted version ranges.
+Nonnumeric comparisons remain unresolved. The baseline does not infer
+applicability from `summary`.
 
 ### Component change
 
@@ -185,7 +204,9 @@ field. Non-object differences use the field name `value`.
 | --- | --- | --- |
 | New CVE matches at least one known component | `review_required` | The item is affected and the TARA does not reference the CVE. |
 | Existing TARA CVE matches at least one known component | `no_review` | The baseline suppresses an already represented CVE. |
-| No supplied component ID or exact CPE matches the architecture | `unresolved` | Item applicability is unknown. |
+| Same-product installed version is outside all supplied vulnerable ranges | `no_review` | A new CVE has positive version-exclusion evidence. |
+| Existing TARA CVE conflicts with same-product version exclusion | `review_required` | Current evidence and the attack reference need analyst reconciliation. |
+| No supplied component ID or CPE rule matches the architecture | `unresolved` | Item applicability is unknown. |
 | Known component has different before/after states | `review_required` | Existing and missing attack chains may need review. |
 | Known component has identical before/after states | `no_review` | There is no effective state change. |
 | Changed component is absent from the architecture | `unresolved` | Its relationship to the item is unknown. |
@@ -204,10 +225,11 @@ The report contains:
 - `recommendations`: one entry per input change, in input order.
 
 Each recommendation includes `decision`, `rationale`, and `evidence`. Evidence
-can include the source, matched components/software, unresolved identifiers,
-related threat scenarios and attack steps, existing CVE references, and
-before/after component states. Output has no timestamp or random field, so
-identical inputs produce identical JSON.
+can include the source, matched components/software, matched range rules,
+same-product exclusions, unresolved identifiers, related threat scenarios and
+attack steps, existing CVE references, and before/after component states.
+Output has no timestamp or random field, so identical inputs produce identical
+JSON.
 
 ## Python API
 
@@ -287,19 +309,24 @@ configuration, and ignored result location with each experiment.
 
 ## Known limitations
 
-- Exact CPE matching does not process CPE ranges, wildcard semantics, or product
-  aliases.
+- CPE range matching supports numeric/dotted versions only; nonnumeric versions
+  and product aliases require further handling.
+- NVD configurations are flattened for extraction; nested AND/OR, negation, and
+  platform prerequisites are not yet evaluated as Boolean expressions.
 - Existing-CVE suppression ignores new severity, exploitability, patch, and
-  description information.
+  description information unless a version-applicability conflict is detected.
 - Any effective change to a known component is flagged; the baseline does not
   prove that risk changed.
 - New components and unmapped vulnerabilities remain unresolved until the
   architecture or mapping data is extended.
-- Natural-language threat intelligence and automatic NVD/CVE ingestion are not
-  implemented.
+- Incremental NVD synchronization, OpenCTI ingestion, and natural-language
+  threat-intelligence parsing are not implemented.
 - Recommendations are triage decisions, not updated risk ratings or proof that
   an attack is feasible.
 
-See [ADR 0001](docs/decisions/0001-deterministic-maintenance-baseline.md) for
-the rules and [ADR 0002](docs/decisions/0002-pi-extension-for-maintenance-agent.md)
-for the agent-interface rationale.
+See [ADR 0001](docs/decisions/0001-deterministic-maintenance-baseline.md),
+[ADR 0002](docs/decisions/0002-pi-extension-for-maintenance-agent.md), and
+[ADR 0003](docs/decisions/0003-nvd-version-aware-applicability.md) for the
+baseline, agent interface, and NVD applicability rationale.
+
+See [ROADMAP.md](ROADMAP.md) for prioritized follow-up work.

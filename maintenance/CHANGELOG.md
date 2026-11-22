@@ -32,6 +32,12 @@ version.
   recall, false-positive rate, unresolved counts, and structural evidence
   support metrics.
 - Repeatable DeepSeek/Pi experiment runner and response quality gates.
+- Four real NVD snapshots with public-domain provenance, SHA-256 manifest,
+  offline converter, converted changes, and manually reviewed labels.
+- CPE wildcard/product matching, numeric version ranges, matched-rule evidence,
+  unaffected-version handling, and existing-TARA conflict review.
+- Repeatable DeepSeek/Pi NVD scenario and roadmap for NVD Boolean semantics,
+  incremental updates, independent datasets, and OpenCTI integration.
 
 ### Changed
 

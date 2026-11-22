@@ -23,6 +23,9 @@ between these fields provide inspectable evidence and repeatable output. A
 separate `unresolved` decision prevents missing mappings from becoming false
 `no_review` decisions.
 
+Update: ADR 0003 extends exact CPE matching with wildcard products, numeric
+version ranges, and existing-TARA conflict review.
+
 ## Consequences
 
 The baseline requires affected component identifiers or exact CPE strings. It

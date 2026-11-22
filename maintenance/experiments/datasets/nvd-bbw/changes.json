@@ -1,0 +1,190 @@
+{
+  "changes": [
+    {
+      "change_id": "NVD-CVE-2020-12351",
+      "type": "vulnerability",
+      "cve_id": "CVE-2020-12351",
+      "affected_components": [],
+      "affected_cpes": [
+        "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:5.9.0:-:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:5.9.0:rc1:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:5.9.0:rc2:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:5.9.0:rc3:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:5.9.0:rc4:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:5.9.0:rc5:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:5.9.0:rc6:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:5.9.1:*:*:*:*:*:*:*"
+      ],
+      "affected_cpe_ranges": [
+        {
+          "cpe": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+          "match_criteria_id": "08773B20-01AF-4061-8951-B595A37CFB4B",
+          "version_start_including": "4.7.7",
+          "version_end_excluding": "4.9.240"
+        },
+        {
+          "cpe": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+          "match_criteria_id": "8E2D7A7E-D935-4817-8AE4-66DED8AA8A2D",
+          "version_start_including": "4.10",
+          "version_end_excluding": "4.14.202"
+        },
+        {
+          "cpe": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+          "match_criteria_id": "66F89D5B-1E6E-4A87-A6A1-A4B7C283657A",
+          "version_start_including": "4.15",
+          "version_end_excluding": "4.19.152"
+        },
+        {
+          "cpe": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+          "match_criteria_id": "AA6369D1-CCFF-4758-8837-FA53432ECB57",
+          "version_start_including": "4.20",
+          "version_end_excluding": "5.4.72"
+        },
+        {
+          "cpe": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+          "match_criteria_id": "24B20F22-E73D-4739-8952-F751BC0027A9",
+          "version_start_including": "5.5",
+          "version_end_excluding": "5.8.16"
+        }
+      ],
+      "source": "NVD",
+      "source_url": "https://nvd.nist.gov/vuln/detail/CVE-2020-12351",
+      "summary": "Improper input validation in BlueZ may allow an unauthenticated user to potentially enable escalation of privilege via adjacent access.",
+      "published": "2020-11-23T17:15:12.250",
+      "last_modified": "2026-06-17T02:51:40.773",
+      "vulnerability_status": "Modified"
+    },
+    {
+      "change_id": "NVD-CVE-2022-0847",
+      "type": "vulnerability",
+      "cve_id": "CVE-2022-0847",
+      "affected_components": [],
+      "affected_cpes": [
+        "cpe:2.3:a:ovirt:ovirt-engine:4.4.10.2:*:*:*:*:*:*:*",
+        "cpe:2.3:a:redhat:codeready_linux_builder:-:*:*:*:*:*:*:*",
+        "cpe:2.3:a:redhat:virtualization_host:4.0:*:*:*:*:*:*:*",
+        "cpe:2.3:o:fedoraproject:fedora:35:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:netapp:h300e_firmware:-:*:*:*:*:*:*:*",
+        "cpe:2.3:o:netapp:h300s_firmware:-:*:*:*:*:*:*:*",
+        "cpe:2.3:o:netapp:h410c_firmware:-:*:*:*:*:*:*:*",
+        "cpe:2.3:o:netapp:h410s_firmware:-:*:*:*:*:*:*:*",
+        "cpe:2.3:o:netapp:h500e_firmware:-:*:*:*:*:*:*:*",
+        "cpe:2.3:o:netapp:h500s_firmware:-:*:*:*:*:*:*:*",
+        "cpe:2.3:o:netapp:h700e_firmware:-:*:*:*:*:*:*:*",
+        "cpe:2.3:o:netapp:h700s_firmware:-:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux:8.0:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_eus:8.2:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_eus:8.4:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_for_ibm_z_systems:8.0:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_for_ibm_z_systems_eus:8.2:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_for_ibm_z_systems_eus:8.4:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_for_power_little_endian:8.0:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_for_power_little_endian_eus:8.2:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_for_power_little_endian_eus:8.4:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_for_real_time:8:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_for_real_time_for_nfv:8:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_for_real_time_for_nfv_tus:8.2:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_for_real_time_for_nfv_tus:8.4:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_for_real_time_tus:8.2:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_for_real_time_tus:8.4:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_server_aus:8.2:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_server_aus:8.4:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_server_for_power_little_endian_update_services_for_sap_solutions:8.1:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_server_for_power_little_endian_update_services_for_sap_solutions:8.2:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_server_for_power_little_endian_update_services_for_sap_solutions:8.4:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_server_tus:8.2:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_server_tus:8.4:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_server_update_services_for_sap_solutions:8.1:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_server_update_services_for_sap_solutions:8.2:*:*:*:*:*:*:*",
+        "cpe:2.3:o:redhat:enterprise_linux_server_update_services_for_sap_solutions:8.4:*:*:*:*:*:*:*",
+        "cpe:2.3:o:siemens:scalance_lpe9403_firmware:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:sonicwall:sma1000_firmware:*:*:*:*:*:*:*:*"
+      ],
+      "affected_cpe_ranges": [
+        {
+          "cpe": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+          "match_criteria_id": "22317905-77D0-46F0-A4F8-06B630002681",
+          "version_start_including": "5.8",
+          "version_end_excluding": "5.10.102"
+        },
+        {
+          "cpe": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+          "match_criteria_id": "B4CBC8B4-E0F5-4D9B-A622-8627B9D66B00",
+          "version_start_including": "5.15",
+          "version_end_excluding": "5.15.25"
+        },
+        {
+          "cpe": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+          "match_criteria_id": "0D327234-5D4A-43DC-A6DF-BCA0CEBEC039",
+          "version_start_including": "5.16",
+          "version_end_excluding": "5.16.11"
+        },
+        {
+          "cpe": "cpe:2.3:o:siemens:scalance_lpe9403_firmware:*:*:*:*:*:*:*:*",
+          "match_criteria_id": "9FC41AD4-69E5-48D8-8216-671F485C3C40",
+          "version_end_excluding": "2.0"
+        },
+        {
+          "cpe": "cpe:2.3:o:sonicwall:sma1000_firmware:*:*:*:*:*:*:*:*",
+          "match_criteria_id": "7F4BE1A7-14AA-4E0F-AA13-46D3B9D48F2F",
+          "version_end_including": "12.4.2-02044"
+        }
+      ],
+      "source": "NVD",
+      "source_url": "https://nvd.nist.gov/vuln/detail/CVE-2022-0847",
+      "summary": "A flaw was found in the way the \"flags\" member of the new pipe buffer structure was lacking proper initialization in copy_page_to_iter_pipe and push_pipe functions in the Linux kernel and could thus contain stale values. An unprivileged local user could use this flaw to write to pages in the page cache backed by read only files and as such escalate their privileges on the system.",
+      "published": "2022-03-10T17:44:57.283",
+      "last_modified": "2026-06-17T04:21:21.750",
+      "vulnerability_status": "Analyzed",
+      "cisa": {
+        "exploit_added": "2022-04-25",
+        "action_due": "2022-05-16",
+        "required_action": "Apply updates per vendor instructions.",
+        "vulnerability_name": "Linux Kernel Privilege Escalation Vulnerability"
+      }
+    },
+    {
+      "change_id": "NVD-CVE-2021-34434",
+      "type": "vulnerability",
+      "cve_id": "CVE-2021-34434",
+      "affected_components": [],
+      "affected_cpes": [
+        "cpe:2.3:a:eclipse:mosquitto:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:fedoraproject:fedora:34:*:*:*:*:*:*:*",
+        "cpe:2.3:o:fedoraproject:fedora:35:*:*:*:*:*:*:*"
+      ],
+      "affected_cpe_ranges": [
+        {
+          "cpe": "cpe:2.3:a:eclipse:mosquitto:*:*:*:*:*:*:*:*",
+          "match_criteria_id": "07853BAC-AF86-4FF4-B0DB-FC0B91EE1E28",
+          "version_start_including": "2.0.0",
+          "version_end_including": "2.0.11"
+        }
+      ],
+      "source": "NVD",
+      "source_url": "https://nvd.nist.gov/vuln/detail/CVE-2021-34434",
+      "summary": "In Eclipse Mosquitto versions 2.0 to 2.0.11, when using the dynamic security plugin, if the ability for a client to make subscriptions on a topic is revoked when a durable client is offline, then existing subscriptions for that client are not revoked.",
+      "published": "2021-08-30T20:15:07.363",
+      "last_modified": "2026-06-17T03:55:51.627",
+      "vulnerability_status": "Modified"
+    },
+    {
+      "change_id": "NVD-CVE-2020-22284",
+      "type": "vulnerability",
+      "cve_id": "CVE-2020-22284",
+      "affected_components": [],
+      "affected_cpes": [
+        "cpe:2.3:a:lwip_project:lwip:2.1.2:*:*:*:*:*:*:*"
+      ],
+      "affected_cpe_ranges": [],
+      "source": "NVD",
+      "source_url": "https://nvd.nist.gov/vuln/detail/CVE-2020-22284",
+      "summary": "A buffer overflow vulnerability in the zepif_linkoutput() function of Free Software Foundation lwIP git head version and version 2.1.2 allows attackers to access sensitive information via a crafted 6LoWPAN packet.",
+      "published": "2021-07-22T20:15:07.960",
+      "last_modified": "2026-06-17T03:04:13.497",
+      "vulnerability_status": "Modified"
+    }
+  ]
+}

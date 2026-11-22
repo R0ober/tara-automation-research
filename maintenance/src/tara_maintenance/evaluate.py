@@ -15,20 +15,41 @@ DECISIONS = {"review_required", "no_review", "unresolved"}
 
 
 def evaluate_dataset(
-    tara: dict[str, Any], architecture: dict[str, Any], dataset: dict[str, Any]
+    tara: dict[str, Any],
+    architecture: dict[str, Any],
+    dataset: dict[str, Any],
+    changes_document: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Evaluate decision and structural-evidence metrics for a labeled dataset."""
 
     cases = dataset.get("cases")
     if not isinstance(cases, list) or not cases:
         raise InputError("Evaluation dataset requires a non-empty 'cases' array")
-    changes = []
+    external_changes = changes_document.get("changes") if changes_document else None
+    if external_changes is not None and not isinstance(external_changes, list):
+        raise InputError("External evaluation changes require a 'changes' array")
+    by_id = {
+        change.get("change_id"): change
+        for change in external_changes or []
+        if isinstance(change, dict)
+    }
+    normalized_cases = []
     for index, case in enumerate(cases):
-        if not isinstance(case, dict) or not isinstance(case.get("change"), dict):
-            raise InputError(f"Evaluation case {index} requires a change object")
+        if not isinstance(case, dict):
+            raise InputError(f"Evaluation case {index} must be an object")
         if case.get("expected_decision") not in DECISIONS:
             raise InputError(f"Evaluation case {index} has an invalid expected_decision")
-        changes.append(case["change"])
+        if external_changes is None:
+            if not isinstance(case.get("change"), dict):
+                raise InputError(f"Evaluation case {index} requires a change object")
+            normalized_cases.append(case)
+            continue
+        change_id = case.get("change_id")
+        if change_id not in by_id:
+            raise InputError(f"Evaluation case {index} references an unknown change_id")
+        normalized_cases.append({**case, "change": by_id[change_id]})
+    cases = normalized_cases
+    changes = [case["change"] for case in cases]
 
     report = evaluate_changes(tara, architecture, {"changes": changes})
     predictions = {item["change_id"]: item for item in report["recommendations"]}
@@ -110,9 +131,12 @@ def _evidence_is_supported(
         if matched != known_expected:
             return False
         if decision == "review_required":
-            return bool(matched)
+            return bool(matched or evidence.get("excluded_software"))
         if decision == "no_review":
-            return bool(evidence.get("existing_vulnerability_references"))
+            return bool(
+                evidence.get("existing_vulnerability_references")
+                or evidence.get("excluded_software")
+            )
         return not matched and bool(unresolved.get("components") or unresolved.get("cpes"))
 
     if set(expected_components) - {prediction["component_id"]}:
@@ -130,6 +154,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="tara-maintenance-evaluate")
     parser.add_argument("--config", help="Maintenance configuration JSON")
     parser.add_argument("--dataset", required=True, help="Labeled evaluation dataset JSON")
+    parser.add_argument("--changes", help="External converted changes referenced by change_id")
     parser.add_argument("--output", help="Write metrics JSON instead of using standard output")
     args = parser.parse_args(argv)
     try:
@@ -140,8 +165,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         tara_path = resolve_path(config["tara_path"], PROJECT_ROOT)
         architecture_path = resolve_path(config["architecture_path"], PROJECT_ROOT)
         dataset_path = resolve_path(args.dataset, Path.cwd())
+        changes_document = (
+            load_json(resolve_path(args.changes, Path.cwd())) if args.changes else None
+        )
         result = evaluate_dataset(
-            load_json(tara_path), load_json(architecture_path), load_json(dataset_path)
+            load_json(tara_path),
+            load_json(architecture_path),
+            load_json(dataset_path),
+            changes_document,
         )
         rendered = json.dumps(result, indent=2, ensure_ascii=False) + "\n"
         if args.output:

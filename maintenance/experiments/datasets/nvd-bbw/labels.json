@@ -1,0 +1,32 @@
+{
+  "dataset_id": "nvd-bbw-selected-v1-manual-labels",
+  "synthetic": false,
+  "independent_labels": false,
+  "label_method": "Manual review of the four NVD snapshots against the reference BBW architecture and existing TARA during this iteration; not an independent benchmark.",
+  "cases": [
+    {
+      "change_id": "NVD-CVE-2020-12351",
+      "expected_decision": "review_required",
+      "expected_components": [],
+      "label_rationale": "The TARA references this CVE, but the NVD ranges in this snapshot exclude installed kernel 5.10.70; review the conflict."
+    },
+    {
+      "change_id": "NVD-CVE-2022-0847",
+      "expected_decision": "no_review",
+      "expected_components": ["COMP-VDCM"],
+      "label_rationale": "NVD range 5.8 (inclusive) to 5.10.102 (exclusive) includes kernel 5.10.70, and the TARA already references the CVE."
+    },
+    {
+      "change_id": "NVD-CVE-2021-34434",
+      "expected_decision": "review_required",
+      "expected_components": ["COMP-VDCM"],
+      "label_rationale": "NVD range 2.0.0 through 2.0.11 includes Mosquitto 2.0.10, and this CVE is absent from the TARA."
+    },
+    {
+      "change_id": "NVD-CVE-2020-22284",
+      "expected_decision": "review_required",
+      "expected_components": ["COMP-EBCM"],
+      "label_rationale": "The exact vulnerable CPE identifies lwIP 2.1.2 on COMP-EBCM, and this CVE is absent from the TARA."
+    }
+  ]
+}

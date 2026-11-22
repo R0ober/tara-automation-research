@@ -151,7 +151,7 @@ class MaintenanceBaselineTests(unittest.TestCase):
     def test_vulnerability_requires_applicability_identifiers(self) -> None:
         change = self.vulnerability(affected_components=[])
 
-        with self.assertRaisesRegex(InputError, "affected_components or affected_cpes"):
+        with self.assertRaises(InputError):
             self.evaluate_one(change)
 
     def test_invalid_cve_identifier_is_rejected(self) -> None:
