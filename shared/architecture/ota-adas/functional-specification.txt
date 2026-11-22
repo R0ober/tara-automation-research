@@ -12,7 +12,7 @@ Target ASIL:        Up to ASIL-D (Electronic Brake Control Module)
 --------------------------------------------------------------------------------
 The Telematics, OTA Update & ADAS Actuation Subsystem (AUTO-OTA-ADAS-01) 
 provides external wireless connectivity, over-the-air software update 
-distribution, remote diagnostics, and internal communication routing for 
+distribution, diagnostic report uploads, and internal communication routing for
 safety-critical braking actuation.
 
 System Boundary:
@@ -84,12 +84,11 @@ System Boundary:
     Impact — Safety: Severe, Financial: Major, Operational: Severe, Privacy: Negligible.
 
 
-2.2. FUNC-02: Remote Diagnostics & Telemetry
---------------------------------------------
+2.2. FUNC-02: Diagnostic and Telemetry Report Upload
+----------------------------------------------------
 - Objective:
-  Collect real-time vehicle health logs, diagnostic trouble codes (DTCs), and 
-  GPS coordinates, and transmit them to the OEM Cloud Backend while providing 
-  local Wi-Fi hotspot and maintenance access.
+  The TCU uploads diagnostic and telemetry reports to the OEM backend.
+  FUNC-02 provides no cloud-initiated diagnostic operations.
 
 - Involved Components & Interfaces:
   Telemetry upload: COMP-TCU -> [CONN-01: Cellular WAN] -> COMP-CLOUD.
@@ -97,9 +96,13 @@ System Boundary:
   Local service tool -> [CONN-06: Physical serial console] -> COMP-TCU.
 
 - Functional Behavior & Data Flow:
-  1. Telemetry Aggregation: The TCU running Automotive Grade Linux (Kernel 
-     5.15.32) collects vehicle operational logs and GPS location data (ASSET-03).
-  2. Cloud Uplink: Data is transmitted to `COMP-CLOUD` over HTTPS (CONN-01).
+  1. Collection: The TCU queues each report (ASSET-03) in persistent storage.
+     A report contains the collection timestamp, vehicle health logs,
+     diagnostic trouble codes, and GPS coordinates.
+  2. Upload: The TCU sends queued reports to COMP-CLOUD over HTTPS on CONN-01.
+     It retries unacknowledged uploads and removes a report when the backend
+     acknowledges receipt. If the queue is full, the oldest pending report is
+     discarded to make room for the newest.
   3. Local access: The TCU operates the cabin Wi-Fi access point on CONN-02
      with wpa_supplicant v2.9. It uses dnsmasq v2.82 for DHCP and DNS
      (DNS on UDP/TCP port 53). The SSH maintenance service
@@ -113,13 +116,19 @@ System Boundary:
     login requires a workshop SSH key authorized on the TCU.
   * CONN-06 requires physical contact with the diagnostic connector.
     The serial console is unencrypted and requires no login credential.
+  * Only the TCU telemetry service account and the TCU root account can read
+    the local queue. The serial maintenance session has no queue read access.
+    The OEM telemetry ingestion service and authorized OEM diagnostic support
+    staff can read received reports at the backend.
 
 - Associated Cybersecurity Goals & Damage Scenarios:
   * Protected Asset: ASSET-03 (Vehicle GPS & Telemetry Logs)
   * Security Properties: Confidentiality, Privacy
-  * Damage Scenario (DS-03): Exfiltration of real-time vehicle location and 
-    driver behavior history via a compromised TCU (Safety: Negligible, 
-    Financial: Moderate, Operational: Negligible, Privacy: Major).
+  * Damage Scenario (DS-03): Disclosure of timestamped GPS coordinates can
+    reveal where the vehicle was at a given time. If the vehicle can be linked
+    to a person, multiple reports can reveal that person’s travel patterns and
+    the places they visit.
+    Impact — Safety: Negligible, Financial: Moderate, Operational: Negligible, Privacy: Major.
 
 
 2.3. FUNC-03: Autonomous Emergency Braking (AEB) Request
@@ -158,10 +167,11 @@ System Boundary:
 - Associated Cybersecurity Goals & Damage Scenarios:
   * Protected Asset: ASSET-02 (AEB Deceleration Request)
   * Security Properties: Integrity, Authenticity, Availability
-  * Damage Scenario (DS-02): Spoofed braking commands trigger unintended 
-    emergency braking at highway speeds, or DoS bus flooding prevents legitimate 
-    braking actuation (Safety: Severe, Financial: Major, Operational: Severe, 
-    Privacy: Negligible).
+  * Damage Scenario (DS-02): Unintended automatic braking at highway speed can
+    cause a rear-end collision. If automatic emergency braking is unavailable
+    when needed, the vehicle may collide at a higher speed. Either outcome can
+    cause serious injury or death.
+    Impact — Safety: Severe, Financial: Major, Operational: Severe, Privacy: Negligible.
 
 
 3. COMPONENT & INTERFACE TRACEABILITY MATRIX

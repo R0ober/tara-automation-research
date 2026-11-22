@@ -12,8 +12,8 @@
       },
       {
         "function_id": "FUNC-02",
-        "name": "Remote Diagnostics & Telemetry",
-        "description": "Collects vehicle health logs and GPS coordinates and transmits them to the OEM backend."
+        "name": "Diagnostic and Telemetry Report Upload",
+        "description": "The TCU collects diagnostic and telemetry reports and uploads them to the OEM backend over CONN-01. FUNC-02 provides no cloud-initiated diagnostic operations."
       },
       {
         "function_id": "FUNC-03",
@@ -248,7 +248,8 @@
       "medium": "Physical service connection at the vehicle diagnostic connector",
       "protocol": "Manufacturer-specific UART serial console",
       "encrypted": false,
-      "authenticated": "Physical connection required. The serial console requires no login credential."
+      "authenticated": "Physical connection required. The serial console requires no login credential.",
+      "telemetry_queue_read_access": false
     }
   ],
   "assets": [
@@ -280,7 +281,7 @@
       "damage_scenarios": [
         {
           "damage_id": "DS-02",
-          "description": "Spoofed braking commands trigger unintended emergency braking at highway speeds, or DoS flooding prevents legitimate braking.",
+          "description": "Unintended automatic braking at highway speed can cause a rear-end collision. If automatic emergency braking is unavailable when needed, the vehicle may collide at a higher speed. Either outcome can cause serious injury or death.",
           "expected_sfop_impact": {
             "Safety": "Severe",
             "Financial": "Major",
@@ -295,11 +296,15 @@
       "name": "Vehicle GPS & Telemetry Logs",
       "parent_component": "COMP-TCU",
       "associated_connections": ["CONN-01"],
+      "report_contents": ["collection timestamp", "vehicle health logs", "diagnostic trouble codes", "GPS coordinates"],
+      "local_retention": "The TCU queues pending reports in persistent storage and retries unacknowledged uploads. It removes a report when the backend acknowledges receipt. If the queue is full, the oldest pending report is discarded to make room for the newest.",
+      "local_read_access": ["TCU telemetry service account", "TCU root account"],
+      "backend_read_access": ["OEM telemetry ingestion service", "authorized OEM diagnostic support staff"],
       "cybersecurity_properties": ["Confidentiality", "Privacy"],
       "damage_scenarios": [
         {
           "damage_id": "DS-03",
-          "description": "Exfiltration of real-time vehicle location and driver behavior history via compromised TCU.",
+          "description": "Disclosure of timestamped GPS coordinates can reveal where the vehicle was at a given time. If the vehicle can be linked to a person, multiple reports can reveal that person’s travel patterns and the places they visit.",
           "expected_sfop_impact": {
             "Safety": "Negligible",
             "Financial": "Moderate",
