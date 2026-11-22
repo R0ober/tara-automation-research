@@ -128,14 +128,21 @@ System Boundary:
 
 - Functional Behavior & Data Flow:
   1. Request generation: COMP-ADAS uses forward-sensor information to decide
-     when automatic emergency braking is needed. It sends the requested
-     deceleration (ASSET-02) to COMP-CGW over CONN-05.
-  2. Request relay: COMP-CGW transmits the requested deceleration on CONN-04
-     using CAN ID `0x120`.
+     when automatic emergency braking is needed. While AEB is active, it sends
+     the requested deceleration (ASSET-02) periodically to COMP-CGW over CONN-05.
+  2. Request relay: COMP-CGW transmits each request once on CONN-04 using
+     CAN ID `0x120`. If the input stops, the gateway stops sending requests.
   3. Brake Actuation: The Electronic Brake Control Module (COMP-EBCM, NXP S32K3
      running FreeRTOS v10.4.1) receives CAN ID `0x120` via the 
      `brake_torque_controller` task (v3.4.0) and actuates the hydraulic brake 
      valves in response. Achieved deceleration depends on brake and road conditions.
+  4. Request timeout: COMP-EBCM starts with zero AEB demand. It accepts a
+     correctly formatted request within the configured deceleration range,
+     applies the demand, and records the local reception time. An accepted zero
+     clears AEB demand immediately. Otherwise, the last accepted demand applies
+     until a new request is accepted or the configured reception timeout expires.
+     Rejected requests do not refresh the timeout. At expiry, COMP-EBCM clears
+     only the AEB demand. The next accepted request takes effect on receipt.
 
 - Current Security & Operational Parameters (As-Built Baseline):
   * COMP-CGW relays AEB requests from the ADAS input on CONN-05. The TCU

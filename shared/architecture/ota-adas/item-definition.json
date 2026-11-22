@@ -18,7 +18,7 @@
       {
         "function_id": "FUNC-03",
         "name": "Autonomous Emergency Braking (AEB) Request",
-        "description": "COMP-ADAS determines the requested deceleration and sends it to COMP-CGW over CONN-05. COMP-CGW relays the request over CONN-04 to COMP-EBCM, which controls hydraulic braking."
+        "description": "COMP-ADAS periodically sends the requested deceleration to COMP-CGW over CONN-05 while AEB is active. COMP-CGW relays each request once over CONN-04 to COMP-EBCM, which controls hydraulic braking."
       }
     ]
   },
@@ -158,6 +158,12 @@
           "name": "brake_torque_controller",
           "version": "3.4.0",
           "role": "Actuates hydraulic brake valves based on CAN ID 0x120 deceleration messages",
+          "operational_parameters": {
+            "aeb_initial_demand": 0,
+            "aeb_request_acceptance": "Accept a correctly formatted request within the configured deceleration range. Apply its demand and record the local reception time. An accepted zero clears AEB demand immediately.",
+            "aeb_request_timeout": "Hold the last accepted demand until the configured interval since its reception expires. Rejected requests do not refresh the interval.",
+            "aeb_on_timeout": "Clear AEB demand only. Apply the next accepted request on receipt."
+          },
           "security_configuration": {
             "secoc_mac_verification": false,
             "uds_flash_programming_locked": false
