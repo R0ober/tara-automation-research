@@ -16,9 +16,9 @@ distribution, remote diagnostics, and internal communication routing for
 safety-critical braking actuation.
 
 System Boundary:
-- External Interfaces: 4G LTE / 5G Cellular WAN (INT-CELLULAR-WAN), In-Cabin 
-  IEEE 802.11ac Wi-Fi AP (INT-WIFI-AP), and physical UART/OBD-II maintenance 
-  ports (INT-OBD2-DEBUG) terminated at the Telematics Control Unit (COMP-TCU).
+- The TCU uses its cellular interface (INT-CELLULAR-WAN) for OEM cloud traffic.
+  Its cabin Wi-Fi access point (INT-WIFI-AP) and physical maintenance console
+  (INT-OBD2-DEBUG) provide local access.
 - Internal Backbone: 100BASE-T1 Automotive Ethernet link (CONN-03) connecting 
   the TCU to the Central Gateway ECU (COMP-CGW).
 - Safety-Critical Network: Chassis & Safety CAN-FD Bus (CONN-04) operating at 
@@ -47,8 +47,8 @@ System Boundary:
 
 - Functional Behavior & Data Flow:
   1. Connection Initiation: The TCU's OTA agent (`ota_agent_daemon` v1.1.0) 
-     polls the OEM Cloud API Gateway (`nginx` v1.22.0) over 4G/5G cellular 
-     (CONN-01) or Wi-Fi (CONN-02) using `openssl` v3.0.4 on port 443.
+     polls the OEM Cloud API Gateway (`nginx` v1.22.0) over the cellular link
+     (CONN-01) using `openssl` v3.0.4 and HTTPS on TCP port 443.
   2. Package Download: The firmware binary image (ASSET-01) is downloaded and 
      staged locally on the TCU filesystem at `/tmp/ota_update.bin`.
   3. Diagnostic Routing: `ota_agent_daemon` initiates a Diagnostics over IP 
@@ -92,22 +92,27 @@ System Boundary:
   local Wi-Fi hotspot and maintenance access.
 
 - Involved Components & Interfaces:
-  COMP-TCU <-> [CONN-01: Cellular WAN / CONN-02: Wi-Fi & OBD-II] <-> COMP-CLOUD.
+  Telemetry upload: COMP-TCU -> [CONN-01: Cellular WAN] -> COMP-CLOUD.
+  Cabin client -> [CONN-02: Wi-Fi] -> COMP-TCU.
+  Local service tool -> [CONN-06: Physical serial console] -> COMP-TCU.
 
 - Functional Behavior & Data Flow:
   1. Telemetry Aggregation: The TCU running Automotive Grade Linux (Kernel 
      5.15.32) collects vehicle operational logs and GPS location data (ASSET-03).
   2. Cloud Uplink: Data is transmitted to `COMP-CLOUD` over HTTPS (CONN-01).
-  3. Cabin Connectivity & Maintenance: The TCU manages cabin Wi-Fi connections 
-     via `wpa_supplicant` (v2.9) and provides DHCP/DNS services via `dnsmasq` 
-     (v2.82, UDP/TCP port 53). Physical diagnostic access is provided via 
-     UART/OBD-II (CONN-02).
+  3. Local access: The TCU operates the cabin Wi-Fi access point on CONN-02
+     with wpa_supplicant v2.9. It uses dnsmasq v2.82 for DHCP and DNS
+     (DNS on UDP/TCP port 53). The SSH maintenance service
+     listens only on this Wi-Fi interface (TCP port 22). CONN-06 provides a
+     separate manufacturer-specific UART console at the diagnostic connector.
 
 - Current Security & Operational Parameters (As-Built Baseline):
   * CONN-01 uses Server-only TLS 1.2 (no mutual TLS client certificate 
     authentication).
-  * CONN-02 exposes SSH on TCP Port 22 with root login enabled, WPA2-PSK on 
-    Wi-Fi, and unauthenticated serial access on UART.
+  * Cabin clients join CONN-02 using WPA2 with a pre-shared key. SSH root
+    login requires a workshop SSH key authorized on the TCU.
+  * CONN-06 requires physical contact with the diagnostic connector.
+    The serial console is unencrypted and requires no login credential.
 
 - Associated Cybersecurity Goals & Damage Scenarios:
   * Protected Asset: ASSET-03 (Vehicle GPS & Telemetry Logs)

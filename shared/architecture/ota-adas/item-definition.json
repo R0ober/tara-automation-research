@@ -3,12 +3,12 @@
     "item_id": "AUTO-OTA-ADAS-01",
     "name": "Telematics, OTA Update & ADAS Actuation Subsystem",
     "standard_reference": "ISO/SAE 21434:2021",
-    "system_boundary": "Includes external wireless interfaces on the Telematics Control Unit (TCU), internal Ethernet routing through the Central Gateway (CGW), and CAN-FD actuation commands to the Electronic Brake Control Module (EBCM). The in-vehicle ADAS controller is outside the item boundary and supplies AEB requests to the CGW.",
+    "system_boundary": "Includes the cellular, cabin Wi-Fi and physical maintenance interfaces on the Telematics Control Unit (TCU), internal Ethernet routing through the Central Gateway (CGW), and CAN-FD actuation commands to the Electronic Brake Control Module (EBCM). The in-vehicle ADAS controller is outside the item boundary and supplies AEB requests to the CGW.",
     "functions": [
       {
         "function_id": "FUNC-01",
         "name": "Over-the-Air (OTA) Firmware Update",
-        "description": "The TCU downloads firmware from the OEM cloud via cellular or Wi-Fi and sends it to the CGW over CONN-03. A CGW update ends at the gateway. For an EBCM update, the gateway forwards the image over CONN-04 to the EBCM."
+        "description": "The TCU downloads firmware from the OEM cloud over the cellular link (CONN-01) and sends it to the CGW over CONN-03. A CGW update ends at the gateway. For an EBCM update, the gateway forwards the image over CONN-04 to the EBCM."
       },
       {
         "function_id": "FUNC-02",
@@ -79,7 +79,7 @@
           "name": "wpa_supplicant",
           "version": "2.9",
           "cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:2.9:*:*:*:*:*:*:*",
-          "role": "Wi-Fi Client & Access Point Manager"
+          "role": "Manages the TCU cabin Wi-Fi access point"
         },
         {
           "name": "ota_agent_daemon",
@@ -186,8 +186,10 @@
     {
       "connection_id": "CONN-01",
       "name": "Cellular OTA & Telemetry Link",
-      "source_component": "COMP-CLOUD",
-      "target_component": "COMP-TCU",
+      "source_component": "COMP-TCU",
+      "target_component": "COMP-CLOUD",
+      "interface_id": "INT-CELLULAR-WAN",
+      "purpose": "The TCU initiates HTTPS sessions to download OTA images and upload telemetry.",
       "medium": "4G LTE / 5G Cellular",
       "protocol": "HTTPS / TLS 1.2",
       "encrypted": true,
@@ -195,13 +197,20 @@
     },
     {
       "connection_id": "CONN-02",
-      "name": "Cabin Wi-Fi & OBD-II Maintenance Access",
+      "name": "Cabin Wi-Fi Access Point",
       "source_component": "EXTERNAL_ATTACKER_SURFACE",
       "target_component": "COMP-TCU",
-      "medium": "IEEE 802.11ac Wi-Fi & Physical UART/OBD-II Port",
-      "protocol": "TCP/IP, DHCP, DNS, SSH (Port 22 open with root login enabled)",
-      "encrypted": false,
-      "authenticated": "WPA2 Pre-Shared Key (Wi-Fi) / None on UART"
+      "interface_id": "INT-WIFI-AP",
+      "medium": "IEEE 802.11ac cabin Wi-Fi",
+      "protocol": "DHCP, DNS and SSH",
+      "encrypted": true,
+      "authenticated": "WPA2 pre-shared key for Wi-Fi access",
+      "ssh_maintenance": {
+        "listen_interface": "INT-WIFI-AP",
+        "tcp_port": 22,
+        "root_login_enabled": true,
+        "authentication": "Root login requires a workshop SSH key authorized on the TCU."
+      }
     },
     {
       "connection_id": "CONN-03",
@@ -229,6 +238,17 @@
       "source_component": "COMP-ADAS",
       "target_component": "COMP-CGW",
       "interface_id": "INT-ADAS-REQUEST"
+    },
+    {
+      "connection_id": "CONN-06",
+      "name": "Physical TCU Maintenance Console",
+      "source_component": "EXTERNAL_ATTACKER_SURFACE",
+      "target_component": "COMP-TCU",
+      "interface_id": "INT-OBD2-DEBUG",
+      "medium": "Physical service connection at the vehicle diagnostic connector",
+      "protocol": "Manufacturer-specific UART serial console",
+      "encrypted": false,
+      "authenticated": "Physical connection required. The serial console requires no login credential."
     }
   ],
   "assets": [
@@ -274,7 +294,7 @@
       "asset_id": "ASSET-03",
       "name": "Vehicle GPS & Telemetry Logs",
       "parent_component": "COMP-TCU",
-      "associated_connections": ["CONN-01", "CONN-02"],
+      "associated_connections": ["CONN-01"],
       "cybersecurity_properties": ["Confidentiality", "Privacy"],
       "damage_scenarios": [
         {
