@@ -38,6 +38,11 @@ version.
   unaffected-version handling, and existing-TARA conflict review.
 - Repeatable DeepSeek/Pi NVD scenario and roadmap for NVD Boolean semantics,
   incremental updates, independent datasets, and OpenCTI integration.
+- Eight-record real NVD evaluation, including unaffected versions, N/A CPE
+  conflicts, and feature-specific Mosquitto preconditions.
+- Optional `--tara-output` writer carrying `maintenance_review` in a complete
+  TARA copy with real-file round-trip and in-place-write protection.
+- Scenario coverage matrix and measured iteration log.
 
 ### Changed
 

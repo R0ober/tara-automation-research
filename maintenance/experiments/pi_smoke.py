@@ -54,9 +54,9 @@ SCENARIOS = {
             "output_path": "output/nvd-pi-report.json",
         },
         expected_summary={
-            "total": 4,
-            "review_required": 3,
-            "no_review": 1,
+            "total": 8,
+            "review_required": 6,
+            "no_review": 2,
             "unresolved": 0,
         },
         output_directory=ROOT / "output" / "pi-nvd-experiment",

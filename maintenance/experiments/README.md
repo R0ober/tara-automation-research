@@ -55,10 +55,11 @@ These values demonstrate agreement with the rule-derived labels only.
 
 ## Real NVD snapshot experiment
 
-`datasets/nvd-bbw/` contains raw NVD API 2.0 responses for CVE-2020-12351,
-CVE-2022-0847, CVE-2021-34434, and CVE-2020-22284, plus `manifest.json` source
-URLs, timestamps, and SHA-256 hashes. `changes.json` is the converted input and
-`labels.json` records this iteration's manual review. Labels are not
+`datasets/nvd-bbw/` contains eight raw NVD API 2.0 responses: CVE-2020-12351,
+CVE-2022-0847, CVE-2021-34434, CVE-2020-22284, CVE-2014-4883,
+CVE-2020-22283, CVE-2024-3935, and CVE-2024-10525. `manifest.json` records
+source URLs, timestamps, and SHA-256 hashes. `changes.json` is the converted
+input and `labels.json` records this iteration's manual review. Labels are not
 independent.
 
 **NVD notice:** This product uses data from the NVD API but is not endorsed or
@@ -71,7 +72,8 @@ default delay):
 ```bash
 .venv/bin/python experiments/nvd_fetch.py \
   --output-directory experiments/datasets/nvd-bbw \
-  CVE-2020-12351 CVE-2022-0847 CVE-2021-34434 CVE-2020-22284
+  CVE-2020-12351 CVE-2022-0847 CVE-2021-34434 CVE-2020-22284 \
+  CVE-2014-4883 CVE-2020-22283 CVE-2024-3935 CVE-2024-10525
 ```
 
 Convert and evaluate entirely offline:
@@ -82,26 +84,34 @@ Convert and evaluate entirely offline:
   experiments/datasets/nvd-bbw/CVE-2022-0847.json \
   experiments/datasets/nvd-bbw/CVE-2021-34434.json \
   experiments/datasets/nvd-bbw/CVE-2020-22284.json \
+  experiments/datasets/nvd-bbw/CVE-2014-4883.json \
+  experiments/datasets/nvd-bbw/CVE-2020-22283.json \
+  experiments/datasets/nvd-bbw/CVE-2024-3935.json \
+  experiments/datasets/nvd-bbw/CVE-2024-10525.json \
   --output experiments/datasets/nvd-bbw/changes.json
 
 .venv/bin/tara-maintenance-evaluate \
   --config config/maintenance.example.json \
   --dataset experiments/datasets/nvd-bbw/labels.json \
   --changes experiments/datasets/nvd-bbw/changes.json \
-  --output output/nvd-evaluation.json
+  --output output/nvd-expanded-evaluation.json
 ```
 
 The initial exact-CPE-only run produced 1 `review_required` and 3 `unresolved`.
 After version-aware matching and existing-TARA conflict handling, the observed
-result on 2026-11-22 is:
+result on 2026-11-22 after expanding to eight records is:
 
 | Total | Correct | Accuracy | Detection recall | False-positive rate | Evidence support | Unresolved |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 4 | 4 | 1.0 | 1.0 | 0.0 | 1.0 | 0 |
+| 8 | 8 | 1.0 | 1.0 | 0.0 | 1.0 | 0 |
 
 CVE-2020-12351 requires review because its TARA references conflict with the
 current same-product version exclusion. This is not a claim that the whole item
 is unaffected.
+
+The expanded decisions are 6 `review_required`, 2 `no_review`, and 0
+`unresolved`. The feature-specific records trigger review of their stated
+preconditions, not automatic exploit confirmation.
 
 ## DeepSeek + Pi agent experiment
 

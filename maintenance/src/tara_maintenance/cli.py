@@ -15,6 +15,7 @@ from .config import (
     load_config,
     resolve_path,
 )
+from .review import build_reviewed_tara
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -31,6 +32,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--architecture", help="Reference item architecture JSON file; overrides the config"
     )
     parser.add_argument("--changes", help="Change-event JSON file; overrides the config")
+    parser.add_argument(
+        "--tara-output",
+        help="Write the original TARA plus a maintenance_review overlay; never edits in place",
+    )
     output = parser.add_mutually_exclusive_group()
     output.add_argument("--output", help="Write the report to this file; overrides the config")
     output.add_argument(
@@ -63,9 +68,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"Missing {', '.join(missing)}. Pass the option or configure the "
                 "corresponding path in config/maintenance.json."
             )
+        assert tara_path is not None
+        assert architecture_path is not None
+        assert changes_path is not None
 
+        tara = load_json(tara_path)
         report = evaluate_changes(
-            load_json(tara_path),
+            tara,
             load_json(architecture_path),
             load_json(changes_path),
         )
@@ -76,6 +85,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_path.write_text(rendered, encoding="utf-8")
         else:
             sys.stdout.write(rendered)
+        if args.tara_output:
+            tara_output = _resolve_setting(args.tara_output, None)
+            if tara_output is None:
+                raise InputError("--tara-output requires a path")
+            if tara_output == tara_path:
+                raise InputError("--tara-output must not overwrite the input TARA")
+            reviewed_tara = build_reviewed_tara(tara, report)
+            tara_output.parent.mkdir(parents=True, exist_ok=True)
+            tara_output.write_text(
+                json.dumps(reviewed_tara, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
     except (InputError, OSError, UnicodeError) as exc:
         print(f"tara-maintenance: {exc}", file=sys.stderr)
         return 2

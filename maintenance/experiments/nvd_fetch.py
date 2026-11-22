@@ -59,7 +59,7 @@ def fetch_snapshot(
         )
 
     manifest = {
-        "dataset_id": "nvd-bbw-selected-v1",
+        "dataset_id": "nvd-bbw-selected-v2",
         "source": "National Vulnerability Database (NVD) CVE API 2.0",
         "license": "NIST publications are in the public domain under Title 17 U.S.C.",
         "notice": NVD_NOTICE,

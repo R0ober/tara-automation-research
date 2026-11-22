@@ -119,6 +119,22 @@ the synthetic example explicitly:
   --output output/example-report.json
 ```
 
+To carry the review in a complete TARA document, add:
+
+```bash
+  --tara-output output/TARA-reviewed.json
+```
+
+This option preserves every original field and adds `maintenance_review` with
+the summary and recommendations. It refuses in-place writes and existing
+overlays. Removing that top-level member reconstructs the input TARA exactly.
+It does not create attack steps or update risk ratings; those changes still
+require analyst-approved methods.
+
+See [docs/COVERAGE_MATRIX.md](docs/COVERAGE_MATRIX.md) and
+[docs/ITERATION_LOG.md](docs/ITERATION_LOG.md) for covered scenarios and measured
+improvements.
+
 The example's two `CVE-2026-9xxxx` identifiers are placeholders, not claims
 about real vulnerabilities. Its expected summary is:
 
@@ -136,7 +152,7 @@ report is written only after all inputs pass validation.
 
 ## Open vulnerability data
 
-The project includes four real NVD CVE API 2.0 snapshots, provenance hashes,
+The project includes eight real NVD CVE API 2.0 snapshots, provenance hashes,
 converted changes, and manually reviewed labels under `experiments/datasets/nvd-bbw/`.
 The NVD adapter preserves vulnerable CPEs, numeric version ranges, timestamps,
 descriptions, and available CISA fields.

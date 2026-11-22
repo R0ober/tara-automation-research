@@ -44,6 +44,6 @@ not endorsed or certified by the NVD."
 ## Validation
 
 Unit tests cover range boundaries, numeric ordering, wildcards, escaped CPE
-characters, and unsupported versions. Offline integration tests use four real
+characters, and unsupported versions. Offline integration tests use eight real
 NVD snapshots and manual labels. DeepSeek/Pi experiments validate tool
 arguments, decisions, and response evidence. Remaining work is in `ROADMAP.md`.

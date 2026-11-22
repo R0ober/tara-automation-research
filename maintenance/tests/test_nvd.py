@@ -11,7 +11,16 @@ from tara_maintenance.nvd import nvd_to_changes
 MAINTENANCE_DIR = Path(__file__).resolve().parents[1]
 NVD_DIR = MAINTENANCE_DIR / "experiments" / "datasets" / "nvd-bbw"
 REFERENCE_DIR = MAINTENANCE_DIR.parent / "shared" / "reference-tara"
-CVE_IDS = ("CVE-2020-12351", "CVE-2022-0847", "CVE-2021-34434", "CVE-2020-22284")
+CVE_IDS = (
+    "CVE-2020-12351",
+    "CVE-2022-0847",
+    "CVE-2021-34434",
+    "CVE-2020-22284",
+    "CVE-2014-4883",
+    "CVE-2020-22283",
+    "CVE-2024-3935",
+    "CVE-2024-10525",
+)
 
 
 class NvdIntegrationTests(unittest.TestCase):
@@ -47,11 +56,15 @@ class NvdIntegrationTests(unittest.TestCase):
                 "CVE-2022-0847": "no_review",
                 "CVE-2021-34434": "review_required",
                 "CVE-2020-22284": "review_required",
+                "CVE-2014-4883": "no_review",
+                "CVE-2020-22283": "review_required",
+                "CVE-2024-3935": "review_required",
+                "CVE-2024-10525": "review_required",
             },
         )
         self.assertEqual(
             report["summary"],
-            {"total": 4, "review_required": 3, "no_review": 1, "unresolved": 0},
+            {"total": 8, "review_required": 6, "no_review": 2, "unresolved": 0},
         )
 
     def test_range_evidence_contains_nvd_match_criteria(self) -> None:

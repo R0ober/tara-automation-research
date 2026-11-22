@@ -12,8 +12,7 @@ not use `config/maintenance.json` or `data/changes.json` for this command.
 
 After the tool returns:
 
-1. Give one small table with the total and each decision count.
-2. Give exactly one Markdown table containing all four CVEs, with columns
+2. Give exactly one Markdown table containing all eight CVEs, with columns
    `change_id`, `subject`, `decision`, and `key_evidence`. Copy identifiers,
    decisions, and `matched_by` values verbatim. Include complete CPE strings or
    omit them. Never convert `unresolved` into `no_review`.

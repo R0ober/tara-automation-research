@@ -61,6 +61,7 @@ to the actual command.
 - `src/tara_maintenance/evaluate.py`: labeled decision and evidence metrics.
 - `src/tara_maintenance/cpe.py`: CPE product and numeric range comparisons.
 - `src/tara_maintenance/nvd.py`: offline NVD snapshot conversion.
+- `src/tara_maintenance/review.py`: TARA-preserving maintenance review overlay.
 - `tests/test_baseline.py`: decision boundaries and shared-data integration.
 - `tests/test_cli.py`: real subprocess CLI behavior.
 - `tests/test_configuration.py`: config precedence and example/local separation.
@@ -68,6 +69,7 @@ to the actual command.
 - `tests/test_pi_smoke.py`: tool arguments and final-response quality gates.
 - `tests/test_cpe.py`: numeric range and wildcard boundaries.
 - `tests/test_nvd.py`: real NVD snapshots, ranges, and conflict decisions.
+- `tests/test_review.py`: TARA round-trip, identity, and overlay safety.
 - `docs/decisions/`: meaningful architectural decisions.
 - `README.md`: public input/output contract and operating instructions.
 - `CHANGELOG.md`: user-visible changes.

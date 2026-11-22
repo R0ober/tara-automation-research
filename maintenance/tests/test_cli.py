@@ -37,7 +37,9 @@ class CommandLineTests(unittest.TestCase):
             ]
         }
 
-    def run_cli(self, input_dir: Path, output: Path) -> subprocess.CompletedProcess:
+    def run_cli(
+        self, input_dir: Path, output: Path, tara_output: Path | None = None
+    ) -> subprocess.CompletedProcess:
         paths = {
             "tara": self.tara,
             "architecture": self.architecture,
@@ -49,20 +51,23 @@ class CommandLineTests(unittest.TestCase):
             )
         environment = os.environ.copy()
         environment["PYTHONPATH"] = str(MAINTENANCE_DIR / "src")
+        command = [
+            sys.executable,
+            "-m",
+            "tara_maintenance",
+            "--tara",
+            str(input_dir / "tara.json"),
+            "--architecture",
+            str(input_dir / "architecture.json"),
+            "--changes",
+            str(input_dir / "changes.json"),
+            "--output",
+            str(output),
+        ]
+        if tara_output:
+            command.extend(("--tara-output", str(tara_output)))
         return subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "tara_maintenance",
-                "--tara",
-                str(input_dir / "tara.json"),
-                "--architecture",
-                str(input_dir / "architecture.json"),
-                "--changes",
-                str(input_dir / "changes.json"),
-                "--output",
-                str(output),
-            ],
+            command,
             cwd=MAINTENANCE_DIR,
             env=environment,
             text=True,
@@ -82,6 +87,18 @@ class CommandLineTests(unittest.TestCase):
             report = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(report["recommendations"][0]["decision"], "review_required")
             self.assertEqual(report["summary"]["review_required"], 1)
+
+    def test_cli_refuses_to_overwrite_input_tara(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            input_dir = Path(temporary_directory)
+            tara_path = input_dir / "tara.json"
+            output = input_dir / "report.json"
+
+            completed = self.run_cli(input_dir, output, tara_output=tara_path)
+
+            self.assertEqual(completed.returncode, 2)
+            self.assertIn("must not overwrite", completed.stderr)
+            self.assertEqual(json.loads(tara_path.read_text(encoding="utf-8")), self.tara)
 
     def test_cli_reports_invalid_json_and_does_not_create_report(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
