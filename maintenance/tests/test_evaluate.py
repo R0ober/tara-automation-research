@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from tara_maintenance import load_json
+from tara_maintenance import InputError, load_json
 from tara_maintenance.baseline import JsonObject
 from tara_maintenance.evaluate import evaluate_dataset
 
@@ -88,6 +88,18 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(result["summary"]["false_positive_rate"], 0.0)
         self.assertEqual(result["summary"]["evidence_support_rate"], 1.0)
         self.assertEqual(result["summary"]["unresolved"], 2)
+
+    def test_external_changes_reject_duplicate_ids_before_indexing(self) -> None:
+        case = self.case("review_required", "DUPLICATE")
+        labels = {"cases": [{"change_id": "DUPLICATE", "expected_decision": "review_required"}]}
+
+        with self.assertRaises(InputError):
+            evaluate_dataset(
+                self.tara,
+                self.architecture,
+                labels,
+                {"changes": [case["change"], case["change"]]},
+            )
 
 
 if __name__ == "__main__":

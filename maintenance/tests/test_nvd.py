@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from tara_maintenance import evaluate_changes, load_json
+from tara_maintenance import InputError, evaluate_changes, load_json
 from tara_maintenance.baseline import JsonObject
 from tara_maintenance.evaluate import evaluate_dataset
 from tara_maintenance.nvd import nvd_to_changes
@@ -139,6 +139,97 @@ class NvdIntegrationTests(unittest.TestCase):
         self.assertEqual(result["summary"]["false_positive_rate"], 0.0)
         self.assertEqual(result["summary"]["unresolved"], 0)
 
+    def test_range_only_input_is_evaluated_without_duplicate_cpe_list(self) -> None:
+        rule = {
+            "cpe": "cpe:2.3:a:eclipse:mosquitto:*:*:*:*:*:*:*:*",
+            "version_start_including": "2.0.0",
+            "version_end_including": "2.0.11",
+        }
+        change = {
+            "change_id": "RANGE-ONLY",
+            "type": "vulnerability",
+            "cve_id": "CVE-2026-99998",
+            "affected_cpe_ranges": [rule],
+            "source": "audit regression test",
+        }
+
+        report = evaluate_changes(self.tara, self.architecture, {"changes": [change]})
+
+        self.assertEqual(report["recommendations"][0]["decision"], "review_required")
+
+    def test_unknown_component_blocks_unaffected_version_no_review(self) -> None:
+        rule = {
+            "cpe": "cpe:2.3:a:eclipse:mosquitto:*:*:*:*:*:*:*:*",
+            "version_end_including": "2.0.9",
+        }
+        change = {
+            "change_id": "UNKNOWN-AND-EXCLUDED",
+            "type": "vulnerability",
+            "cve_id": "CVE-2026-99997",
+            "affected_components": ["COMP-UNKNOWN"],
+            "affected_cpe_ranges": [rule],
+            "source": "audit regression test",
+        }
+
+        report = evaluate_changes(self.tara, self.architecture, {"changes": [change]})
+
+        self.assertEqual(report["recommendations"][0]["decision"], "unresolved")
+
+
+    def test_nvd_record_without_cpe_is_unresolved_not_invalid(self) -> None:
+        document = {
+            "vulnerabilities": [
+                {
+                    "cve": {
+                        "id": "CVE-2026-99996",
+                        "vulnStatus": "Awaiting Analysis",
+                        "descriptions": [],
+                    }
+                }
+            ]
+        }
+        changes = nvd_to_changes(document)
+
+        report = evaluate_changes(self.tara, self.architecture, {"changes": changes})
+
+        self.assertTrue(changes[0]["applicability_unknown"])
+        self.assertEqual(report["recommendations"][0]["decision"], "unresolved")
+        evaluation = evaluate_dataset(
+            self.tara,
+            self.architecture,
+            {
+                "cases": [
+                    {
+                        "expected_decision": "unresolved",
+                        "expected_components": [],
+                        "change": changes[0],
+                    }
+                ]
+            },
+        )
+        self.assertEqual(evaluation["summary"]["evidence_support_rate"], 1.0)
+
+    def test_malformed_nvd_vulnerability_is_an_input_error(self) -> None:
+        with self.assertRaises(InputError):
+            nvd_to_changes({"vulnerabilities": [42]})
+
+    def test_explicit_unknown_blocks_exclusion_no_review(self) -> None:
+        rule = {
+            "cpe": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+            "version_end_excluding": "5.10.60",
+        }
+        change = {
+            "change_id": "FLAG-AND-EXCLUDED",
+            "type": "vulnerability",
+            "cve_id": "CVE-2026-99995",
+            "affected_cpe_ranges": [rule],
+            "applicability_unknown": True,
+            "source": "audit regression test",
+        }
+
+        report = evaluate_changes(self.tara, self.architecture, {"changes": [change]})
+
+        self.assertEqual(report["recommendations"][0]["decision"], "unresolved")
 
 if __name__ == "__main__":
     unittest.main()

@@ -229,7 +229,12 @@ class MaintenanceBaseline:
             components = self._string_list(change, "affected_components")
             cpes = self._string_list(change, "affected_cpes")
             ranges = self._cpe_range_list(change)
-            if not components and not cpes and not ranges:
+            applicability_unknown = change.get("applicability_unknown", False)
+            if not isinstance(applicability_unknown, bool):
+                raise InputError(
+                    f"Change {change['change_id']}: applicability_unknown must be boolean"
+                )
+            if not components and not cpes and not ranges and not applicability_unknown:
                 raise InputError(
                     f"Change {change['change_id']}: vulnerability requires "
                     "affected_components, affected_cpes, or affected_cpe_ranges"
@@ -237,6 +242,7 @@ class MaintenanceBaseline:
             normalized["affected_components"] = components
             normalized["affected_cpes"] = cpes
             normalized["affected_cpe_ranges"] = ranges
+            normalized["applicability_unknown"] = applicability_unknown
             return normalized
 
         if change_type == "component_change":
@@ -307,6 +313,8 @@ class MaintenanceBaseline:
         evidence["matched_cpe_rules"] = range_evidence["matched"]
         evidence["excluded_software"] = range_evidence["excluded"]
         evidence["unresolved_identifiers"] = unknown
+        if change["applicability_unknown"]:
+            evidence["applicability_unknown"] = True
         evidence["related_threat_scenarios"] = self._related_scenarios(matched_components)
         evidence["related_attack_steps"] = self._related_attacks(matched_components)
 
@@ -325,7 +333,10 @@ class MaintenanceBaseline:
                 "evidence excludes the installed software. Review the conflicting reference."
             )
         elif not matched_components:
-            if range_evidence["excluded"]:
+            unknown_applicability = (
+                change["applicability_unknown"] or unknown["components"] or unknown["cpes"]
+            )
+            if range_evidence["excluded"] and not unknown_applicability:
                 decision = "no_review"
                 rationale = (
                     "The installed same-product software version is outside all supplied "
@@ -379,7 +390,15 @@ class MaintenanceBaseline:
         for component_id in change["affected_components"]:
             if component_id in self._component_names:
                 matched[component_id].add("affected_components")
-        for cpe in change["affected_cpes"]:
+        cpe_candidates = list(
+            dict.fromkeys(
+                [
+                    *change["affected_cpes"],
+                    *(rule["cpe"] for rule in change["affected_cpe_ranges"]),
+                ]
+            )
+        )
+        for cpe in cpe_candidates:
             exact_inventory = self._cpe_inventory.get(cpe, [])
             if exact_inventory:
                 for software in exact_inventory:

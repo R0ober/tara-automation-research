@@ -53,7 +53,7 @@ export default function taraMaintenance(pi: ExtensionAPI) {
 		name: "tara_maintenance",
 		label: "TARA maintenance",
 		description:
-			"Evaluate vulnerability and component-change JSON against an existing TARA and item architecture. Returns deterministic review_required, no_review, or unresolved decisions with evidence. CPE matching is exact; this tool does not fetch vulnerability feeds or update risk ratings.",
+			"Evaluate vulnerability and component-change JSON against an existing TARA and item architecture. Returns deterministic review_required, no_review, or unresolved decisions with evidence. Supports exact/wildcard CPEs and numeric version ranges; does not fetch feeds or update risk ratings.",
 		promptSnippet: "Triage TARA vulnerability and component changes with inspectable evidence",
 		promptGuidelines: [
 			"Use tara_maintenance when the user asks whether new vulnerabilities or component changes require review of an existing TARA.",

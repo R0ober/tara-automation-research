@@ -56,3 +56,33 @@
 - Improvement over the previous deliverable: maintenance decisions can now be
   carried in a complete TARA document while preserving all original analysis.
   The overlay is review evidence, not an invented attack-tree or risk update.
+
+## Iteration 4: correctness audit
+
+### Audit findings
+
+- Range-only inputs were accepted by validation but ignored by matching.
+- A version exclusion could hide an unrelated unknown component and incorrectly
+  produce `no_review`.
+- Valid NVD records without configurations could not reach an unresolved
+  decision, and malformed entries could raise an unintended exception.
+
+### Corrections and evidence
+
+- Unified exact/range CPE candidates and blocked negative decisions whenever
+  unknown applicability remains.
+- Added explicit `applicability_unknown` for NVD records without CPE rules and
+  structural validation for NVD vulnerability entries.
+- Added four consumer-visible regression tests. The previous 56-test suite did
+  not cover these cases; the corrected suite covers them directly.
+- Roadmap and the scenario matrix now separate these closed defects from open
+  Boolean-configuration, snapshot-update, independent-label, and OpenCTI work.
+
+### Independent reviewer follow-up
+
+A separate read-only reviewer confirmed the first corrections and identified six
+additional gaps: flag-plus-exclusion handling, unresolved evidence scoring,
+external-ID deduplication, unresolved/punctuated CPE citations, stale Pi
+capability text, and incomplete output-overwrite protection. All six were
+corrected with focused regression tests. This increased direct decision and
+safety coverage without changing the eight-record expected labels.

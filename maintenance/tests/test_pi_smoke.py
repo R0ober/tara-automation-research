@@ -119,6 +119,16 @@ class PiSmokeValidationTests(unittest.TestCase):
 
         self.assertEqual(validate_example_run(self.events, self.report), [])
 
+    def test_unresolved_cpe_with_sentence_punctuation_is_accepted(self) -> None:
+        wildcard = "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*"
+        self.report["recommendations"][0]["evidence"] = {
+            "matched_software": [],
+            "unresolved_identifiers": {"cpes": [wildcard]},
+        }
+        self.events[2]["message"]["content"][0]["text"] += f"; unresolved {wildcard},"
+
+        self.assertEqual(validate_example_run(self.events, self.report), [])
+
 
 if __name__ == "__main__":
     unittest.main()

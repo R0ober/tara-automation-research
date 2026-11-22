@@ -80,7 +80,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         rendered = json.dumps(report, indent=2, ensure_ascii=False) + "\n"
         output_path = _resolve_setting(args.output, config.get("output_path"))
+        input_paths = {tara_path, architecture_path, changes_path}
         if not args.stdout and output_path and str(output_path) != "-":
+            if output_path in input_paths:
+                raise InputError("--output must not overwrite an input file")
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(rendered, encoding="utf-8")
         else:
@@ -89,8 +92,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             tara_output = _resolve_setting(args.tara_output, None)
             if tara_output is None:
                 raise InputError("--tara-output requires a path")
-            if tara_output == tara_path:
-                raise InputError("--tara-output must not overwrite the input TARA")
+            if tara_output in input_paths:
+                raise InputError("--tara-output must not overwrite an input file")
             reviewed_tara = build_reviewed_tara(tara, report)
             tara_output.parent.mkdir(parents=True, exist_ok=True)
             tara_output.write_text(

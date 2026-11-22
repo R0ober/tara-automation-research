@@ -155,6 +155,7 @@ and failed invocations can be retried.
 
 | Observed failure | Correction | Regression coverage |
 | --- | --- | --- |
+| Unresolved or punctuated CPE citations were unsupported | Include unresolved evidence and strip sentence punctuation | CPE regression fixtures |
 | Model ID resolved to the wrong provider | Explicit provider and catalog model ID | Live DeepSeek call |
 | Conditional prompt arguments selected local empty data | Separate actual and example commands | Literal tool-argument gate |
 | Model repeated an identical tool call | Session-level invocation guard | Repeated independent Pi runs |

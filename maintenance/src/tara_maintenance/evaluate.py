@@ -28,6 +28,11 @@ def evaluate_dataset(
     external_changes = changes_document.get("changes") if changes_document else None
     if external_changes is not None and not isinstance(external_changes, list):
         raise InputError("External evaluation changes require a 'changes' array")
+    external_ids = [
+        change.get("change_id") for change in external_changes or [] if isinstance(change, dict)
+    ]
+    if len(external_ids) != len(set(external_ids)):
+        raise InputError("External evaluation changes contain duplicate change_id values")
     by_id = {
         change.get("change_id"): change
         for change in external_changes or []
@@ -137,7 +142,11 @@ def _evidence_is_supported(
                 evidence.get("existing_vulnerability_references")
                 or evidence.get("excluded_software")
             )
-        return not matched and bool(unresolved.get("components") or unresolved.get("cpes"))
+        return not matched and bool(
+            evidence.get("applicability_unknown")
+            or unresolved.get("components")
+            or unresolved.get("cpes")
+        )
 
     if set(expected_components) - {prediction["component_id"]}:
         return False

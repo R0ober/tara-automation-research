@@ -126,8 +126,9 @@ To carry the review in a complete TARA document, add:
 ```
 
 This option preserves every original field and adds `maintenance_review` with
-the summary and recommendations. It refuses in-place writes and existing
-overlays. Removing that top-level member reconstructs the input TARA exactly.
+the summary and recommendations. It refuses to overwrite any input file or
+stack an existing overlay. Removing that top-level member reconstructs the input
+TARA exactly.
 It does not create attack steps or update risk ratings; those changes still
 require analyst-approved methods.
 
@@ -191,10 +192,11 @@ is optional.
 `affected_components` and `affected_cpes` are optional string arrays.
 `affected_cpe_ranges` optionally adds rules with `cpe`, optional
 `match_criteria_id`, and the four snake-case version bounds. At least one
-applicability identifier or range is required. Matching supports exact CPEs,
-part/vendor/product wildcard matching, and numeric/dotted version ranges.
-Nonnumeric comparisons remain unresolved. The baseline does not infer
-applicability from `summary`.
+applicability identifier or range is required unless `applicability_unknown` is
+explicitly `true`. Such explicitly unknown records produce `unresolved`.
+Matching supports exact CPEs, part/vendor/product wildcard matching, and
+numeric/dotted version ranges. Nonnumeric comparisons remain unresolved. The
+baseline does not infer applicability from `summary`.
 
 ### Component change
 

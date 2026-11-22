@@ -100,6 +100,36 @@ class CommandLineTests(unittest.TestCase):
             self.assertIn("must not overwrite", completed.stderr)
             self.assertEqual(json.loads(tara_path.read_text(encoding="utf-8")), self.tara)
 
+    def test_report_output_cannot_overwrite_changes_input(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            input_dir = Path(temporary_directory)
+            changes_path = input_dir / "changes.json"
+
+            completed = self.run_cli(input_dir, changes_path)
+
+            self.assertEqual(completed.returncode, 2)
+            self.assertIn("must not overwrite", completed.stderr)
+            self.assertEqual(
+                json.loads(changes_path.read_text(encoding="utf-8")), self.changes
+            )
+
+    def test_tara_output_cannot_overwrite_architecture_input(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            input_dir = Path(temporary_directory)
+            architecture_path = input_dir / "architecture.json"
+
+            completed = self.run_cli(
+                input_dir,
+                input_dir / "report.json",
+                tara_output=architecture_path,
+            )
+
+            self.assertEqual(completed.returncode, 2)
+            self.assertEqual(
+                json.loads(architecture_path.read_text(encoding="utf-8")),
+                self.architecture,
+            )
+
     def test_cli_reports_invalid_json_and_does_not_create_report(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             input_dir = Path(temporary_directory)

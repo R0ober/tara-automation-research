@@ -24,7 +24,12 @@ def nvd_to_changes(document: JsonObject) -> list[JsonObject]:
     vulnerabilities = document.get("vulnerabilities")
     if not isinstance(vulnerabilities, list):
         raise InputError("NVD document requires a 'vulnerabilities' array")
-    return [_convert_cve(item.get("cve", {})) for item in vulnerabilities]
+    changes = []
+    for item in vulnerabilities:
+        if not isinstance(item, dict) or not isinstance(item.get("cve"), dict):
+            raise InputError("Each NVD vulnerability requires a cve object")
+        changes.append(_convert_cve(item["cve"]))
+    return changes
 
 
 def _convert_cve(cve: JsonObject) -> JsonObject:
@@ -48,6 +53,7 @@ def _convert_cve(cve: JsonObject) -> JsonObject:
         "affected_components": [],
         "affected_cpes": sorted({match["criteria"] for match in matches}),
         "affected_cpe_ranges": ranges,
+        "applicability_unknown": not matches,
         "source": "NVD",
         "source_url": f"https://nvd.nist.gov/vuln/detail/{cve_id}",
         "summary": _english_description(cve),

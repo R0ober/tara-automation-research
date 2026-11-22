@@ -134,7 +134,14 @@ def validate_run(
         for field in ("matched_software", "matched_cpe_rules", "excluded_software")
         for item in recommendation.get("evidence", {}).get(field, [])
     }
-    for cpe in re.findall(r"cpe:2\.3:[^\s`|]+", final_text):
+    for recommendation in report.get("recommendations", []):
+        report_cpes.update(
+            recommendation.get("evidence", {})
+            .get("unresolved_identifiers", {})
+            .get("cpes", [])
+        )
+    for cpe_match in re.findall(r"cpe:2\.3:[^\s`|]+", final_text):
+        cpe = cpe_match.rstrip(".,);")
         if cpe not in report_cpes:
             errors.append(f"Final response contains an incomplete or unsupported CPE: {cpe}")
     truncation = ends[0].get("result", {}).get("details", {}).get("truncated")

@@ -58,3 +58,14 @@ version.
   allowing different inputs and failure retries.
 - Regression gates detect corrected CVE IDs, incomplete CPEs, false CPE
   matching claims, and unsupported truncation statements.
+- Range-only vulnerability inputs are now evaluated without requiring a
+  duplicate `affected_cpes` entry.
+- Unknown applicability now blocks version-exclusion `no_review` decisions.
+- NVD records without CPE configurations become explicitly unresolved, and
+  malformed NVD entries raise controlled input errors.
+- Explicit unknown flags now block exclusion-based negative decisions, and the
+  evidence metric recognizes unresolved-source evidence.
+- External evaluation inputs reject duplicate IDs; Pi response validation
+  accepts unresolved CPEs and sentence punctuation.
+- Reports and TARA overlays reject overwriting any input artifact; Pi capability
+  text now describes wildcard and numeric-range matching.

@@ -4,8 +4,9 @@
 
 The repository contains a deterministic component-change and vulnerability
 review baseline, a Pi/DeepSeek agent interface, local configuration isolation,
-and synthetic smoke experiments. The first open-data experiment uses four raw
-NVD CVE API 2.0 snapshots with source URLs, timestamps, and SHA-256 hashes.
+and synthetic smoke experiments. The current open-data set contains eight raw
+NVD CVE API 2.0 snapshots with source URLs, timestamps, and SHA-256 hashes; the
+first experiment used four.
 
 NVD notice: this product uses data from the NVD API but is not endorsed or
 certified by the NVD.
@@ -42,6 +43,37 @@ DeepSeek/Pi NVD scenario also passed three independent sessions after the
 quality gate was corrected to accept wildcard CPEs from range evidence. These
 results do not close the P1/P2 items below.
 
+## Audit iteration: correctness boundaries
+
+The follow-up audit reproduced and fixed four cases that were not covered by
+the earlier metrics:
+
+- A range supplied without a duplicate `affected_cpes` entry was ignored. Range
+  CPEs are now evaluated directly.
+- An unknown component combined with an excluded known-product version could
+  incorrectly produce `no_review`. Any remaining unknown applicability now
+  prevents that negative decision.
+- A valid NVD record without CPE configurations now uses
+  `applicability_unknown` and produces `unresolved` instead of failing input
+  validation.
+- Malformed NVD vulnerability entries now produce `InputError` instead of an
+  attribute-access exception.
+
+These fixes close the observed defects, not the broader P1/P2 limitations.
+No open P0 defect is claimed solely from the current test pass; independent
+review and adversarial configuration tests remain required.
+
+Independent review added six further corrections: explicit
+`applicability_unknown` now participates in negative-decision guards;
+unresolved evidence is accepted by the structural evidence metric; external
+evaluation data rejects duplicate IDs before indexing; the Pi CPE gate accepts
+unresolved identifiers and strips sentence punctuation; the model-facing tool
+description includes range support; and neither reports nor TARA overlays can
+overwrite any input artifact.
+
+Remaining lower-priority engineering work includes atomic multi-file output for
+users who request both a report and a TARA overlay in one command.
+
 ## P0: Correct vulnerability applicability
 
 ### Version-aware matching
@@ -59,7 +91,7 @@ CVE-2020-22284, and the CVE-2020-12351 range conflict; boundary tests cover all
 four range operators.
 
 Status: implemented for numeric/dotted versions and verified by unit tests plus
-the four offline NVD snapshots. Full NVD Boolean configuration semantics remain
+the eight offline NVD snapshots. Full NVD Boolean configuration semantics remain
 open under P1.
 
 ### Existing-TARA conflicts
@@ -95,11 +127,14 @@ with CVE-2020-12351. Content-update detection remains open.
 
 ### Independent evaluation data
 
-- Expand beyond four selected records with stratified component, version,
-  existing-CVE, unaffected-version, and unknown-product cases.
+- The selected set now contains eight records covering existing-CVE,
+  unaffected-version, N/A-CPE, exact-CPE, range, and feature-precondition cases.
+- Expand further with stratified component, version, unknown-product, nested
+  configuration, and malformed/awaiting-analysis records.
 - Obtain independent analyst labels; do not derive expected labels solely from
   the implementation rules.
-- Report unresolved separately and publish per-case errors with metrics.
+- Report unresolved separately and publish per-case errors with metrics. Add a
+  strict metric view where unresolved counts as an error for operational use.
 
 ## P1: Reproducible ingestion
 

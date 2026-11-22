@@ -16,6 +16,14 @@ real records do not cover.
 | New CVE with feature-specific description | CVE-2024-3935 | Version match triggers review, not exploit confirmation | Covered |
 | Additional real configuration record | CVE-2024-10525 | Exercise client/callback precondition and range | Covered |
 | Unknown component/product | Synthetic | Unresolved | Covered |
+| Range supplied without duplicate CPE list | Audit fixture | Evaluate range and match component | Covered |
+| Unknown component plus excluded known version | Audit fixture | Unresolved, never no_review | Covered |
+| NVD record without CPE configurations | Awaiting-analysis fixture | Explicit applicability unknown; unresolved | Covered |
+| Malformed NVD vulnerability entry | Invalid fixture | InputError instead of attribute exception | Covered |
+| Explicit unknown flag plus version exclusion | Audit fixture | Unresolved, never no_review | Covered |
+| External evaluation data with duplicate IDs | Evaluation fixture | Reject before indexing | Covered |
+| Unresolved CPE cited with punctuation | Pi response fixture | Accepted as valid source evidence | Covered |
+| Report/TARA output targeting any input | CLI fixtures | Reject without modifying input | Covered |
 | Nonnumeric version comparison | Synthetic | Unresolved, never guessed | Covered |
 | All range boundaries | Synthetic | Inclusive/exclusive comparisons | Covered |
 | Same nested component state | Synthetic | No review | Covered |
