@@ -1,12 +1,48 @@
 #!/usr/bin/env python3
 import argparse
+import shlex
+import subprocess
+import tempfile
 from pathlib import Path
 
 import yaml
 
 
+def write_job_script(command):
+    script = rf"""#!/bin/bash
+#SBATCH --cpus-per-task=1
+#SBATCH --time=00:05:00
+#SBATCH --output=slurm.log
+
+set -e
+mkdir -p output
+exec apptainer exec \
+    --bind ./input:/input:ro \
+    --bind ./output:/output \
+    ./image.sif {shlex.join(command)}
+"""
+    run_dir = Path(tempfile.mkdtemp(prefix="minerva-run-"))
+    script_path = run_dir / "job.sh"
+    script_path.write_text(script, encoding="utf-8")
+    return script_path
+
+
+def upload_job(image_path, input_dir, script_path):
+    create_dir = "mkdir -p ~/tara-demo && mktemp -d ~/tara-demo/run-$(date +%Y-%m-%d:%H:%M:%S)-XXXXXXXX"
+    result = subprocess.run(
+        ["ssh", "-o", "BatchMode=yes", "minerva", create_dir],
+        check=True, stdout=subprocess.PIPE, text=True,
+    )
+    destination = f"minerva:{result.stdout.strip()}"
+    print(f"Remote run directory: {destination}", flush=True)
+
+    subprocess.run(["scp", "-B", image_path, f"{destination}/image.sif"], check=True)
+    subprocess.run(["scp", "-B", "-r", input_dir, f"{destination}/input"], check=True)
+    subprocess.run(["scp", "-B", script_path, f"{destination}/job.sh"], check=True)
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Validate a Minerva job file and its input directory.")
+    parser = argparse.ArgumentParser(description="Prepare and upload a job to Minerva.")
     parser.add_argument("--job-yaml", type=Path, required=True, help="Path to the job YAML file.")
     parser.add_argument("--input-dir", type=Path, required=True, help="Directory containing the job inputs.")
     args = parser.parse_args()
@@ -27,6 +63,9 @@ def main():
     image = job.get("image")
     if not isinstance(image, str) or not image.strip():
         parser.error("'image' must be a non-empty string.")
+    image_path = (args.job_yaml.parent / image).resolve()
+    if not image_path.is_file():
+        parser.error(f"Expected an image file at {image_path}")
 
     command = job.get("command")
     if not isinstance(command, list) or not command:
@@ -34,8 +73,20 @@ def main():
     if not all(isinstance(argument, str) for argument in command):
         parser.error("Each entry in 'command' must be a string.")
 
+    try:
+        script_path = write_job_script(command)
+    except OSError as error:
+        parser.error(f"Could not write the job script: {error}")
+
     print(f"Job file: {args.job_yaml}")
     print(f"Input directory: {args.input_dir}")
+    print(f"Job script: {script_path}")
+
+    try:
+        upload_job(image_path, args.input_dir.resolve(), script_path)
+    except (OSError, subprocess.CalledProcessError) as error:
+        parser.exit(1, f"Upload failed: {error}\n")
+    print("Upload complete.")
 
 
 if __name__ == "__main__":
