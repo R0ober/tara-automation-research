@@ -2,9 +2,9 @@ name: Shared validation
 
 # Runs on pull requests that change shared/ or this workflow.
 #
-# Current scope: repository-structure check only. The shared schemas and
-# reference artifacts do not exist yet. Add schema and data validation here
-# when they exist, and record the format decision in shared/docs/decisions/.
+# Current scope: repository-structure check only. Shared artifacts are under
+# refinement and schemas are not yet defined. Add schema and data validation
+# when the formats are agreed, and record the decision in shared/docs/decisions/.
 
 on:
   pull_request:
@@ -25,7 +25,7 @@ jobs:
       - name: Check that the shared directories exist
         run: |
           missing=0
-          for dir in shared/architecture shared/reference-tara shared/schemas shared/docs/decisions; do
+          for dir in shared/architecture/{bbw,ota-adas} shared/reference-tara/{bbw,ota-adas} shared/benchmarks/{bbw,ota-adas} shared/schemas shared/docs/decisions; do
             if [ -d "$dir" ]; then
               echo "Found: $dir"
             else

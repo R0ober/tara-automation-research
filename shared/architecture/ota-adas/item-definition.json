@@ -1,0 +1,318 @@
+{
+  "item_definition": {
+    "item_id": "AUTO-OTA-ADAS-01",
+    "name": "Telematics, OTA Update & ADAS Actuation Subsystem",
+    "standard_reference": "ISO/SAE 21434:2021",
+    "system_boundary": "Includes the cellular, cabin Wi-Fi and physical maintenance interfaces on the Telematics Control Unit (TCU), internal Ethernet routing through the Central Gateway (CGW), and CAN-FD actuation commands to the Electronic Brake Control Module (EBCM). The in-vehicle ADAS controller is outside the item boundary and supplies AEB requests to the CGW.",
+    "functions": [
+      {
+        "function_id": "FUNC-01",
+        "name": "Over-the-Air (OTA) Firmware Update",
+        "description": "The TCU downloads firmware from the OEM cloud over the cellular link (CONN-01) and sends it to the CGW over CONN-03. A CGW update ends at the gateway. For an EBCM update, the gateway forwards the image over CONN-04 to the EBCM."
+      },
+      {
+        "function_id": "FUNC-02",
+        "name": "Diagnostic and Telemetry Report Upload",
+        "description": "The TCU collects diagnostic and telemetry reports and uploads them to the OEM backend over CONN-01. FUNC-02 provides no cloud-initiated diagnostic operations."
+      },
+      {
+        "function_id": "FUNC-03",
+        "name": "Autonomous Emergency Braking (AEB) Request",
+        "description": "COMP-ADAS periodically sends the requested deceleration to COMP-CGW over CONN-05 while AEB is active. COMP-CGW relays each request once over CONN-04 to COMP-EBCM, which controls hydraulic braking."
+      }
+    ]
+  },
+  "components": [
+    {
+      "component_id": "COMP-CLOUD",
+      "name": "OEM OTA & Telemetry Cloud Backend",
+      "type": "External_Server",
+      "trust_zone": "Untrusted_External",
+      "os": {
+        "name": "Ubuntu Server",
+        "version": "22.04 LTS"
+      },
+      "hosted_software": [
+        {
+          "name": "nginx",
+          "version": "1.22.0",
+          "cpe": "cpe:2.3:a:f5:nginx:1.22.0:*:*:*:*:*:*:*",
+          "role": "HTTPS API Gateway"
+        }
+      ],
+      "interfaces": ["INT-CELLULAR-WAN"]
+    },
+    {
+      "component_id": "COMP-ADAS",
+      "name": "Advanced Driver Assistance Systems (ADAS) Controller",
+      "type": "External_In_Vehicle_ECU",
+      "trust_zone": "ADAS_Domain",
+      "role": "Uses forward-sensor information to decide when automatic emergency braking is needed and request a deceleration.",
+      "interfaces": ["INT-ADAS-REQUEST"]
+    },
+    {
+      "component_id": "COMP-TCU",
+      "name": "Telematics Control Unit (TCU)",
+      "type": "ECU_Linux",
+      "trust_zone": "DMZ_Connectivity",
+      "hardware": "NXP i.MX8QuadXPlus (ARM Cortex-A35)",
+      "os": {
+        "name": "Automotive Grade Linux (Yocto Kirkstone)",
+        "kernel_version": "5.15.32",
+        "cpe": "cpe:2.3:o:linux:linux_kernel:5.15.32:*:*:*:*:*:*:*"
+      },
+      "hosted_software": [
+        {
+          "name": "openssl",
+          "version": "3.0.4",
+          "cpe": "cpe:2.3:a:openssl:openssl:3.0.4:*:*:*:*:*:*:*",
+          "role": "Provides TLS for the OTA agent connection to the OEM cloud on TCP port 443"
+        },
+        {
+          "name": "dnsmasq",
+          "version": "2.82",
+          "cpe": "cpe:2.3:a:thekelleys:dnsmasq:2.82:*:*:*:*:*:*:*",
+          "role": "In-Vehicle Wi-Fi Hotspot DHCP/DNS Server",
+          "listening_port": 53
+        },
+        {
+          "name": "wpa_supplicant",
+          "version": "2.9",
+          "cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:2.9:*:*:*:*:*:*:*",
+          "role": "Manages the TCU cabin Wi-Fi access point"
+        },
+        {
+          "name": "ota_agent_daemon",
+          "version": "1.1.0",
+          "role": "Downloads firmware to /tmp/ota_update.bin and forwards via DoIP to CGW",
+          "security_configuration": {
+            "runs_as_root": true,
+            "verify_firmware_signature": false,
+            "hardcoded_uds_seed_key": "0xDEADBEEF"
+          }
+        }
+      ],
+      "interfaces": ["INT-CELLULAR-WAN", "INT-WIFI-AP", "INT-OBD2-DEBUG", "INT-ETH-INTERNAL"]
+    },
+    {
+      "component_id": "COMP-CGW",
+      "name": "Central Gateway ECU (CGW)",
+      "type": "ECU_Microcontroller",
+      "trust_zone": "Internal_Backbone",
+      "hardware": "Infineon AURIX TC397",
+      "os": {
+        "name": "AUTOSAR Classic",
+        "version": "R20-11"
+      },
+      "hosted_software": [
+        {
+          "name": "doip_uds_router",
+          "version": "2.0.1",
+          "role": "Routes Diagnostics over IP (DoIP) from Ethernet to CAN-FD buses",
+          "security_configuration": {
+            "vlan_isolation_enabled": false,
+            "uds_0x27_security_access_required_for_routing": false
+          }
+        }
+      ],
+      "forwarding_rules": [
+        {
+          "input_connection": "CONN-03",
+          "output_connection": "CONN-04",
+          "request_scope": "Diagnostic requests supported by COMP-EBCM",
+          "client_authorization_required_for_forwarding": false,
+          "raw_can_forwarding_enabled": false
+        },
+        {
+          "input_connection": "CONN-05",
+          "output_connection": "CONN-04",
+          "request_scope": "AEB deceleration request"
+        }
+      ],
+      "firmware_programming": {
+        "credential_check_required": true,
+        "authorization_rule": "For its own firmware, COMP-CGW accepts the programming request only after it verifies the fixed programming credential held by the TCU OTA agent."
+      },
+      "firmware_activation": {
+        "complete_image_required": true,
+        "target_identity_match_required": true,
+        "trusted_firmware_signature_required": true,
+        "on_check_failure": "Reject activation of the candidate image"
+      },
+      "interfaces": ["INT-ETH-INTERNAL", "INT-CAN-SAFETY", "INT-ADAS-REQUEST"]
+    },
+    {
+      "component_id": "COMP-EBCM",
+      "name": "Electronic Brake Control Module (EBCM)",
+      "type": "ECU_Safety_Critical",
+      "trust_zone": "Safety_Critical_Chassis",
+      "asil_level": "ASIL-D",
+      "hardware": "NXP S32K3",
+      "os": {
+        "name": "FreeRTOS",
+        "version": "10.4.1",
+        "cpe": "cpe:2.3:o:amazon:freertos:10.4.1:*:*:*:*:*:*:*"
+      },
+      "hosted_software": [
+        {
+          "name": "brake_torque_controller",
+          "version": "3.4.0",
+          "role": "Actuates hydraulic brake valves based on CAN ID 0x120 deceleration messages",
+          "operational_parameters": {
+            "aeb_initial_demand": 0,
+            "aeb_request_acceptance": "Accept a correctly formatted request within the configured deceleration range. Apply its demand and record the local reception time. An accepted zero clears AEB demand immediately.",
+            "aeb_request_timeout": "Hold the last accepted demand until the configured interval since its reception expires. Rejected requests do not refresh the interval.",
+            "aeb_on_timeout": "Clear AEB demand only. Apply the next accepted request on receipt."
+          },
+          "security_configuration": {
+            "secoc_mac_verification": false,
+            "uds_flash_programming_locked": false
+          }
+        }
+      ],
+      "firmware_programming": {
+        "credential_check_required": false
+      },
+      "firmware_activation": {
+        "complete_image_required": true,
+        "target_identity_match_required": true,
+        "trusted_firmware_signature_required": true,
+        "on_check_failure": "Reject activation of the candidate image"
+      },
+      "interfaces": ["INT-CAN-SAFETY"]
+    }
+  ],
+  "connections": [
+    {
+      "connection_id": "CONN-01",
+      "name": "Cellular OTA & Telemetry Link",
+      "source_component": "COMP-TCU",
+      "target_component": "COMP-CLOUD",
+      "interface_id": "INT-CELLULAR-WAN",
+      "purpose": "The TCU initiates HTTPS sessions to download OTA images and upload telemetry.",
+      "medium": "4G LTE / 5G Cellular",
+      "protocol": "HTTPS / TLS 1.2",
+      "encrypted": true,
+      "authenticated": "Server-only TLS (No mTLS client certificate authentication)"
+    },
+    {
+      "connection_id": "CONN-02",
+      "name": "Cabin Wi-Fi Access Point",
+      "source_component": "EXTERNAL_ATTACKER_SURFACE",
+      "target_component": "COMP-TCU",
+      "interface_id": "INT-WIFI-AP",
+      "medium": "IEEE 802.11ac cabin Wi-Fi",
+      "protocol": "DHCP, DNS and SSH",
+      "encrypted": true,
+      "authenticated": "WPA2 pre-shared key for Wi-Fi access",
+      "ssh_maintenance": {
+        "listen_interface": "INT-WIFI-AP",
+        "tcp_port": 22,
+        "root_login_enabled": true,
+        "authentication": "Root login requires a workshop SSH key authorized on the TCU."
+      }
+    },
+    {
+      "connection_id": "CONN-03",
+      "name": "In-Vehicle Automotive Ethernet Link",
+      "source_component": "COMP-TCU",
+      "target_component": "COMP-CGW",
+      "medium": "100BASE-T1 Automotive Ethernet",
+      "protocol": "DoIP (ISO 13400) over TCP Port 13400",
+      "encrypted": false,
+      "authenticated": "None (Plaintext TCP/IP without MACsec or IPsec)"
+    },
+    {
+      "connection_id": "CONN-04",
+      "name": "Chassis & Safety CAN-FD Bus",
+      "source_component": "COMP-CGW",
+      "target_component": "COMP-EBCM",
+      "medium": "CAN-FD (500 kbps / 2 Mbps)",
+      "protocol": "Raw CAN Frames (ID 0x120) & UDS on CAN (ISO 15765-2)",
+      "encrypted": false,
+      "authenticated": "None (AUTOSAR SecOC disabled)"
+    },
+    {
+      "connection_id": "CONN-05",
+      "name": "ADAS deceleration request input",
+      "source_component": "COMP-ADAS",
+      "target_component": "COMP-CGW",
+      "interface_id": "INT-ADAS-REQUEST"
+    },
+    {
+      "connection_id": "CONN-06",
+      "name": "Physical TCU Maintenance Console",
+      "source_component": "EXTERNAL_ATTACKER_SURFACE",
+      "target_component": "COMP-TCU",
+      "interface_id": "INT-OBD2-DEBUG",
+      "medium": "Physical service connection at the vehicle diagnostic connector",
+      "protocol": "Manufacturer-specific UART serial console",
+      "encrypted": false,
+      "authenticated": "Physical connection required. The serial console requires no login credential.",
+      "telemetry_queue_read_access": false
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "ASSET-01",
+      "name": "OTA Firmware Binary Image",
+      "parent_component": "COMP-TCU",
+      "associated_connections": ["CONN-01", "CONN-03", "CONN-04"],
+      "cybersecurity_properties": ["Integrity", "Authenticity"],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-01",
+          "description": "Loss of gateway or brake ECU function can prevent emergency braking when needed. A resulting collision can cause serious injury or death. Loss of ECU function can also prevent vehicle use.",
+          "expected_sfop_impact": {
+            "Safety": "Severe",
+            "Financial": "Major",
+            "Operational": "Severe",
+            "Privacy": "Negligible"
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": "ASSET-02",
+      "name": "AEB Deceleration Request",
+      "parent_component": "COMP-EBCM",
+      "associated_connections": ["CONN-05", "CONN-04"],
+      "cybersecurity_properties": ["Integrity", "Authenticity", "Availability"],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-02",
+          "description": "Unintended automatic braking at highway speed can cause a rear-end collision. If automatic emergency braking is unavailable when needed, the vehicle may collide at a higher speed. Either outcome can cause serious injury or death.",
+          "expected_sfop_impact": {
+            "Safety": "Severe",
+            "Financial": "Major",
+            "Operational": "Severe",
+            "Privacy": "Negligible"
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": "ASSET-03",
+      "name": "Vehicle GPS & Telemetry Logs",
+      "parent_component": "COMP-TCU",
+      "associated_connections": ["CONN-01"],
+      "report_contents": ["collection timestamp", "vehicle health logs", "diagnostic trouble codes", "GPS coordinates"],
+      "local_retention": "The TCU queues pending reports in persistent storage and retries unacknowledged uploads. It removes a report when the backend acknowledges receipt. If the queue is full, the oldest pending report is discarded to make room for the newest.",
+      "local_read_access": ["TCU telemetry service account", "TCU root account"],
+      "backend_read_access": ["OEM telemetry ingestion service", "authorized OEM diagnostic support staff"],
+      "cybersecurity_properties": ["Confidentiality", "Privacy"],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-03",
+          "description": "Disclosure of timestamped GPS coordinates can reveal where the vehicle was at a given time. If the vehicle can be linked to a person, multiple reports can reveal that person’s travel patterns and the places they visit.",
+          "expected_sfop_impact": {
+            "Safety": "Negligible",
+            "Financial": "Moderate",
+            "Operational": "Negligible",
+            "Privacy": "Major"
+          }
+        }
+      ]
+    }
+  ]
+}
