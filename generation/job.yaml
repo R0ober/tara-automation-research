@@ -1,0 +1,6 @@
+image: ./generation-demo.sif
+command:
+  - python3
+  - /app/read_item.py
+  - /input/item-definition.json
+  - /output/result.json
