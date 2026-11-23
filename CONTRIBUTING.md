@@ -54,9 +54,7 @@ author tested it, and that the PR states known limitations.
 | `maintenance/` | Hongbin, Zeren |
 | `shared/` | All contributors (cross-team review) |
 | `infrastructure/` | All contributors (cross-team review) |
-
-Status: CODEOWNERS is a template. Add the verified GitHub usernames and
-uncomment the entries to activate it.
+| `.github/` | All contributors (cross-team review) |
 
 CODEOWNERS only requests reviewers. It does not guarantee that a specific
 owner approves the change. The review conventions above are team agreements;
@@ -76,7 +74,7 @@ The `main` branch is protected by the active ruleset `Pull-squash`
 Not enabled:
 
 - Required status checks. No CI check runs on every pull request.
-- Required review from code owners. CODEOWNERS is still a template.
+- Required review from code owners.
 
 Repository merge settings:
 

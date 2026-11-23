@@ -1,13 +1,7 @@
-Closes #
+Closes #X
 
-## Summary
+## This Has Been Done:
 
-<!-- What does this change do, and why? Easiest to use a dot list -->
+<!-- Use short, active sentences. List the changes and checks. Mention any known limitation. -->
 
-## Testing
-
-<!-- How did you test the change? Write "Not tested" with a reason if you did not test it. -->
-
-## Risks and limitations
-
-<!-- Known risks, limitations, or follow-up work. Write "None" if there are none.  (MIGHT remove this as its kinda overkill for our project)-->
+-
