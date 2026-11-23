@@ -28,21 +28,23 @@ exec apptainer exec \
 
 
 def upload_job(image_path, input_dir, script_path):
-    create_dir = "mkdir -p ~/tara-demo && mktemp -d ~/tara-demo/run-$(date +%Y-%m-%d:%H:%M:%S)-XXXXXXXX"
+    create_dir = "mkdir -p ~/tara-demo && mktemp -d ~/tara-demo/run-$(date +%Y-%m-%d_%H-%M-%S)-XXXXXXXX"
     result = subprocess.run(
         ["ssh", "-o", "BatchMode=yes", "minerva", create_dir],
         check=True, stdout=subprocess.PIPE, text=True,
     )
-    destination = f"minerva:{result.stdout.strip()}"
+    remote_dir = result.stdout.strip()
+    destination = f"minerva:{remote_dir}"
     print(f"Remote run directory: {destination}", flush=True)
 
     subprocess.run(["scp", "-B", image_path, f"{destination}/image.sif"], check=True)
     subprocess.run(["scp", "-B", "-r", input_dir, f"{destination}/input"], check=True)
     subprocess.run(["scp", "-B", script_path, f"{destination}/job.sh"], check=True)
+    return remote_dir
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Prepare and upload a job to Minerva.")
+    parser = argparse.ArgumentParser(description="Upload a job to Minerva and submit it to Slurm.")
     parser.add_argument("--job-yaml", type=Path, required=True, help="Path to the job YAML file.")
     parser.add_argument("--input-dir", type=Path, required=True, help="Directory containing the job inputs.")
     args = parser.parse_args()
@@ -83,10 +85,16 @@ def main():
     print(f"Job script: {script_path}")
 
     try:
-        upload_job(image_path, args.input_dir.resolve(), script_path)
+        remote_dir = upload_job(image_path, args.input_dir.resolve(), script_path)
     except (OSError, subprocess.CalledProcessError) as error:
         parser.exit(1, f"Upload failed: {error}\n")
-    print("Upload complete.")
+    print("Upload complete.", flush=True)
+
+    submit = shlex.join(["sbatch", "--chdir", remote_dir, f"{remote_dir}/job.sh"])
+    try:
+        subprocess.run(["ssh", "-o", "BatchMode=yes", "minerva", submit], check=True)
+    except (OSError, subprocess.CalledProcessError) as error:
+        parser.exit(1, f"Could not confirm Slurm submission: {error}\n")
 
 
 if __name__ == "__main__":
