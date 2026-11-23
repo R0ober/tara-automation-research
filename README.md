@@ -22,7 +22,7 @@ artifacts.
 generation/        Generation subproject (docs, src, tests)
 verification/      Verification subproject (docs, src, tests)
 maintenance/       Maintenance subproject (docs, src, tests)
-shared/            Reference architecture, reference TARA, schemas, shared decisions
+shared/            System descriptions, reference TARAs, benchmarks, schemas, decisions
 infrastructure/    Shared infrastructure instructions (for example, Chalmers Minerva)
 docs/              Repository-wide documentation and the ADR template
 ```
@@ -32,13 +32,18 @@ Each subproject has `docs/decisions/` for its own Architecture Decision Records
 
 ## Shared reference artifacts
 
-The `shared/` directory contains the inputs that all three subprojects use:
+The `shared/` directory contains system descriptions, reference assessments,
+and evaluation material for all three subprojects:
 
-- `shared/architecture/`: the reference vehicle architecture.
-- `shared/reference-tara/`: the initial reference TARA.
+- `shared/architecture/`: item definitions and functional specifications.
+- `shared/reference-tara/`: manually prepared reference assessments.
+- `shared/benchmarks/`: planted weaknesses and expected evaluation results.
 - `shared/schemas/`: the data formats that the subprojects exchange.
 
-Status: these artifacts are not yet defined.
+Each system has a separate folder. BBW documents are under refinement.
+The OTA/ADAS folders are placeholders. Shared schemas are not yet defined.
+See [Shared research material](shared/README.md) for the directory structure
+and rules for experiment inputs.
 
 Rules for shared artifacts:
 

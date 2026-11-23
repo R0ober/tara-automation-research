@@ -1,0 +1,647 @@
+{
+  "tara_metadata": {
+    "document_id": "TARA-AUTO-BBW-01",
+    "version": "1.0.0",
+    "date": "2026-11-18",
+    "standard_reference": "ISO/SAE 21434:2021 (Clauses 15.3 - 15.9)",
+    "item_id": "AUTO-BBW-01",
+    "item_name": "Electronic Brake-by-Wire (BBW) & Regenerative Braking Subsystem",
+    "target_asil": "ASIL-D",
+    "methodology": {
+      "impact_rating_method": "ISO/SAE 21434 Annex F (Safety, Financial, Operational, Privacy - SFOP)",
+      "impact_levels": [
+        "Negligible",
+        "Moderate",
+        "Major",
+        "Severe"
+      ],
+      "attack_feasibility_method": "Attack Potential-based Approach (ISO/SAE 21434 Annex G.4 / ISO/IEC 18045)",
+      "attack_potential_parameters": {
+        "elapsed_time": {
+          "<=1d": 0,
+          "<=1w": 1,
+          "<=1m": 4,
+          "<=3m": 10,
+          "<=6m": 17,
+          ">6m": 19
+        },
+        "specialist_expertise": {
+          "Layman": 0,
+          "Proficient": 3,
+          "Expert": 6,
+          "Multiple_Experts": 8
+        },
+        "knowledge_of_item": {
+          "Public": 0,
+          "Restricted": 3,
+          "Confidential": 7,
+          "Strictly_Confidential": 11
+        },
+        "window_of_opportunity": {
+          "Unlimited": 0,
+          "Easy": 1,
+          "Moderate": 4,
+          "Difficult_None": 10
+        },
+        "equipment": {
+          "Standard": 0,
+          "Specialized": 4,
+          "Bespoke": 7,
+          "Multiple_Bespoke": 9
+        }
+      },
+      "feasibility_mapping": {
+        "0-9": "High",
+        "10-13": "Medium",
+        "14-19": "Low",
+        "20-24": "Very Low",
+        ">=25": "Very Low"
+      },
+      "tree_aggregation_rules": {
+        "AND_gate": "For a complete path, assess all required conditions together. Assign one value to each of the five attack potential factors and sum those values once.",
+        "OR_gate": "Use the lowest score among supported complete paths. If none can be scored, leave the score and feasibility null."
+      },
+      "risk_matrix": {
+        "Severe": {
+          "High": 5,
+          "Medium": 5,
+          "Low": 4,
+          "Very Low": 3
+        },
+        "Major": {
+          "High": 4,
+          "Medium": 4,
+          "Low": 3,
+          "Very Low": 2
+        },
+        "Moderate": {
+          "High": 3,
+          "Medium": 2,
+          "Low": 2,
+          "Very Low": 1
+        },
+        "Negligible": {
+          "High": 1,
+          "Medium": 1,
+          "Low": 1,
+          "Very Low": 1
+        }
+      }
+    },
+    "assessment_status": "All four BBW scenarios have been reassessed. Inherent risk remains open for TS-BRK-02 and TS-BRK-04. Residual risk is unassessed for all four."
+  },
+  "threat_scenarios_and_attack_trees": [
+    {
+      "threat_scenario_id": "TS-BRK-01",
+      "threat_scenario_name": "Incorrect driver pedal demand due to unauthorized calibration changes",
+      "targeted_asset": {
+        "asset_id": "ASSET-BRK-01",
+        "asset_name": "Driver Pedal Travel & Braking Demand Signal (CAN ID 0x080)",
+        "parent_component": "COMP-BPSU",
+        "associated_connections": [
+          "CONN-BRK-02"
+        ],
+        "compromised_properties": [
+          "Integrity"
+        ]
+      },
+      "stride_classification": [
+        "Tampering"
+      ],
+      "associated_damage_scenario": {
+        "damage_id": "DS-BRK-01",
+        "description": "Insufficient braking during an emergency stop or unintended braking at highway speed can cause a collision. The collision can cause serious injury or death.",
+        "impact_ratings": {
+          "Safety": {
+            "rating": "Severe",
+            "justification": "Insufficient or unintended braking can cause a collision with serious or fatal injuries."
+          },
+          "Financial": {
+            "rating": "Major",
+            "justification": "A collision can cause vehicle damage and repair costs."
+          },
+          "Operational": {
+            "rating": "Severe",
+            "justification": "The driver can lose control of the braking demand on the primary electronic path."
+          },
+          "Privacy": {
+            "rating": "Negligible",
+            "justification": "The damage scenario identifies no disclosure of personal data."
+          },
+          "overall_impact_rating": "Severe"
+        }
+      },
+      "attack_tree": {
+        "node_id": "AT-BRK-01-ROOT",
+        "node_type": "ROOT_GOAL",
+        "gate": "OR",
+        "title": "Compromise the integrity of driver pedal demand",
+        "aggregated_attack_potential_score": 15,
+        "aggregated_attack_feasibility": "Low",
+        "critical_attack_path": [
+          "AT-BRK-01-ROOT",
+          "AT-BRK-01-B3"
+        ],
+        "children": [
+          {
+            "node_id": "AT-BRK-01-B3",
+            "node_type": "LEAF_ATTACK_STEP",
+            "title": "Unauthorized change to pedal zero-point calibration",
+            "target_component": "COMP-BPSU",
+            "target_interface": "INT-SWD-HEADER",
+            "vulnerability_reference": "COMP-BPSU permits calibration writes through its unprotected board debug interface.",
+            "technical_detail": "This case requires physical access to the cabin and the pedal sensor board. An incorrect calibration can bias reported travel if the readings pass the range and agreement checks. If the checks reject the readings, the VDCM uses its modeled invalid-demand fallback. The resulting braking force depends on vehicle conditions.",
+            "attack_potential": {
+              "elapsed_time": {
+                "label": "<=1w",
+                "score": 1
+              },
+              "specialist_expertise": {
+                "label": "Proficient",
+                "score": 3
+              },
+              "knowledge_of_item": {
+                "label": "Restricted",
+                "score": 3
+              },
+              "window_of_opportunity": {
+                "label": "Moderate",
+                "score": 4
+              },
+              "equipment": {
+                "label": "Specialized",
+                "score": 4
+              },
+              "total_score": 15,
+              "feasibility_rating": "Low"
+            },
+            "scoring_basis": "The five factor estimates apply once to the complete calibration case. The original assessment assumes up to one week, proficient personnel, restricted calibration knowledge, a moderate opportunity for board access, and specialized equipment. The item confirms the access requirement. The factor estimates are engineering judgments."
+          }
+        ]
+      },
+      "risk_determination": {
+        "overall_impact_rating": "Severe",
+        "aggregated_attack_feasibility": "Low",
+        "minimum_attack_potential_score": 15,
+        "inherent_risk_value": 4,
+        "inherent_risk_level": "4 / 5",
+        "risk_determination_rationale": "The calibration case scores 15. The project matrix assigns risk 4 to Low feasibility and the supplied Severe impact of DS-BRK-01. The item establishes no raw chassis-bus access through workshop diagnostics.",
+        "unscored_pedal_message_case": "The VDCM checks the pedal message CRC but does not verify its sender or freshness. The item establishes no external access path for altering pedal messages on the chassis bus. This finding is unscored."
+      },
+      "proposed_risk_treatment": {
+        "risk_treatment_option": "Reduce",
+        "cybersecurity_goals": [
+          {
+            "goal_id": "CG-BRK-01",
+            "description": "Protect pedal zero-point calibration against unauthorized changes."
+          }
+        ],
+        "cybersecurity_requirements": [
+          {
+            "requirement_id": "CSR-BRK-01.2",
+            "target_component": "COMP-BPSU",
+            "description": "Restrict production debug access and permit only authorized updates to pedal zero-point calibration."
+          }
+        ],
+        "target_residual_feasibility": null,
+        "target_residual_risk_value": null,
+        "target_residual_risk_level": null,
+        "residual_risk_status": "Unassessed. Reassess after verification of the calibration and debug access controls."
+      }
+    },
+    {
+      "threat_scenario_id": "TS-BRK-02",
+      "threat_scenario_name": "Unauthorized change to brake demand during torque blending",
+      "targeted_asset": {
+        "asset_id": "ASSET-BRK-02",
+        "asset_name": "Regenerative Torque Feedback and Friction Torque Request (CAN ID 0x1A0 and SOME/IP 0x1020)",
+        "parent_component": "COMP-VDCM",
+        "associated_connections": [
+          "CONN-BRK-02",
+          "CONN-BRK-03"
+        ],
+        "compromised_properties": [
+          "Integrity"
+        ]
+      },
+      "stride_classification": [
+        "Tampering"
+      ],
+      "associated_damage_scenario": {
+        "damage_id": "DS-BRK-02",
+        "description": "Insufficient combined regenerative and friction braking can prevent the vehicle from achieving the required deceleration. This can cause a collision and serious injury or death.",
+        "impact_ratings": {
+          "Safety": {
+            "rating": "Severe",
+            "justification": "If combined braking falls short of the required deceleration, the vehicle may collide with an obstacle and cause serious or fatal injuries."
+          },
+          "Financial": {
+            "rating": "Major",
+            "justification": "A collision can result in vehicle and other property damage."
+          },
+          "Operational": {
+            "rating": "Severe",
+            "justification": "Insufficient combined torque can prevent the vehicle from achieving the deceleration the driver requests."
+          },
+          "Privacy": {
+            "rating": "Negligible",
+            "justification": "The damage scenario identifies no disclosure of personal data."
+          },
+          "overall_impact_rating": "Severe"
+        }
+      },
+      "attack_tree": {
+        "node_id": "AT-BRK-02-ROOT",
+        "node_type": "ROOT_GOAL",
+        "gate": "OR",
+        "title": "Change brake demand without authorization",
+        "aggregated_attack_potential_score": 10,
+        "aggregated_attack_feasibility": "Medium",
+        "critical_attack_path": [
+          "AT-BRK-02-ROOT",
+          "AT-BRK-02-B2"
+        ],
+        "children": [
+          {
+            "node_id": "AT-BRK-02-B2",
+            "node_type": "LEAF_ATTACK_STEP",
+            "title": "Unauthorized diagnostic brake-demand override",
+            "target_component": "COMP-VDCM",
+            "target_interface": "CONN-BRK-01",
+            "vulnerability_reference": "VDCM permits a brake-demand override while driving without checking the client’s authority for that operation.",
+            "technical_detail": "Workshop access requires a paired client within BLE range or a physical connection to the diagnostic connector. The VDCM accepts the override through either interface. The model leaves override priority relative to pedal demand and override duration unspecified.",
+            "attack_potential": {
+              "elapsed_time": {
+                "label": "<=1d",
+                "score": 0
+              },
+              "specialist_expertise": {
+                "label": "Proficient",
+                "score": 3
+              },
+              "knowledge_of_item": {
+                "label": "Restricted",
+                "score": 3
+              },
+              "window_of_opportunity": {
+                "label": "Moderate",
+                "score": 4
+              },
+              "equipment": {
+                "label": "Standard",
+                "score": 0
+              },
+              "total_score": 10,
+              "feasibility_rating": "Medium"
+            },
+            "scoring_basis": "This estimate covers diagnostic access and acceptance of the override once as a single case. It assumes up to one day, a proficient diagnostic user, restricted service knowledge, a moderate opportunity for access to the operating vehicle, and standard workshop equipment. These are assessment assumptions."
+          }
+        ]
+      },
+      "risk_determination": {
+        "overall_impact_rating": "Severe",
+        "aggregated_attack_feasibility": "Medium",
+        "minimum_attack_potential_score": 10,
+        "inherent_risk_value": null,
+        "inherent_risk_level": null,
+        "risk_determination_rationale": "The score covers acceptance of the unauthorized override. If the override can reduce combined braking below driver demand, the supplied Severe impact and Medium feasibility give 5 / 5. The final risk remains open until the override behavior establishes that link.",
+        "unscored_feedback_case": "VDCM uses reported regenerative torque to calculate the remaining friction request. It checks CRC but does not verify the sender, freshness, or actual deceleration. Incorrect feedback can bias the request. Workshop diagnostics do not forward raw chassis frames, and the item establishes no other path to alter this feedback."
+      },
+      "proposed_risk_treatment": {
+        "risk_treatment_option": "Reduce",
+        "cybersecurity_goals": [
+          {
+            "goal_id": "CG-BRK-02",
+            "description": "Prevent unauthorized diagnostic changes to brake demand and protect the integrity of regenerative torque feedback."
+          }
+        ],
+        "cybersecurity_requirements": [
+          {
+            "requirement_id": "CSR-BRK-02.1",
+            "target_component": "COMP-RIC & COMP-VDCM",
+            "description": "VDCM shall verify the source and freshness of regenerative torque feedback from RIC before crediting the reported torque."
+          },
+          {
+            "requirement_id": "CSR-BRK-02.2",
+            "target_component": "COMP-VDCM",
+            "description": "VDCM shall verify the client’s authority for a brake-demand override and reject the override while the vehicle is moving."
+          }
+        ],
+        "target_residual_feasibility": null,
+        "target_residual_risk_value": null,
+        "target_residual_risk_level": null,
+        "residual_risk_status": "Unassessed. Reassess after the override behavior is defined and the proposed controls are verified."
+      }
+    },
+    {
+      "threat_scenario_id": "TS-BRK-03",
+      "threat_scenario_name": "Incorrect wheel clamping demand or loss of normal wheel control during pad service",
+      "targeted_asset": {
+        "asset_id": "ASSET-BRK-03",
+        "asset_name": "Wheel Caliper Clamping Force Command (CAN ID 0x040)",
+        "parent_component": "COMP-EMBA",
+        "associated_connections": [
+          "CONN-BRK-04"
+        ],
+        "compromised_properties": [
+          "Integrity",
+          "Authenticity",
+          "Availability"
+        ]
+      },
+      "stride_classification": [
+        "Spoofing",
+        "Tampering",
+        "Denial of Service"
+      ],
+      "associated_damage_scenario": {
+        "damage_id": "DS-BRK-03",
+        "description": "Uneven or insufficient wheel braking can cause loss of directional control or increased stopping distance. This can cause a collision and serious injury or death.",
+        "impact_ratings": {
+          "Safety": {
+            "rating": "Severe",
+            "justification": "Uneven or insufficient wheel braking can increase stopping distance or cause loss of directional control. A resulting collision can cause serious or fatal injuries."
+          },
+          "Financial": {
+            "rating": "Major",
+            "justification": "A collision can cause vehicle damage and repair costs."
+          },
+          "Operational": {
+            "rating": "Severe",
+            "justification": "The driver may be unable to maintain direction or stop within the available distance."
+          },
+          "Privacy": {
+            "rating": "Negligible",
+            "justification": "The damage scenario identifies no disclosure of personal data."
+          },
+          "overall_impact_rating": "Severe"
+        }
+      },
+      "attack_tree": {
+        "node_id": "AT-BRK-03-ROOT",
+        "node_type": "ROOT_GOAL",
+        "gate": "OR",
+        "title": "Disrupt normal clamping at one or more wheels",
+        "aggregated_attack_potential_score": 10,
+        "aggregated_attack_feasibility": "Medium",
+        "critical_attack_path": [
+          "AT-BRK-03-ROOT",
+          "AT-BRK-03-B2"
+        ],
+        "children": [
+          {
+            "node_id": "AT-BRK-03-B1",
+            "node_type": "LEAF_ATTACK_STEP",
+            "title": "Unauthorized change to a wheel clamping target",
+            "target_component": "COMP-EMBA",
+            "target_interface": "INT-CANFD-ACTUATOR",
+            "vulnerability_reference": "The wheel actuators do not verify the sender or freshness of normal clamping commands.",
+            "technical_detail": "This case requires physical access to the actuator bus. Each actuator in normal mode uses only its assigned force field. An accepted incorrect value can change braking at that wheel. The next accepted command replaces the target. A communication timeout retains the last accepted target.",
+            "attack_potential": {
+              "elapsed_time": {
+                "label": "<=1w",
+                "score": 1
+              },
+              "specialist_expertise": {
+                "label": "Proficient",
+                "score": 3
+              },
+              "knowledge_of_item": {
+                "label": "Restricted",
+                "score": 3
+              },
+              "window_of_opportunity": {
+                "label": "Moderate",
+                "score": 4
+              },
+              "equipment": {
+                "label": "Standard",
+                "score": 0
+              },
+              "total_score": 11,
+              "feasibility_rating": "Medium"
+            },
+            "scoring_basis": "The estimate covers physical access and the command integrity failure together. It retains the prior estimates for time, expertise, knowledge and equipment. It assumes a moderate opportunity because the case requires physical contact with the wheel-end wiring."
+          },
+          {
+            "node_id": "AT-BRK-03-B2",
+            "node_type": "LEAF_ATTACK_STEP",
+            "title": "Unauthorized pad-service entry during vehicle operation",
+            "target_component": "COMP-EBCM",
+            "target_interface": "INT-ETH-TSN-BRAKE",
+            "vulnerability_reference": "The EBCM accepts pad-service entry through workshop diagnostics without operation-specific authorization or a vehicle-speed check.",
+            "technical_detail": "Selected actuators retract and stop following normal clamping commands. Other actuators continue their existing operation. Each selected actuator remains at the service position until explicit exit and a subsequent accepted normal command. Commands received during service are discarded.",
+            "attack_potential": {
+              "elapsed_time": {
+                "label": "<=1d",
+                "score": 0
+              },
+              "specialist_expertise": {
+                "label": "Proficient",
+                "score": 3
+              },
+              "knowledge_of_item": {
+                "label": "Restricted",
+                "score": 3
+              },
+              "window_of_opportunity": {
+                "label": "Moderate",
+                "score": 4
+              },
+              "equipment": {
+                "label": "Standard",
+                "score": 0
+              },
+              "total_score": 10,
+              "feasibility_rating": "Medium"
+            },
+            "scoring_basis": "The estimate uses the workshop access, service knowledge and equipment assumptions from TS-BRK-02. It covers access and acceptance of the EBCM routine once."
+          }
+        ]
+      },
+      "risk_determination": {
+        "overall_impact_rating": "Severe",
+        "aggregated_attack_feasibility": "Medium",
+        "minimum_attack_potential_score": 10,
+        "inherent_risk_value": 5,
+        "inherent_risk_level": "5 / 5",
+        "risk_determination_rationale": "Either case can produce uneven or insufficient braking when friction braking is required. The affected wheels, braking demand and road conditions determine the vehicle response. The lower of the two path scores is 10. The project matrix assigns risk 5 to Medium feasibility and the supplied Severe impact of DS-BRK-03."
+      },
+      "proposed_risk_treatment": {
+        "risk_treatment_option": "Reduce",
+        "cybersecurity_goals": [
+          {
+            "goal_id": "CG-BRK-03",
+            "description": "Protect the integrity and availability of normal wheel clamping during vehicle operation."
+          }
+        ],
+        "cybersecurity_requirements": [
+          {
+            "requirement_id": "CSR-BRK-03.1",
+            "target_component": "COMP-EBCM & COMP-EMBA",
+            "description": "Each actuator shall verify the source, integrity and freshness of a normal clamping command before accepting its assigned force target."
+          },
+          {
+            "requirement_id": "CSR-BRK-03.2",
+            "target_component": "COMP-EBCM",
+            "description": "The EBCM shall verify the client’s authority for pad-service entry and reject entry unless the vehicle is stationary."
+          }
+        ],
+        "target_residual_feasibility": null,
+        "target_residual_risk_value": null,
+        "target_residual_risk_level": null,
+        "residual_risk_status": "Unassessed. Reassess after verification of command protection and pad-service entry controls."
+      }
+    },
+    {
+      "threat_scenario_id": "TS-BRK-04",
+      "threat_scenario_name": "Rollback of EBCM braking firmware to an older signed version",
+      "targeted_asset": {
+        "asset_id": "ASSET-BRK-04",
+        "asset_name": "EBCM & Caliper Actuator Control Firmware",
+        "parent_component": "COMP-EBCM",
+        "associated_connections": [
+          "CONN-BRK-03",
+          "CONN-BRK-04"
+        ],
+        "compromised_properties": [
+          "Integrity"
+        ]
+      },
+      "stride_classification": [
+        "Tampering"
+      ],
+      "associated_damage_scenario": {
+        "damage_id": "DS-BRK-04",
+        "description": "Loss of anti-lock braking or damage to brake actuators can reduce braking performance and vehicle stability. This can cause a collision and serious injury or death. Damaged actuators can require replacement and prevent vehicle use.",
+        "impact_ratings": {
+          "Safety": {
+            "rating": "Severe",
+            "justification": "Loss of anti-lock braking or actuator damage can reduce vehicle stability and braking performance. A resulting collision can cause serious or fatal injuries."
+          },
+          "Financial": {
+            "rating": "Severe",
+            "justification": "Actuator replacement and loss of vehicle use can add to collision costs. The item assigns Severe but gives no cost estimate or threshold for this rating."
+          },
+          "Operational": {
+            "rating": "Severe",
+            "justification": "Actuator damage can prevent vehicle use until repairs are complete."
+          },
+          "Privacy": {
+            "rating": "Negligible",
+            "justification": "The damage scenario identifies no disclosure of personal data."
+          },
+          "overall_impact_rating": "Severe"
+        }
+      },
+      "attack_tree": {
+        "node_id": "AT-BRK-04-ROOT",
+        "node_type": "ROOT_GOAL",
+        "gate": "OR",
+        "title": "Replace the approved EBCM firmware version with an older signed version",
+        "aggregated_attack_potential_score": null,
+        "aggregated_attack_feasibility": null,
+        "critical_attack_path": [],
+        "children": [
+          {
+            "node_id": "AT-BRK-04-B1",
+            "node_type": "LEAF_ATTACK_STEP",
+            "title": "Conditional rollback of EBCM firmware",
+            "target_component": "COMP-EBCM",
+            "target_interface": "INT-ETH-TSN-BRAKE",
+            "vulnerability_reference": "The EBCM has no rollback protection.",
+            "technical_detail": "Programming requires a stationary vehicle, a programming session and a successful SecurityAccess unlock. The EBCM accepts a complete, compatible older image with a valid signature from a trusted signer. The 8-bit seed alone does not establish unauthorized programming access. The key algorithm and retry policy are unspecified.",
+            "attack_potential": null
+          }
+        ]
+      },
+      "risk_determination": {
+        "overall_impact_rating": "Severe",
+        "aggregated_attack_feasibility": null,
+        "minimum_attack_potential_score": null,
+        "inherent_risk_value": null,
+        "inherent_risk_level": null,
+        "risk_determination_rationale": "The item identifies neither a means of unauthorized programming nor an available older signed image with a braking defect. Feasibility remains open. To link rollback to DS-BRK-04, identify an affected image and its effect on braking.",
+        "unscored_current_limit_case": "The actuator service permits a change to the active motor-current limit on the addressed wheel without a SecurityAccess unlock or a speed check. This changes an operating parameter. The model establishes neither a firmware change nor thermal damage. Assess authorization for this service separately from firmware rollback."
+      },
+      "proposed_risk_treatment": {
+        "risk_treatment_option": "Reduce",
+        "cybersecurity_goals": [
+          {
+            "goal_id": "CG-BRK-04",
+            "description": "Prevent unauthorized rollback of EBCM braking firmware."
+          }
+        ],
+        "cybersecurity_requirements": [
+          {
+            "requirement_id": "CSR-BRK-04.2",
+            "target_component": "COMP-EBCM",
+            "description": "Before activation, the EBCM shall verify that the signed firmware version meets the approved minimum version."
+          }
+        ],
+        "target_residual_feasibility": null,
+        "target_residual_risk_value": null,
+        "target_residual_risk_level": null,
+        "residual_risk_status": "Unassessed. Reassess when evidence supports a damage-linked path and the version control has been verified."
+      }
+    }
+  ],
+  "traceability_and_risk_summary": [
+    {
+      "threat_scenario_id": "TS-BRK-01",
+      "asset_id": "ASSET-BRK-01",
+      "damage_id": "DS-BRK-01",
+      "primary_vulnerabilities_exploited": [
+        "COMP-BPSU permits unauthorized changes to pedal zero-point calibration through its board debug interface."
+      ],
+      "inherent_impact": "Severe",
+      "inherent_feasibility": "Low (Min Attack Potential = 15)",
+      "inherent_risk": "4 / 5",
+      "treatment_decision": "Reduce (CG-BRK-01 / CSR-BRK-01.2)",
+      "residual_feasibility": null,
+      "residual_risk": null
+    },
+    {
+      "threat_scenario_id": "TS-BRK-02",
+      "asset_id": "ASSET-BRK-02",
+      "damage_id": "DS-BRK-02",
+      "primary_vulnerabilities_exploited": [
+        "VDCM permits the diagnostic brake-demand override while driving without operation-specific authorization."
+      ],
+      "inherent_impact": "Severe",
+      "inherent_feasibility": "Medium (Min Attack Potential = 10)",
+      "inherent_risk": null,
+      "treatment_decision": "Reduce (CG-BRK-02 / CSR-BRK-02.1 and CSR-BRK-02.2)",
+      "residual_feasibility": null,
+      "residual_risk": null
+    },
+    {
+      "threat_scenario_id": "TS-BRK-03",
+      "asset_id": "ASSET-BRK-03",
+      "damage_id": "DS-BRK-03",
+      "primary_vulnerabilities_exploited": [
+        "The wheel actuators do not verify the sender or freshness of normal clamping commands.",
+        "The EBCM accepts pad-service entry through workshop diagnostics without operation-specific authorization or a vehicle-speed check."
+      ],
+      "inherent_impact": "Severe",
+      "inherent_feasibility": "Medium (Min Attack Potential = 10)",
+      "inherent_risk": "5 / 5",
+      "treatment_decision": "Reduce (CG-BRK-03 / CSR-BRK-03.1 and CSR-BRK-03.2)",
+      "residual_feasibility": null,
+      "residual_risk": null
+    },
+    {
+      "threat_scenario_id": "TS-BRK-04",
+      "asset_id": "ASSET-BRK-04",
+      "damage_id": "DS-BRK-04",
+      "primary_vulnerabilities_exploited": [],
+      "inherent_impact": "Severe",
+      "inherent_feasibility": null,
+      "inherent_risk": null,
+      "treatment_decision": "Reduce (CG-BRK-04 / CSR-BRK-04.2)",
+      "residual_feasibility": null,
+      "residual_risk": null,
+      "unscored_finding": "EBCM firmware rollback protection is absent. The conditions for unauthorized rollback and its effect on braking remain unresolved."
+    }
+  ]
+}

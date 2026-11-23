@@ -1,0 +1,311 @@
+================================================================================
+FUNCTIONAL SPECIFICATION & ITEM DEFINITION
+================================================================================
+Document ID:        FS-AUTO-BBW-01
+Item Name:          Electronic Brake-by-Wire (BBW) & Regenerative Braking Subsystem
+Item ID:            AUTO-BBW-01
+Standard Reference: ISO/SAE 21434:2021 (Road vehicles — Cybersecurity engineering)
+Target ASIL:        ASIL-D (Braking Actuation & Pedal Sensing Chain)
+================================================================================
+
+1. SYSTEM OVERVIEW & ITEM BOUNDARY
+--------------------------------------------------------------------------------
+Model scope: This synthetic item describes the primary electronic braking path.
+Independent emergency braking paths are outside its scope and are not assumed.
+Sensor-agreement tolerance and communication timeouts are configurable; their
+numeric calibration is outside this item definition.
+The Electronic Brake-by-Wire (BBW) & Regenerative Braking Subsystem (AUTO-BBW-01) 
+is a function-level architecture responsible for capturing driver deceleration 
+intent at the brake pedal, blending regenerative electric motor braking with 
+friction braking, and commanding the 4-corner electro-mechanical brake caliper 
+actuators to press the brake pads against the wheel rotors.
+
+System Boundary:
+- Physical & Sensor Entry: Brake Pedal Sensor Unit (COMP-BPSU) in the cabin 
+  pedal box zone, equipped with dual Hall-effect sensors and an exposed SWD 
+  debug header (INT-SWD-HEADER).
+- Diagnostic & Wireless Interfaces: Bluetooth Low Energy (BLE 5.0) workshop 
+  service interface (INT-BLE-DIAG) and physical OBD-II CAN port (INT-OBD2-CAN) 
+  terminated at the Vehicle Motion & Chassis Domain Controller (COMP-VDCM).
+- Internal Control Networks:
+  * Chassis & Pedal Sensor CAN-FD Bus (CONN-BRK-02) linking COMP-BPSU, 
+    COMP-VDCM, and the Regenerative Inverter Controller (COMP-RIC).
+  * Braking TSN Ethernet Link (CONN-BRK-03, 100BASE-T1) linking
+    COMP-VDCM to the Electronic Brake Control Module (COMP-EBCM).
+  * Wheel-End Brake Actuator CAN-FD Bus (CONN-BRK-04) routed from COMP-EBCM 
+    into the 4 wheel wells to drive the Smart Electro-Mechanical Brake Caliper 
+    Actuators (COMP-EMBA).
+
+
+2. FUNCTIONAL SPECIFICATIONS
+--------------------------------------------------------------------------------
+
+2.1. FUNC-BRK-01: Driver Pedal Travel Sensing
+-----------------------------------------------------
+- Objective:
+  Sample two redundant Hall-effect pedal travel sensors at 1 kHz and transmit
+  driver pedal demand over CAN-FD to the chassis domain controller.
+
+- Involved Components & Interfaces:
+  COMP-BPSU -> [CONN-BRK-02: Chassis CAN-FD Bus (500 kbps / 2 Mbps)] -> COMP-VDCM.
+
+- Functional Behavior & Data Flow:
+  1. Sensor Sampling: The Brake Pedal Sensor Unit (COMP-BPSU, Infineon TLE4998S 
+     + NXP S32K116 running Bare-Metal Firmware v1.0.4) samples two redundant
+     Hall-effect travel sensors at 1 kHz via `pedal_feel_and_travel_encoder`
+     (v1.0.4).
+     Both readings must be within 0-100% travel, inclusive. Their absolute
+     difference must be within the configured agreement tolerance. When both
+     checks pass, BPSU uses their arithmetic mean as pedal demand and sets
+     `demand_valid` to true. Otherwise, it sets `demand_valid` to false and does
+     not select either sensor as correct. The travel value has no meaning when invalid.
+  2. Signal Transmission: BPSU sends CAN-FD message `0x080`
+     (`Pedal_Travel_Demand`, ASSET-BRK-01) over `CONN-BRK-02` to `COMP-VDCM`.
+     The message contains `pedal_travel_percent`, `demand_valid`, and an E2E
+     CRC-8 covering both fields. Invalid demand is distinct from a valid 0%
+     reading, which represents a released pedal. BPSU transmits after each
+     sampling cycle, including when demand is invalid.
+  3. Pedal Demand Reception & Fallback: VDCM accepts a correctly formatted
+     message with valid CRC-8, demand_valid true, and travel within 0-100%.
+     The last accepted message replaces the stored demand and its local
+     monotonic reception time. VDCM uses zero demand before the first accepted
+     message. Invalid or missing messages leave the last accepted demand in
+     use only until the configured timeout; they do not restart that interval.
+     At timeout, VDCM marks driver demand unavailable and sets pedal-derived
+     braking demand to zero. The next accepted message restores demand use.
+     A valid 0% message releases pedal-derived demand immediately.
+     This hold-then-zero response is a simplified primary-path model, not a
+     production safety strategy. Loss of valid input can remove pedal-derived
+     braking demand. Independent fallback braking is not modeled.
+
+- Current Security & Operational Parameters (As-Built Baseline):
+  * End-to-End (E2E) CRC-8 safety checksums are enabled (`e2e_crc_enabled: true`), 
+    but cryptographic message authentication (AUTOSAR SecOC MAC) is disabled 
+    (`secoc_mac_enabled: false`). VDCM verifies CRC-8 on pedal demand
+    (`pedal_demand_e2e_crc_enabled: true`), but does not verify a MAC or
+    freshness counter (`pedal_demand_mac_verification_enabled: false`,
+    `pedal_demand_freshness_counter_verification_enabled: false`).
+  * The SWD header (`INT-SWD-HEADER`) is unlocked
+    (`jtag_swd_debug_port_locked: false`). Debugger access requires cabin access
+    and physical access to the BPSU board in the pedal box. No additional debug
+    authentication is required.
+  * Pedal travel zero-point calibration storage is not write-protected
+    (`calibration_eeprom_write_protected: false`) and can be modified through
+    SWD debugger access. This is the modeled calibration write path; diagnostic
+    or remote calibration writes are not established.
+
+- Associated Cybersecurity Goals & Damage Scenarios:
+  * Protected Asset: ASSET-BRK-01 (Driver Pedal Travel & Braking Demand Signal)
+  * Security Properties: Integrity, Authenticity, Availability
+  * Damage Scenario (DS-BRK-01): Insufficient braking during an emergency stop
+    or unintended braking at highway speed can cause a collision. The collision
+    can cause serious injury or death.
+    Impact — Safety: Severe, Financial: Major, Operational: Severe, Privacy: Negligible.
+
+
+2.2. FUNC-BRK-02: Brake Torque Blending & Dynamic Allocation
+------------------------------------------------------------
+- Objective:
+  Calculate total vehicle deceleration demand, coordinate regenerative braking 
+  torque with the traction inverter, and transmit friction braking torque 
+  requests to the Electronic Brake Control Module.
+
+- Involved Components & Interfaces:
+  COMP-VDCM <-> [CONN-BRK-02: Chassis CAN-FD] <-> COMP-RIC
+  COMP-VDCM -> [CONN-BRK-03: 100BASE-T1 TSN Ethernet] -> COMP-EBCM
+  EXTERNAL_ATTACKER_SURFACE -> [CONN-BRK-01: BLE / OBD-II] -> COMP-VDCM.
+
+- Functional Behavior & Data Flow:
+  1. Torque Split Calculation: `COMP-VDCM` (Renesas R-Car S4 running Embedded 
+     Linux 5.10.70 + AUTOSAR Adaptive) executes `brake_blending_coordinator` 
+     (v2.3.1) to split deceleration demand between regenerative electric 
+     braking and mechanical friction braking.
+  2. Regenerative Feedback Loop: The Regenerative Inverter Controller (`COMP-RIC`, 
+     TI C2000 running TI-RTOS `sys/bios` v6.83.00.18 with `regen_torque_inverter_app` 
+     v4.1.2) applies negative motor torque and reports actual achieved 
+     regenerative torque to `COMP-VDCM` via CAN ID `0x1A0` over `CONN-BRK-02`.
+     RIC transmits this feedback periodically.
+  3. Friction Demand Transmission: `COMP-VDCM` calculates friction torque demand
+     as max(0, driver demand - credited regenerative contribution). Both inputs
+     use the same torque basis, with positive values representing braking.
+     It sends the friction torque request (`BrakeTorqueRequest`, SOME/IP Service
+     `0x1020`, ASSET-BRK-02) over 100BASE-T1 TSN Ethernet (`CONN-BRK-03`,
+     UDP) to the configured application port on `COMP-EBCM`. SOME/IP service
+     discovery is outside the current model.
+     - At startup, the credited regenerative contribution is zero.
+     - Each correctly formatted feedback message that passes E2E CRC-8 updates
+       the stored torque and local monotonic reception time.
+     - Invalid messages are discarded without updating torque or reception time.
+       The previous contribution remains in use until timeout.
+     - When the configured reception timeout expires, VDCM credits zero
+       regenerative contribution and requests the full available driver braking
+       demand through friction braking. If pedal demand has also timed out,
+       its contribution is zero under the pedal fallback rule.
+     - The next accepted message restores blending with its reported torque.
+     This fallback defines the requested torque, not the achieved deceleration.
+  4. Workshop Diagnostics & IPC: `COMP-VDCM` uses `bluez` (v5.54) for BLE
+     transport to the workshop diagnostic service. Normal BLE service access
+     requires wireless proximity and pairing with the fixed six-digit passkey
+     `000000`. The BLE diagnostic link is encrypted; OBD-II CAN is unencrypted.
+     OBD-II access requires a physical connection to `INT-OBD2-CAN`.
+     Both entry points submit diagnostic requests to VDCM. VDCM handles the
+     supported requests; it does not forward arbitrary chassis CAN frames
+     from either entry point to `CONN-BRK-02`.
+     VDCM forwards EBCM-supported diagnostic requests from either entry point
+     over DoIP on `CONN-BRK-03`, without additional client authorization.
+     EBCM applies authorization separately for each requested operation.
+     VDCM also runs `mosquitto` (v2.0.10, TCP port 1883) for internal
+     SOME/IP-to-MQTT telemetry.
+
+- Current Security & Operational Parameters (As-Built Baseline):
+  * Software versions on COMP-VDCM: `linux_kernel` v5.10.70, `bluez`
+    v5.54, and `mosquitto` v2.0.10.
+    The synthetic kernel baseline is unmodified upstream Linux v5.10.70.
+  * Software versions on COMP-RIC: TI `sys/bios` v6.83.00.18.
+  * BLE workshop pairing uses a fixed six-digit passkey (`000000`). Link
+    encryption does not add application authorization to diagnostic operations.
+  * `brake_blending_coordinator` runs with root privileges (`runs_as_root: true`).
+  * SOME/IP traffic over `CONN-BRK-03` is transmitted in plaintext without TLS, 
+    IPsec, or MACsec (`someip_tls_or_ipsec_enabled: false`).
+  * VDCM accepts UDS `0x2F` (InputOutputControlByIdentifier) brake-demand
+    override requests through either diagnostic entry point without additional
+    application authorization (`uds_0x2F_io_control_auth_required: false`).
+    The override is permitted while driving
+    (`allow_diagnostic_brake_override_while_driving: true`).
+  * `COMP-VDCM` checks the E2E CRC-8 of regenerative torque feedback on CAN ID
+    `0x1A0` (`regen_feedback_e2e_crc_enabled: true`). CRC detects transmission
+    errors; it does not authenticate the sender.
+  * `COMP-VDCM` does not verify a cryptographic MAC on this feedback
+    (`regen_feedback_mac_verification_enabled: false`).
+  * `COMP-VDCM` does not check a freshness counter on this feedback
+    (`regen_feedback_freshness_counter_verification_enabled: false`).
+  * `COMP-VDCM` does not compare the reported regenerative torque with an
+    independent measurement of actual vehicle deceleration
+    (`regen_feedback_independent_deceleration_check_enabled: false`).
+
+- Associated Cybersecurity Goals & Damage Scenarios:
+  * Protected Asset: ASSET-BRK-02 (Regenerative Torque Feedback and Friction Torque Request)
+  * Security Properties: Integrity, Authenticity, Availability
+  * Damage Scenario (DS-BRK-02): Insufficient combined regenerative and friction
+    braking can prevent the vehicle from achieving the required deceleration.
+    This can cause a collision and serious injury or death.
+    Impact — Safety: Severe, Financial: Major, Operational: Severe, Privacy: Negligible.
+
+
+2.3. FUNC-BRK-03: Electro-Mechanical Friction Brake Actuation
+-------------------------------------------------------------
+- Objective:
+  Execute wheel-slip control (ABS/ESC) and drive the 48V 3-phase BLDC motors 
+  inside each wheel's Smart Electro-Mechanical Brake Caliper Actuator to press 
+  the brake pads against the brake disc.
+
+- Involved Components & Interfaces:
+  COMP-EBCM -> [CONN-BRK-04: Wheel-End Actuator CAN-FD Bus (2 Mbps)] -> COMP-EMBA (x4).
+  The four instances share the COMP-EMBA hardware, software, interfaces, and
+  security settings:
+  - COMP-EMBA-FL: front-left wheel.
+  - COMP-EMBA-FR: front-right wheel.
+  - COMP-EMBA-RL: rear-left wheel.
+  - COMP-EMBA-RR: rear-right wheel.
+
+- Functional Behavior & Data Flow:
+  1. SOME/IP Reception & ABS Loop: `COMP-EBCM` uses an NXP S32K344 with two
+     Cortex-M7 cores configured as one lockstep pair. It runs FreeRTOS v10.4.1
+     and `lwip` v2.1.2. The lwIP stack provides UDP/IP communication on the
+     configured application port. The EBCM application processes SOME/IP service
+     `0x1020`; `abs_esc_clamping_controller` (v3.4.0) computes individual wheel
+     clamping forces.
+  2. Actuator Command Transmission: `COMP-EBCM` transmits one command frame
+     (`CAN ID 0x040`, `Target_Clamping_Force_kN`, ASSET-BRK-03) containing four
+     force values in kN. The fields map to actuator instances as follows:
+     - `front_left`: COMP-EMBA-FL.
+     - `front_right`: COMP-EMBA-FR.
+     - `rear_left`: COMP-EMBA-RL.
+     - `rear_right`: COMP-EMBA-RR.
+     All four actuators receive the frame on the shared CONN-BRK-04 bus.
+     Each actuator uses only its assigned field.
+     UDS diagnostic frames (`0x750`) also use this 2 Mbps CAN-FD sub-bus.
+  3. Mechanical Pad Clamping: Each wheel's `COMP-EMBA` uses a CAN-FD-capable
+     automotive MCU and an external 48V-rated three-phase BLDC motor-driver
+     stage. Specific parts are not selected. Bare-Metal Firmware v2.0.0 with
+     `caliper_piston_servo_driver` v2.0.0 controls the 48V BLDC ball-screw
+     actuator to push the brake pads against the rotor.
+  4. Normal Command Reception: Each actuator starts in normal mode with zero
+     clamping demand. The following rules apply in normal mode.
+     It accepts correctly formatted `0x040` frames when its assigned value is
+     within zero and the configured maximum force. The last accepted value
+     becomes its force target and updates local monotonic reception time.
+     Invalid commands do not change the target or refresh the command timer.
+     At the configured timeout, the actuator records a communication fault and
+     retains its last accepted target. The next accepted command restores
+     tracking and clears that fault. The servo regulates force under the active
+     motor-current limit; holding a target does not command continuous maximum
+     motor current.
+  5. Pad-Service Priority: The EBCM routine request identifies the selected wheel
+     instances. EBCM sends entry or explicit exit requests over `CONN-BRK-04`.
+     On entry, each selected actuator retracts its piston to the configured
+     service position. Normal `0x040` commands do not change its target and are
+     not saved for later use. Completing retraction does not end service mode;
+     an explicit service-exit request is required. On exit, the actuator discards
+     its pre-service normal target and reception time and restores normal
+     processing. It waits at the service position for a new accepted `0x040`
+     command. Untargeted actuators continue their existing operation.
+
+- Current Security & Operational Parameters (As-Built Baseline):
+  * Software versions on COMP-EBCM: `freertos` v10.4.1 and `lwip` v2.1.2.
+  * EBCM permits programming only while stationary, in a programming session,
+    after a successful UDS `0x27` SecurityAccess unlock. Access uses the existing
+    diagnostic route from VDCM; forwarding alone does not authorize programming.
+    SecurityAccess uses 8-bit seed entropy (`uds_0x27_seed_entropy_bits: 8`).
+    The seed/key algorithm and retry policy are not specified.
+  * EBCM verifies the firmware signature against a configured trusted firmware
+    signer before activation. It activates only complete, compatible images
+    with valid signatures. Incomplete, unsigned, or invalidly signed images
+    are rejected.
+  * Bootloader rollback protection is disabled
+    (`bootloader_rollback_protection: false`). An older compatible image can be
+    accepted after programming authorization if its signature is valid.
+  * EBCM accepts the UDS `0x31` pad-retraction routine without a SecurityAccess
+    unlock and without a vehicle speed check
+    (`uds_0x31_bleed_routine_speed_interlock_enabled: false`). The service-mode
+    rules above define its priority and recovery. These permissions apply to
+    this routine; they do not authorize other diagnostic operations.
+  * `CONN-BRK-04` and `COMP-EMBA` do not verify command MACs or freshness counters 
+    (`command_authentication_mac: false`, `secoc_freshness_counter_enabled: false`).
+  * A manufacturer-specific UDS operation on `CONN-BRK-04` adjusts the active
+    motor-current limit of the addressed actuator
+    (`max_clamping_current_limiter_overrideable_via_uds: true`). It requires no
+    SecurityAccess unlock or vehicle-speed check. VDCM-to-actuator diagnostic
+    forwarding is not modeled.
+  * Physical wiring for `CONN-BRK-04` uses unshielded twisted-pair cables
+    accessible inside the exterior wheel wells without entering the cabin.
+    Bus access requires physical contact with this wiring and a CAN-FD
+    interface. Wireless proximity alone does not provide this access.
+
+- Associated Cybersecurity Goals & Damage Scenarios:
+  * Protected Assets:
+    - ASSET-BRK-03 (Wheel Caliper Clamping Force Command - CAN ID 0x040)
+      Security Properties: Integrity, Authenticity, Availability
+    - ASSET-BRK-04 (EBCM & Caliper Actuator Control Firmware)
+      Security Properties: Integrity, Authenticity
+  * Damage Scenario (DS-BRK-03): Uneven or insufficient wheel braking can cause
+    loss of directional control or increased stopping distance. This can cause
+    a collision and serious injury or death.
+    Impact — Safety: Severe, Financial: Major, Operational: Severe, Privacy: Negligible.
+  * Damage Scenario (DS-BRK-04): Loss of anti-lock braking or damage to brake
+    actuators can reduce braking performance and vehicle stability. This can
+    cause a collision and serious injury or death. Damaged actuators can
+    require replacement and prevent vehicle use.
+    Impact — Safety: Severe, Financial: Severe, Operational: Severe, Privacy: Negligible.
+
+
+3. COMPONENT & INTERFACE TRACEABILITY MATRIX
+--------------------------------------------------------------------------------
+Component ID | Component Name                  | Trust Zone                   | ASIL   | Functions
+-------------|---------------------------------|------------------------------|--------|--------------------
+COMP-BPSU    | Brake Pedal Sensor Unit         | Cabin_Pedal_Box_Zone         | ASIL-D | FUNC-BRK-01
+COMP-VDCM    | Vehicle Motion Domain Ctrl      | Chassis_Backbone_Zone        | ASIL-D | FUNC-BRK-01, 02
+COMP-RIC     | Regenerative Inverter Ctrl      | Powertrain_HV_Zone           | ASIL-C | FUNC-BRK-02
+COMP-EBCM    | Electronic Brake Control Module | Safety_Critical_Braking_Zone | ASIL-D | FUNC-BRK-02, 03
+COMP-EMBA    | Smart Brake Caliper Actuator x4 | Wheel_End_Actuator_Zone      | ASIL-D | FUNC-BRK-03
+================================================================================
