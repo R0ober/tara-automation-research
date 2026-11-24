@@ -1,0 +1,581 @@
+{
+  "item_definition": {
+    "item_id": "AUTO-BBW-01",
+    "name": "Electronic Brake-by-Wire (BBW) & Regenerative Braking Subsystem",
+    "standard_reference": "ISO/SAE 21434:2021",
+    "system_boundary": "Function-level boundary encompassing the complete braking signal chain: from the physical Brake Pedal Sensor Unit (BPSU) and Vehicle Motion & Chassis Domain Controller (VDCM), through the Electronic Brake Control Module (EBCM) and Regenerative Inverter Controller (RIC), down to the 4-corner Smart Electro-Mechanical Brake Caliper Actuators (EMBA). Includes the exposed OBD-II / Wireless Diagnostic Service Interface on the VDCM.",
+    "functions": [
+      {
+        "function_id": "FUNC-BRK-01",
+        "name": "Driver Pedal Travel Sensing",
+        "description": "Samples two redundant Hall-effect pedal travel sensors at 1 kHz in COMP-BPSU and transmits driver pedal demand over Chassis CAN-FD to COMP-VDCM."
+      },
+      {
+        "function_id": "FUNC-BRK-02",
+        "name": "Brake Torque Blending & Dynamic Allocation",
+        "description": "Calculates total braking demand, coordinates regenerative torque with RIC, and sends the remaining friction torque request to EBCM."
+      },
+      {
+        "function_id": "FUNC-BRK-03",
+        "name": "Electro-Mechanical Friction Brake Actuation",
+        "description": "EBCM calculates per-wheel clamping force commands from friction braking demand and wheel-slip control. Each EMBA converts its assigned command into motor actuation to press the brake pads against the rotor."
+      }
+    ],
+    "modeling_assumptions": [
+      "This synthetic model describes the primary electronic braking path. Independent emergency braking paths are outside its scope; their availability must not be assumed.",
+      "Communication timeouts and the sensor-agreement tolerance are configurable. Their numeric calibration is outside this item definition."
+    ]
+  },
+  "components": [
+    {
+      "component_id": "COMP-BPSU",
+      "name": "Brake Pedal Sensor Unit (BPSU)",
+      "type": "Smart_Sensor_Node",
+      "trust_zone": "Cabin_Pedal_Box_Zone",
+      "asil_level": "ASIL-D",
+      "hardware": "Infineon TLE4998S Hall Sensor + NXP S32K116 Cortex-M0+ MCU",
+      "os": {
+        "name": "Bare-Metal Firmware",
+        "version": "1.0.4"
+      },
+      "hosted_software": [
+        {
+          "name": "pedal_feel_and_travel_encoder",
+          "version": "1.0.4",
+          "role": "Samples two redundant Hall-effect pedal travel sensors at 1 kHz and packages CAN ID 0x080 (Pedal_Travel_Demand)",
+          "security_configuration": {
+            "e2e_crc_enabled": true,
+            "secoc_mac_enabled": false,
+            "jtag_swd_debug_port_locked": false,
+            "calibration_eeprom_write_protected": false
+          },
+          "operational_parameters": {
+            "sensor_sampling_rate_hz": 1000,
+            "sensor_travel_min_percent": 0,
+            "sensor_travel_max_percent": 100,
+            "valid_demand_rule": "Both sensor readings are within 0 to 100 percent inclusive and their absolute difference is within the configured agreement tolerance; pedal travel demand is their arithmetic mean and demand_valid is true",
+            "invalid_demand_rule": "If either reading is outside the permitted range or their absolute difference exceeds the configured tolerance, demand_valid is false; pedal_travel_percent has no meaning and neither sensor is selected as correct",
+            "sensor_agreement_tolerance": "Configured maximum difference between normalized travel readings",
+            "pedal_demand_transmission": "Send pedal demand and validity after each sensor sampling cycle, including when demand is invalid"
+          }
+        }
+      ],
+      "interfaces": [
+        "INT-CAN-CHASSIS",
+        "INT-SWD-HEADER"
+      ],
+      "physical_access": {
+        "interface_id": "INT-SWD-HEADER",
+        "required_access": "Cabin access and physical access to the BPSU board in the pedal box",
+        "debug_authentication_required": false,
+        "capability": "Debugger access through the unlocked SWD header, including writes to pedal zero-point calibration storage"
+      }
+    },
+    {
+      "component_id": "COMP-VDCM",
+      "name": "Vehicle Motion & Chassis Domain Controller (VDCM)",
+      "type": "Domain_Controller_HPC",
+      "trust_zone": "Chassis_Backbone_Zone",
+      "asil_level": "ASIL-D",
+      "hardware": "Renesas R-Car S4 (ARM Cortex-A55 + Cortex-R52 Lockstep)",
+      "os": {
+        "name": "Embedded Linux (AGL) + AUTOSAR Adaptive",
+        "kernel_version": "5.10.70",
+        "kernel_source": "Upstream Linux",
+        "vendor_kernel_modifications": false,
+        "cpe": "cpe:2.3:o:linux:linux_kernel:5.10.70:*:*:*:*:*:*:*"
+      },
+      "hosted_software": [
+        {
+          "name": "bluez",
+          "version": "5.54",
+          "cpe": "cpe:2.3:a:bluez:bluez:5.54:*:*:*:*:*:*:*",
+          "role": "BLE Factory & Workshop Wireless Brake Diagnostics Interface (Bleeding/Pad Service Mode)"
+        },
+        {
+          "name": "mosquitto",
+          "version": "2.0.10",
+          "cpe": "cpe:2.3:a:eclipse:mosquitto:2.0.10:*:*:*:*:*:*:*",
+          "role": "Internal IPC / SOME-IP to MQTT Telemetry Bridge",
+          "listening_port": 1883
+        },
+        {
+          "name": "brake_blending_coordinator",
+          "version": "2.3.1",
+          "role": "Calculates remaining friction torque demand from driver demand and achieved regenerative torque reported by RIC (CAN ID 0x1A0), then transmits SOME/IP BrakeTorqueRequest over TSN Ethernet to EBCM",
+          "security_configuration": {
+            "runs_as_root": true,
+            "someip_tls_or_ipsec_enabled": false,
+            "allow_diagnostic_brake_override_while_driving": true,
+            "uds_0x2F_io_control_auth_required": false,
+            "regen_feedback_e2e_crc_enabled": true,
+            "regen_feedback_mac_verification_enabled": false,
+            "regen_feedback_freshness_counter_verification_enabled": false,
+            "regen_feedback_independent_deceleration_check_enabled": false,
+            "pedal_demand_e2e_crc_enabled": true,
+            "pedal_demand_mac_verification_enabled": false,
+            "pedal_demand_freshness_counter_verification_enabled": false
+          },
+          "operational_parameters": {
+            "braking_torque_basis": "Driver demand and reported regenerative contribution use the same torque basis, with positive values representing braking",
+            "friction_torque_demand": "max(0, driver demand - credited regenerative contribution)",
+            "regen_feedback_initial_contribution": 0,
+            "regen_feedback_acceptance": "Accept correctly formatted CAN ID 0x1A0 feedback that passes E2E CRC-8; store reported torque and local monotonic reception time on each accepted message",
+            "regen_feedback_on_invalid_message": "Discard without updating stored torque or reception time; retain the previous contribution until timeout",
+            "regen_feedback_on_timeout": "When elapsed time since the last accepted message reaches the timeout, credit zero regenerative contribution and request the available driver demand through friction braking; if pedal demand is unavailable, its contribution remains zero",
+            "regen_feedback_on_recovery": "Resume blending with the reported torque from the next accepted message",
+            "regen_feedback_timeout": "Configured maximum time since the last accepted feedback message",
+            "pedal_demand_acceptance": "Accept correctly formatted CAN ID 0x080 with valid E2E CRC-8, demand_valid true, and travel within 0 to 100 percent inclusive; the last accepted message replaces the stored demand and its local monotonic reception time",
+            "pedal_demand_initial_percent": 0,
+            "pedal_demand_timeout": "Configured maximum time since the last accepted valid demand",
+            "pedal_demand_on_invalid_or_missing": "Retain the last accepted demand only until its timeout; invalid messages do not update demand or its reception time",
+            "pedal_demand_on_timeout": "Mark driver demand unavailable and set the pedal-derived braking demand to zero",
+            "pedal_demand_on_recovery": "Resume using the next accepted demand immediately; a valid zero-percent message releases pedal-derived demand immediately",
+            "pedal_fallback_limitation": "The hold-then-zero response is a simplified primary-path model, not a production safety strategy. Loss of valid pedal input can remove pedal-derived braking demand; independent fallback braking is not modeled."
+          }
+        }
+      ],
+      "interfaces": [
+        "INT-BLE-DIAG",
+        "INT-OBD2-CAN",
+        "INT-CAN-CHASSIS",
+        "INT-ETH-TSN-BRAKE"
+      ]
+    },
+    {
+      "component_id": "COMP-RIC",
+      "name": "Regenerative Inverter Controller (RIC)",
+      "type": "ECU_Powertrain",
+      "trust_zone": "Powertrain_HV_Zone",
+      "asil_level": "ASIL-C",
+      "hardware": "TI C2000 TMS320F28388D",
+      "os": {
+        "name": "TI-RTOS (SYS/BIOS)",
+        "version": "6.83.00.18",
+        "cpe": "cpe:2.3:o:ti:sys\\/bios:6.83.00.18:*:*:*:*:*:*:*"
+      },
+      "hosted_software": [
+        {
+          "name": "regen_torque_inverter_app",
+          "version": "4.1.2",
+          "role": "Executes negative torque (regenerative braking) on traction motor and reports achieved regenerative torque to VDCM (CAN ID 0x1A0)",
+          "operational_parameters": {
+            "regen_feedback_transmission": "Periodic CAN ID 0x1A0 feedback"
+          }
+        }
+      ],
+      "interfaces": [
+        "INT-CAN-CHASSIS"
+      ]
+    },
+    {
+      "component_id": "COMP-EBCM",
+      "name": "Electronic Brake Control Module (EBCM)",
+      "type": "ECU_Safety_Critical",
+      "trust_zone": "Safety_Critical_Braking_Zone",
+      "asil_level": "ASIL-D",
+      "hardware": "NXP S32K344 (two ARM Cortex-M7 cores configured as one lockstep pair)",
+      "os": {
+        "name": "FreeRTOS + LwIP TCP/IP Stack",
+        "version": "10.4.1",
+        "cpe": "cpe:2.3:o:amazon:freertos:10.4.1:*:*:*:*:*:*:*"
+      },
+      "hosted_software": [
+        {
+          "name": "lwip",
+          "version": "2.1.2",
+          "cpe": "cpe:2.3:a:lwip_project:lwip:2.1.2:*:*:*:*:*:*:*",
+          "role": "Embedded TCP/IP stack for the Ethernet interface"
+        },
+        {
+          "name": "abs_esc_clamping_controller",
+          "version": "3.4.0",
+          "role": "Processes SOME/IP braking demand over lwIP, executes wheel-slip PID loop, and sends all four wheel clamping force values in each CAN-FD command frame (ID 0x040)",
+          "security_configuration": {
+            "secoc_freshness_counter_enabled": false,
+            "uds_0x27_seed_entropy_bits": 8,
+            "uds_0x31_bleed_routine_speed_interlock_enabled": false,
+            "bootloader_rollback_protection": false
+          }
+        }
+      ],
+      "interfaces": [
+        "INT-ETH-TSN-BRAKE",
+        "INT-CANFD-ACTUATOR"
+      ],
+      "diagnostic_services": [
+        {
+          "service_id": "0x31",
+          "routine": "Caliper piston retraction for pad replacement",
+          "security_access_required": false,
+          "vehicle_speed_interlock_enabled": false,
+          "execution_connection": "CONN-BRK-04",
+          "execution_behavior": "EBCM requests pad-service entry or explicit exit for the selected wheel actuators over the actuator bus",
+          "target_selection": "The request identifies selected COMP-EMBA wheel instances"
+        }
+      ],
+      "diagnostic_programming": {
+        "required_session": "programming",
+        "security_access_service": "0x27",
+        "security_access_required": true,
+        "required_vehicle_state": "stationary",
+        "firmware_signature_verification_required": true,
+        "firmware_signature_verification_component": "COMP-EBCM",
+        "image_activation_rule": "Activate only complete compatible images whose signature verifies against a configured trusted firmware signer; reject incomplete, unsigned, or invalidly signed images",
+        "rollback_protection_enabled": false,
+        "older_image_policy": "An older compatible image can be accepted after programming authorization if its signature is valid",
+        "security_access_seed_key_algorithm": "Not specified",
+        "security_access_retry_policy": "Not specified"
+      }
+    },
+    {
+      "component_id": "COMP-EMBA",
+      "name": "Smart Electro-Mechanical Brake Caliper Actuator (EMBA x4)",
+      "instances": [
+        {
+          "instance_id": "COMP-EMBA-FL",
+          "wheel_position": "front-left"
+        },
+        {
+          "instance_id": "COMP-EMBA-FR",
+          "wheel_position": "front-right"
+        },
+        {
+          "instance_id": "COMP-EMBA-RL",
+          "wheel_position": "rear-left"
+        },
+        {
+          "instance_id": "COMP-EMBA-RR",
+          "wheel_position": "rear-right"
+        }
+      ],
+      "type": "Smart_Actuator_Node",
+      "trust_zone": "Wheel_End_Actuator_Zone",
+      "asil_level": "ASIL-D",
+      "hardware": "CAN-FD-capable automotive MCU with an external 48V-rated three-phase BLDC motor-driver stage; specific parts not selected",
+      "os": {
+        "name": "Bare-Metal Motor Control Firmware",
+        "version": "2.0.0"
+      },
+      "hosted_software": [
+        {
+          "name": "caliper_piston_servo_driver",
+          "version": "2.0.0",
+          "role": "Drives 48V BLDC ball-screw mechanism to push brake pads against disc rotor using only the clamping force field assigned to its wheel instance in CAN ID 0x040",
+          "security_configuration": {
+            "command_authentication_mac": false,
+            "max_clamping_current_limiter_overrideable_via_uds": true,
+            "wheel_harness_physical_shielding": "Unshielded wheel-well twisted pair (accessible without cabin entry)",
+            "secoc_freshness_counter_enabled": false
+          },
+          "operational_parameters": {
+            "initial_clamping_force_kn": 0,
+            "command_force_range": "Zero to the configured maximum clamping force",
+            "command_acceptance": "Accept a correctly formatted CAN ID 0x040 frame when the assigned wheel value is within the configured force range; the last accepted value becomes the force target and updates local monotonic reception time",
+            "command_timeout": "Configured maximum time since the last accepted command",
+            "on_invalid_command": "Reject without changing the force target or refreshing the command timer",
+            "on_command_timeout": "Record a communication fault and retain the last accepted force target",
+            "on_command_recovery": "Resume tracking the next accepted command and clear the communication fault",
+            "force_control": "The servo regulates force under the active motor-current limit; retaining a force target does not command continuous maximum motor current",
+            "initial_mode": "normal",
+            "command_processing_scope": "The normal-command acceptance and timeout rules apply in normal mode; pre-service normal commands are not restored after pad-service exit",
+            "pad_service_mode": {
+              "entry": "On an EBCM pad-service entry request targeting this instance, retract the piston to its configured service position",
+              "normal_command_priority": "Normal CAN ID 0x040 commands do not change the target in pad-service mode and are not saved for use after exit",
+              "completion": "Remain in pad-service mode after retraction completes until an explicit service-exit request",
+              "exit": "Restore normal command processing and discard the pre-service normal target and reception time; wait at the service position for the next newly accepted 0x040 command",
+              "other_instances": "Actuators not targeted by the request continue their existing operation"
+            }
+          }
+        }
+      ],
+      "interfaces": [
+        "INT-CANFD-ACTUATOR"
+      ],
+      "diagnostic_services": [
+        {
+          "operation": "Manufacturer-specific UDS motor-current-limit adjustment",
+          "request_connection": "CONN-BRK-04",
+          "target_scope": "The addressed COMP-EMBA instance",
+          "security_access_required": false,
+          "vehicle_speed_interlock_enabled": false,
+          "effect": "Adjust the active motor-current limit",
+          "vdcm_diagnostic_forwarding": "Not modeled"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "connection_id": "CONN-BRK-01",
+      "name": "Workshop BLE & OBD-II Diagnostic Interface",
+      "source_component": "EXTERNAL_ATTACKER_SURFACE",
+      "target_component": "COMP-VDCM",
+      "medium": "Bluetooth Low Energy (BLE 5.0) & Physical OBD-II Port (ISO 15765-4)",
+      "protocol": "GATT / L2CAP (BLE) & UDS on CAN (0x7E0 / 0x7DF)",
+      "authenticated": "BLE diagnostic service requires pairing with fixed passkey 000000; OBD-II requires physical connection. VDCM UDS 0x2F requires no additional application authorization.",
+      "entry_points": [
+        {
+          "interface_id": "INT-BLE-DIAG",
+          "medium": "Bluetooth Low Energy (BLE 5.0)",
+          "protocol": "Workshop diagnostic requests over GATT / L2CAP",
+          "access_requirement": "Wireless proximity and pairing with the fixed six-digit passkey 000000 for normal diagnostic service access",
+          "encrypted": true
+        },
+        {
+          "interface_id": "INT-OBD2-CAN",
+          "medium": "Physical OBD-II CAN connector",
+          "protocol": "UDS on CAN (0x7E0 / 0x7DF)",
+          "access_requirement": "Physical connection to the diagnostic connector; no additional client authentication for the VDCM brake override service",
+          "encrypted": false
+        }
+      ],
+      "diagnostic_access": {
+        "request_handler_component": "COMP-VDCM",
+        "raw_chassis_can_forwarding_enabled": false,
+        "brake_override_service": {
+          "service_id": "0x2F",
+          "handler_software": "brake_blending_coordinator",
+          "entry_interfaces": [
+            "INT-BLE-DIAG",
+            "INT-OBD2-CAN"
+          ],
+          "additional_authorization_required": false,
+          "allowed_while_driving": true
+        },
+        "downstream_routes": [
+          {
+            "target_component": "COMP-EBCM",
+            "via_connection": "CONN-BRK-03",
+            "protocol": "DoIP",
+            "entry_interfaces": [
+              "INT-BLE-DIAG",
+              "INT-OBD2-CAN"
+            ],
+            "additional_client_authorization_required": false,
+            "request_scope": "Forward EBCM-supported diagnostic requests; EBCM applies authorization for each operation"
+          }
+        ]
+      }
+    },
+    {
+      "connection_id": "CONN-BRK-02",
+      "name": "Chassis & Pedal Sensor CAN-FD Bus",
+      "source_component": "COMP-BPSU",
+      "target_component": "COMP-VDCM",
+      "adjacent_components": [
+        "COMP-RIC"
+      ],
+      "medium": "CAN-FD (500 kbps nominal / 2 Mbps data)",
+      "protocol": "Raw CAN-FD Frames (CAN ID 0x080 Pedal Travel, CAN ID 0x1A0 Regen Torque Status)",
+      "messages": [
+        {
+          "can_id": "0x080",
+          "name": "Pedal_Travel_Demand",
+          "source_component": "COMP-BPSU",
+          "target_component": "COMP-VDCM",
+          "payload_fields": [
+            {
+              "name": "pedal_travel_percent",
+              "unit": "percent",
+              "meaning": "Arithmetic mean of the two sensor readings when demand_valid is true; no meaning when demand_valid is false"
+            },
+            {
+              "name": "demand_valid",
+              "type": "boolean",
+              "meaning": "Result of the BPSU sensor range and disagreement checks"
+            },
+            {
+              "name": "e2e_crc",
+              "type": "CRC-8",
+              "covered_fields": [
+                "pedal_travel_percent",
+                "demand_valid"
+              ]
+            }
+          ]
+        },
+        {
+          "can_id": "0x1A0",
+          "name": "Regen_Torque_Status",
+          "source_component": "COMP-RIC",
+          "target_component": "COMP-VDCM",
+          "payload_fields": [
+            {
+              "name": "achieved_regenerative_torque",
+              "meaning": "Braking torque the RIC reports it has delivered"
+            },
+            {
+              "name": "e2e_crc",
+              "type": "CRC-8"
+            }
+          ]
+        }
+      ],
+      "encrypted": false,
+      "authenticated": "None (CRC-8 error detection only; AUTOSAR SecOC disabled)"
+    },
+    {
+      "connection_id": "CONN-BRK-03",
+      "name": "Braking TSN Ethernet Link",
+      "source_component": "COMP-VDCM",
+      "target_component": "COMP-EBCM",
+      "medium": "100BASE-T1 Automotive Ethernet (IEEE 802.1Qbv TSN)",
+      "protocol": "SOME/IP Service 0x1020 over UDP (configured application port on COMP-EBCM) & DoIP over TCP Port 13400",
+      "encrypted": false,
+      "authenticated": "None (Plaintext SOME/IP without MACsec, IPsec, or SecOC)"
+    },
+    {
+      "connection_id": "CONN-BRK-04",
+      "name": "Wheel-End Brake Actuator CAN-FD Bus",
+      "source_component": "COMP-EBCM",
+      "target_component": "COMP-EMBA",
+      "target_instances": [
+        "COMP-EMBA-FL",
+        "COMP-EMBA-FR",
+        "COMP-EMBA-RL",
+        "COMP-EMBA-RR"
+      ],
+      "messages": [
+        {
+          "can_id": "0x040",
+          "name": "Target_Clamping_Force_kN",
+          "source_component": "COMP-EBCM",
+          "payload_unit": "kN",
+          "payload_fields": [
+            {
+              "name": "front_left",
+              "target_instance": "COMP-EMBA-FL"
+            },
+            {
+              "name": "front_right",
+              "target_instance": "COMP-EMBA-FR"
+            },
+            {
+              "name": "rear_left",
+              "target_instance": "COMP-EMBA-RL"
+            },
+            {
+              "name": "rear_right",
+              "target_instance": "COMP-EMBA-RR"
+            }
+          ],
+          "receiver_behavior": "Each actuator reads only the field assigned to its instance; hardware, software, interfaces, and security settings are shared through COMP-EMBA"
+        }
+      ],
+      "medium": "Private CAN-FD Sub-bus routed to all 4 wheel wells (2 Mbps)",
+      "protocol": "Raw CAN-FD Frames (CAN ID 0x040 Target_Clamping_Force_kN) & UDS (0x750)",
+      "encrypted": false,
+      "authenticated": "None (Plaintext CAN-FD without SecOC; physical wiring exposed in wheel arches)",
+      "physical_access": {
+        "location": "Exterior wheel-well harness",
+        "required_access": "Physical contact with the CAN-FD wiring",
+        "required_equipment": "CAN-FD interface",
+        "cabin_access_required": false
+      }
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "ASSET-BRK-01",
+      "name": "Driver Pedal Travel & Braking Demand Signal (CAN ID 0x080)",
+      "parent_component": "COMP-BPSU",
+      "associated_connections": [
+        "CONN-BRK-02"
+      ],
+      "cybersecurity_properties": [
+        "Integrity",
+        "Authenticity",
+        "Availability"
+      ],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-BRK-01",
+          "description": "Insufficient braking during an emergency stop or unintended braking at highway speed can cause a collision. The collision can cause serious injury or death.",
+          "expected_sfop_impact": {
+            "Safety": "Severe",
+            "Financial": "Major",
+            "Operational": "Severe",
+            "Privacy": "Negligible"
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": "ASSET-BRK-02",
+      "name": "Regenerative Torque Feedback and Friction Torque Request (CAN ID 0x1A0 and SOME/IP 0x1020)",
+      "parent_component": "COMP-VDCM",
+      "associated_connections": [
+        "CONN-BRK-02",
+        "CONN-BRK-03"
+      ],
+      "cybersecurity_properties": [
+        "Integrity",
+        "Authenticity",
+        "Availability"
+      ],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-BRK-02",
+          "description": "Insufficient combined regenerative and friction braking can prevent the vehicle from achieving the required deceleration. This can cause a collision and serious injury or death.",
+          "expected_sfop_impact": {
+            "Safety": "Severe",
+            "Financial": "Major",
+            "Operational": "Severe",
+            "Privacy": "Negligible"
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": "ASSET-BRK-03",
+      "name": "Wheel Caliper Clamping Force Command (CAN ID 0x040)",
+      "parent_component": "COMP-EMBA",
+      "associated_connections": [
+        "CONN-BRK-04"
+      ],
+      "cybersecurity_properties": [
+        "Integrity",
+        "Authenticity",
+        "Availability"
+      ],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-BRK-03",
+          "description": "Uneven or insufficient wheel braking can cause loss of directional control or increased stopping distance. This can cause a collision and serious injury or death.",
+          "expected_sfop_impact": {
+            "Safety": "Severe",
+            "Financial": "Major",
+            "Operational": "Severe",
+            "Privacy": "Negligible"
+          }
+        }
+      ]
+    },
+    {
+      "asset_id": "ASSET-BRK-04",
+      "name": "EBCM & Caliper Actuator Control Firmware",
+      "parent_component": "COMP-EBCM",
+      "associated_connections": [
+        "CONN-BRK-03",
+        "CONN-BRK-04"
+      ],
+      "cybersecurity_properties": [
+        "Integrity",
+        "Authenticity"
+      ],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-BRK-04",
+          "description": "Loss of anti-lock braking or damage to brake actuators can reduce braking performance and vehicle stability. This can cause a collision and serious injury or death. Damaged actuators can require replacement and prevent vehicle use.",
+          "expected_sfop_impact": {
+            "Safety": "Severe",
+            "Financial": "Severe",
+            "Operational": "Severe",
+            "Privacy": "Negligible"
+          }
+        }
+      ]
+    }
+  ]
+}
