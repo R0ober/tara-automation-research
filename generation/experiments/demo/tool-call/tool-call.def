@@ -1,0 +1,6 @@
+Bootstrap: docker
+From: python:3.11-slim
+
+%files
+    read_item.py /app/read_item.py
+    tool-call/check.py /app/check.py
