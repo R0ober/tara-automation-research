@@ -46,7 +46,7 @@ ssh -o BatchMode=yes minerva hostname
 From the repository root on your laptop, install the launcher dependencies.
 
 ```bash
-python3 pip install -r infrastructure/minerva/requirements.txt
+pip install -r infrastructure/minerva/requirements.txt
 ```
 
 If Ubuntu 24.04 reports `externally-managed-environment`, install PyYAML
@@ -56,14 +56,14 @@ Install Apptainer on your laptop, then build the image from the repository root.
 [Apptainer installation guide](https://apptainer.org/docs/admin/latest/installation.html)
 
 ```bash
-(cd generation && apptainer build generation-demo.sif generation-demo.def)
+(cd generation/experiments/demo && apptainer build generation-demo.sif generation-demo.def)
 ```
 
 Submit the job from the repository root.
 
 ```bash
 python3 infrastructure/minerva/submit.py \
-  --job-yaml generation/job.yaml \
+  --job-yaml generation/experiments/demo/job.yaml \
   --input-dir shared/architecture/bbw
 ```
 
@@ -72,6 +72,11 @@ path starts in the directory that contains the job file. The job script mounts
 the input directory at `/input` for read-only access. It mounts the output
 directory at `/output`. The launcher creates a run directory under `~/tara-demo/`
 on Minerva for each submission.
+
+For a custom Slurm job, set `script` in the YAML to a batch script beside the
+job file. The launcher uploads it as `job.sh`. You can also supply a local
+`image` to upload as `image.sif` and an `--input-dir` to upload as `input/`.
+See the [Generation demos](../../generation/experiments/demo/README.md).
 
 ## Check the result
 
