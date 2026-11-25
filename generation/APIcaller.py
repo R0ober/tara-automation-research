@@ -10,7 +10,7 @@ def get_db_connection():
     return conn
 
 # Callback 1: Standard SQL search over ICS + Enterprise MITRE ATT&CK
-def search_mitre_attack(keyword: str, limit: int = 10):
+def search_mitre_attack(keyword: str, limit: int = 50):
     search_term = f"%{keyword.lower()}%"
     
     conn = get_db_connection()

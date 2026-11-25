@@ -69,5 +69,28 @@ stage1_tools = [
                 ]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "save_component_vulnerability",
+            "description": "Save a specific vulnerability found on a component or interface (e.g., CVE, missing MAC, weak PIN) tied to a threat scenario, for use by Stage 2 in building attack trees.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "vuln_id": {"type": "string", "description": "e.g., VULN-BRK-01"},
+                    "threat_scenario_id": {"type": "string", "description": "e.g., TS-BRK-01"},
+                    "component_id": {"type": "string", "description": "e.g., COMP-BPSU"},
+                    "interface_id": {"type": "string", "description": "e.g., INT-BLE-DIAG"},
+                    "vulnerability_name": {"type": "string"},
+                    "vulnerability_reference": {"type": "string", "description": "e.g., CVE-2020-12351 or Missing SecOC"},
+                    "technical_detail": {"type": "string"}
+                },
+                "required": [
+                    "vuln_id", "threat_scenario_id", "component_id", 
+                    "vulnerability_name", "vulnerability_reference", "technical_detail"
+                ]
+            }
+        }
     }
 ]

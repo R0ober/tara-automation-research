@@ -28,11 +28,23 @@ CREATE TABLE IF NOT EXISTS damage_scenarios (
 CREATE TABLE IF NOT EXISTS threat_scenarios (
     threat_scenario_id TEXT PRIMARY KEY,
     threat_scenario_name TEXT,
+    description TEXT, 
     asset_id TEXT,
     damage_id TEXT,
     stride_classification TEXT,
     FOREIGN KEY (asset_id) REFERENCES assets(asset_id),
     FOREIGN KEY (damage_id) REFERENCES damage_scenarios(damage_id)
+);
+
+CREATE TABLE IF NOT EXISTS component_vulnerabilities (
+    vuln_id TEXT PRIMARY KEY,
+    threat_scenario_id TEXT,
+    component_id TEXT,
+    interface_id TEXT,
+    vulnerability_name TEXT,
+    vulnerability_reference TEXT, 
+    technical_detail TEXT,
+    FOREIGN KEY (threat_scenario_id) REFERENCES threat_scenarios(threat_scenario_id)
 );
 
 CREATE TABLE IF NOT EXISTS attack_tree_nodes (
