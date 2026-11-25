@@ -82,7 +82,7 @@ The following is information that needs to be inserted in to the database for ev
             current_tool_choice = "auto"
 
         response = client.chat.completions.create(
-            model="qwen2.5",
+            model="qwen3-5-9b:latest",
             messages=messages,
             tools=stage1_tools,
             tool_choice=current_tool_choice

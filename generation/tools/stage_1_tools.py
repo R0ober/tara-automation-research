@@ -5,7 +5,12 @@ stage1_tools = [
         "type": "function",
         "function": {
             "name": "get_item_definition",
-            "description": "Load the system item definition and component architecture model JSON (e.g., braking system components and interfaces)."
+            "description": "Retrieve the vehicle braking system item definition, assets, components, and interfaces.",
+            "parameters": {
+                "type": "object",
+                "properties": {}, 
+                "required": []
+            }
         }
     },
     {
