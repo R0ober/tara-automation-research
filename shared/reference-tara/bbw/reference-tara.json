@@ -88,7 +88,8 @@
         }
       }
     },
-    "assessment_status": "All four BBW scenarios have been reassessed. Inherent risk remains open for TS-BRK-02 and TS-BRK-04. Residual risk is unassessed for all four."
+    "assessment_status": "All four BBW scenarios have been reassessed. Inherent risk remains open for TS-BRK-02 and TS-BRK-04. Residual risk is unassessed for all four.",
+    "item_definition_version": "1.1.0"
   },
   "threat_scenarios_and_attack_trees": [
     {
@@ -318,8 +319,12 @@
         "cybersecurity_requirements": [
           {
             "requirement_id": "CSR-BRK-02.1",
-            "target_component": "COMP-RIC & COMP-VDCM",
-            "description": "VDCM shall verify the source and freshness of regenerative torque feedback from RIC before crediting the reported torque."
+            "target_component": "COMP-RIC",
+            "description": "VDCM shall verify the source and freshness of regenerative torque feedback from RIC before crediting the reported torque.",
+            "target_components": [
+              "COMP-RIC",
+              "COMP-VDCM"
+            ]
           },
           {
             "requirement_id": "CSR-BRK-02.2",
@@ -478,8 +483,12 @@
         "cybersecurity_requirements": [
           {
             "requirement_id": "CSR-BRK-03.1",
-            "target_component": "COMP-EBCM & COMP-EMBA",
-            "description": "Each actuator shall verify the source, integrity and freshness of a normal clamping command before accepting its assigned force target."
+            "target_component": "COMP-EBCM",
+            "description": "Each actuator shall verify the source, integrity and freshness of a normal clamping command before accepting its assigned force target.",
+            "target_components": [
+              "COMP-EBCM",
+              "COMP-EMBA"
+            ]
           },
           {
             "requirement_id": "CSR-BRK-03.2",

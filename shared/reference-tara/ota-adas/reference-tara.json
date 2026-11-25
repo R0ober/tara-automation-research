@@ -88,7 +88,8 @@
         }
       }
     },
-    "assessment_status": "Initial manual reference for review. The item supplies the impact ratings. Feasibility estimates depend on the stated actor and access assumptions. Residual risk awaits control verification."
+    "assessment_status": "Initial manual reference for review. The item supplies the impact ratings. Feasibility estimates depend on the stated actor and access assumptions. Residual risk awaits control verification.",
+    "item_definition_version": "1.0.0"
   },
   "threat_scenarios_and_attack_trees": [
     {
