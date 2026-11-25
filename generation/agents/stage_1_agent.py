@@ -8,6 +8,7 @@ from tools.stage_1_tools import stage1_tools
 from tools.tool_dispatcher import get_item_definition, save_threat_scenario_to_db
 from APIcaller import search_mitre_attack
 from tools.tool_dispatcher import save_component_vulnerability
+from agents.iso_helper_agent import query_iso_expert
 
 try:
     OpenAI = importlib.import_module("openai").OpenAI
@@ -32,6 +33,8 @@ def execute_tool(name, args):
         return save_threat_scenario_to_db(**args)
     elif name == "save_component_vulnerability":
         return save_component_vulnerability(**args) 
+    elif name == "consult_iso_expert":
+        return query_iso_expert(args.get("question", ""))
     else:
         return {"error": f"Unknown tool: {name}"}
 
@@ -56,6 +59,8 @@ The following is information that needs to be inserted in to the database for ev
     stride_classification: list 
 4. Do NOT just output a text summary. You must execute the 'save_threat_scenario_to_db' tool for every threat scenario you discover.
 5. For each underlying vulnerability discovered on components or interfaces you MUST call 'save_component_vulnerability' so Stage 2 can build accurate attack trees from them.
+IMPORTANT: 
+- Whenever you are unsure about impact rating criteria (safety, financial, operational, privacy), damage scenario definitions, or compliance requirements, you MUST use the `consult_iso_expert` tool to look up the official rules from the standard before making a final rating.
 """
 
     messages = [
@@ -63,7 +68,7 @@ The following is information that needs to be inserted in to the database for ev
         {"role": "user", "content": "Load the item definition, analyze the threats, and call 'save_threat_scenario_to_db' for each threat scenario to populate the database."}
     ]
 
-    print("🚀 Stage 1 Agent: Threat Scenario & Impact Rating started...\n")
+    print("Stage 1 Agent: Threat Scenario & Impact Rating started...\n")
     
     turn_count = 0
     max_turns = 10 # Prevent infinite loops

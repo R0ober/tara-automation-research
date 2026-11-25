@@ -1,6 +1,7 @@
 import json
 import sqlite3
 import requests
+import re
 
 DB_PATH = "./mitre_attack.db"
 
@@ -82,3 +83,36 @@ def check_component_cves(cpe_string: str, nvd_api_key: str = None):
     conn.close()
 
     return cves
+
+def search_local_iso_database(query: str, top_k: int = 4) -> str:
+    """Searches the indexed ISO/SAE 21434 SQLite FTS5 database for relevant clauses."""
+    # Extract clean alphanumeric keywords and join with OR for broad matching
+    words = re.findall(r"\b[a-zA-Z0-9-]{3,}\b", query)
+    if not words:
+        return "No valid search terms provided."
+    
+    fts_query = " OR ".join(words)
+
+    conn = sqlite3.connect("iso21434.db")
+    cursor = conn.cursor()
+    
+    # bm25() ranks results by relevance (lower score = better match)
+    cursor.execute("""
+        SELECT page_num, content 
+        FROM iso_chunks 
+        WHERE iso_chunks MATCH ? 
+        ORDER BY bm25(iso_chunks) 
+        LIMIT ?
+    """, (fts_query, top_k))
+    
+    results = cursor.fetchall()
+    conn.close()
+
+    if not results:
+        return "No matching sections found in ISO/SAE 21434."
+
+    formatted = []
+    for page_num, content in results:
+        formatted.append(f"[Page {page_num}]:\n{content}")
+        
+    return "\n\n---\n\n".join(formatted)

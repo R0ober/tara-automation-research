@@ -97,5 +97,22 @@ stage1_tools = [
                 ]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "consult_iso_expert",
+            "description": "Consult the ISO/SAE 21434 expert agent for official compliance rules, impact criteria, or threat definitions.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "description": "The specific compliance or TARA methodology question."
+                    }
+                },
+                "required": ["question"]
+            }
+        }
     }
 ]
