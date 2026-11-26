@@ -19,10 +19,27 @@ export interface BaselineResult {
 }
 
 const maintenanceRoot = fileURLToPath(new URL("../../../", import.meta.url));
+const INHERITED_ENVIRONMENT_VARIABLES = [
+	"PATH",
+	"HOME",
+	"LANG",
+	"LC_ALL",
+	"TMPDIR",
+	"TEMP",
+	"TMP",
+	"SystemRoot",
+	"WINDIR",
+	"COMSPEC",
+	"PATHEXT",
+] as const;
 
-function absolutePath(path: string, cwd: string): string {
+export function absolutePath(path: string, cwd: string): string {
 	const withoutAttachmentPrefix = path.startsWith("@") ? path.slice(1) : path;
 	return resolve(cwd, withoutAttachmentPrefix);
+}
+
+export function resolveConfigPath(path: string): string {
+	return absolutePath(path, maintenanceRoot);
 }
 
 export function resolveOutputPath(path: string, cwd: string): string {
@@ -48,7 +65,7 @@ export async function runBaseline(
 	const configuredPath = paths.configPath || process.env.TARA_MAINTENANCE_CONFIG;
 	const defaultConfigPath = resolve(maintenanceRoot, "config/maintenance.json");
 	if (configuredPath) {
-		args.push("--config", absolutePath(configuredPath, maintenanceRoot));
+		args.push("--config", resolveConfigPath(configuredPath));
 	} else if (existsSync(defaultConfigPath)) {
 		args.push("--config", defaultConfigPath);
 	}
@@ -70,6 +87,11 @@ export async function runBaseline(
 	const pythonPath = [sourceDirectory, process.env.PYTHONPATH]
 		.filter(Boolean)
 		.join(delimiter);
+	const environment: NodeJS.ProcessEnv = { PYTHONPATH: pythonPath };
+	for (const name of INHERITED_ENVIRONMENT_VARIABLES) {
+		const value = process.env[name];
+		if (value !== undefined) environment[name] = value;
+	}
 	const { promise, resolve: resolveProcess, reject } = Promise.withResolvers<{
 		stdout: string;
 		stderr: string;
@@ -84,7 +106,7 @@ export async function runBaseline(
 		args,
 		{
 			cwd: maintenanceRoot,
-			env: { ...process.env, PYTHONPATH: pythonPath },
+			env: environment,
 			encoding: "utf8",
 			maxBuffer: 16 * 1024 * 1024,
 			signal,

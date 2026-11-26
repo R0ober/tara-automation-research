@@ -107,13 +107,13 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _resolve_setting(cli_value: str | None, config_value: str | None) -> Path | None:
-    if cli_value:
-        if cli_value == "-":
-            return Path("-")
-        return resolve_path(cli_value, Path.cwd())
-    if config_value:
-        return resolve_path(config_value, PROJECT_ROOT)
-    return None
+    value = cli_value or config_value
+    if not value:
+        return None
+    if value == "-":
+        return Path("-")
+    base_directory = Path.cwd() if cli_value else PROJECT_ROOT
+    return resolve_path(value, base_directory)
 
 
 def entrypoint() -> None:

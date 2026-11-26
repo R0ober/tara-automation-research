@@ -70,7 +70,11 @@ class ConfigurationTests(unittest.TestCase):
         return config_path
 
     @staticmethod
-    def run_cli(arguments: list[str], config_path: Path | None = None) -> subprocess.CompletedProcess:
+    def run_cli(
+        arguments: list[str],
+        config_path: Path | None = None,
+        cwd: Path = MAINTENANCE_DIR,
+    ) -> subprocess.CompletedProcess:
         environment = os.environ.copy()
         environment["PYTHONPATH"] = str(MAINTENANCE_DIR / "src")
         environment.pop("TARA_MAINTENANCE_CONFIG", None)
@@ -78,7 +82,7 @@ class ConfigurationTests(unittest.TestCase):
             environment["TARA_MAINTENANCE_CONFIG"] = str(config_path)
         return subprocess.run(
             [sys.executable, "-m", "tara_maintenance", *arguments],
-            cwd=MAINTENANCE_DIR,
+            cwd=cwd,
             env=environment,
             text=True,
             capture_output=True,
@@ -145,6 +149,35 @@ class ConfigurationTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 2)
             self.assertIn("schema_version '1.0'", completed.stderr)
             self.assertEqual(completed.stdout, "")
+
+    def test_unknown_config_key_returns_input_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            directory = Path(temporary_directory)
+            paths = self.write_fixtures(directory, self.one_change)
+            output = directory / "report.json"
+            config = self.write_config(directory, paths, output)
+            document = json.loads(config.read_text(encoding="utf-8"))
+            document["output_paht"] = document.pop("output_path")
+            config.write_text(json.dumps(document), encoding="utf-8")
+
+            completed = self.run_cli(["--config", str(config)])
+
+            self.assertEqual(completed.returncode, 2)
+            self.assertIn("unknown keys: output_paht", completed.stderr)
+            self.assertEqual(completed.stdout, "")
+            self.assertFalse(output.exists())
+
+    def test_config_output_dash_writes_standard_output(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            directory = Path(temporary_directory)
+            paths = self.write_fixtures(directory, self.one_change)
+            config = self.write_config(directory, paths, Path("-"))
+
+            completed = self.run_cli(["--config", str(config)], cwd=directory)
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertEqual(json.loads(completed.stdout)["summary"]["total"], 1)
+            self.assertFalse((directory / "-").exists())
 
     def test_tracked_example_config_runs_explicit_example_data(self) -> None:
         completed = self.run_cli(

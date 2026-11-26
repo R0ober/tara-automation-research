@@ -104,7 +104,33 @@ def validate_run(
     final_text = _final_assistant_text(events)
     if not final_text:
         errors.append("No final assistant response was recorded")
-    for recommendation in report.get("recommendations", []):
+    raw_recommendations = report.get("recommendations", [])
+    recommendations = []
+    if not isinstance(raw_recommendations, list):
+        errors.append("Report recommendations must be an array")
+    else:
+        for index, recommendation in enumerate(raw_recommendations):
+            if not isinstance(recommendation, dict):
+                errors.append(f"Recommendation {index} must be an object")
+                continue
+            missing = [
+                field
+                for field in ("change_id", "decision")
+                if not isinstance(recommendation.get(field), str)
+                or not recommendation[field].strip()
+            ]
+            if missing:
+                errors.append(
+                    f"Recommendation {index} requires non-empty string fields: "
+                    + ", ".join(missing)
+                )
+                continue
+            evidence = recommendation.get("evidence", {})
+            if not isinstance(evidence, dict):
+                errors.append(f"Recommendation {index} evidence must be an object")
+                recommendation = {**recommendation, "evidence": {}}
+            recommendations.append(recommendation)
+    for recommendation in recommendations:
         change_id = recommendation["change_id"]
         row = next(
             (line for line in final_text.splitlines() if change_id in line),
@@ -117,7 +143,9 @@ def validate_run(
         if decision not in row:
             errors.append(f"Final response row for {change_id} omitted decision {decision}")
         subject = recommendation.get("vulnerability_id") or recommendation.get("component_id")
-        if subject and subject not in row:
+        if subject is not None and not isinstance(subject, str):
+            errors.append(f"Final response row for {change_id} has a non-string subject")
+        elif subject and subject not in row:
             errors.append(f"Final response row for {change_id} omitted subject {subject}")
         evidence = recommendation.get("evidence", {})
         if (
@@ -130,11 +158,11 @@ def validate_run(
         errors.append("Final response contains a questioned CVE identifier")
     report_cpes = {
         item.get("cpe")
-        for recommendation in report.get("recommendations", [])
+        for recommendation in recommendations
         for field in ("matched_software", "matched_cpe_rules", "excluded_software")
         for item in recommendation.get("evidence", {}).get(field, [])
     }
-    for recommendation in report.get("recommendations", []):
+    for recommendation in recommendations:
         report_cpes.update(
             recommendation.get("evidence", {})
             .get("unresolved_identifiers", {})

@@ -50,6 +50,23 @@ class PiSmokeValidationTests(unittest.TestCase):
     def test_valid_tool_run_and_response_pass(self) -> None:
         self.assertEqual(validate_example_run(self.events, self.report), [])
 
+    def test_malformed_recommendations_return_validation_failures(self) -> None:
+        cases = [
+            {"decision": "review_required"},
+            {"change_id": "VULN-1"},
+            None,
+        ]
+        for recommendation in cases:
+            with self.subTest(recommendation=recommendation):
+                self.report["recommendations"] = [recommendation]
+
+                failures = validate_example_run(self.events, self.report)
+
+                self.assertTrue(
+                    any("Recommendation 0" in failure for failure in failures),
+                    failures,
+                )
+
     def test_wrong_example_path_fails(self) -> None:
         self.events[0]["args"] = {
             **EXPECTED_ARGUMENTS,

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import io
+import json
+import tempfile
 import unittest
+from contextlib import redirect_stderr
 from pathlib import Path
 
 from tara_maintenance import InputError, load_json
 from tara_maintenance.baseline import JsonObject
-from tara_maintenance.evaluate import evaluate_dataset
+from tara_maintenance.evaluate import evaluate_dataset, main
 
 MAINTENANCE_DIR = Path(__file__).resolve().parents[1]
 TARA_PATH = (
@@ -104,6 +108,35 @@ class EvaluationTests(unittest.TestCase):
                 labels,
                 {"changes": [case["change"], case["change"]]},
             )
+
+    def test_missing_or_null_tara_path_returns_input_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            directory = Path(temporary_directory)
+            config = directory / "maintenance.json"
+            for with_null in (True, False):
+                with self.subTest(with_null=with_null):
+                    document = {
+                        "schema_version": "1.0",
+                        "architecture_path": "architecture.json",
+                    }
+                    if with_null:
+                        document["tara_path"] = None
+                    config.write_text(json.dumps(document), encoding="utf-8")
+                    stderr = io.StringIO()
+
+                    with redirect_stderr(stderr):
+                        status = main(
+                            [
+                                "--config",
+                                str(config),
+                                "--dataset",
+                                str(directory / "dataset.json"),
+                            ]
+                        )
+
+                    self.assertEqual(status, 2)
+                    self.assertIn("requires non-null: tara_path", stderr.getvalue())
+                    self.assertNotIn("TypeError", stderr.getvalue())
 
 
 if __name__ == "__main__":
