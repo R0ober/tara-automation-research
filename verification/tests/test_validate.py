@@ -334,3 +334,40 @@ def test_changed_pointers_detects_key_reorder():
     assert changed_pointers({"a": 1, "b": 2}, {"b": 2, "a": 1}) == {""}
     assert changed_pointers({"a": [1, 2]}, {"a": [1, 3]}) == {"/a/1"}
     assert changed_pointers({"a": 1}, {"a": True}) == {"/a"}
+
+
+# --- every rule is enforced by check_case ------------------------------------
+
+RULE_MUTATIONS = {
+    "R-REF": [((*LEAF_PTR, "target_component"), "COMP-BPCU")],
+    "R-SCORE": [((*AP, "equipment", "score"), 7)],
+    "R-SUM": [((*AP, "total_score"), 16)],
+    "R-BAND": [((*AP, "feasibility_rating"), "High")],
+    "R-AGG": [((*S0, "attack_tree", "aggregated_attack_potential_score"), 14)],
+    "R-RISK": [((*RD, "inherent_risk_value"), 5)],
+    "R-LEVEL": [((*RD, "inherent_risk_level"), "2 / 5")],
+    "R-IMPACT": [((*S0, "associated_damage_scenario", "impact_ratings",
+                   "overall_impact_rating"), "Major")],
+    "R-SUMMARY": [((SUM, 0, "inherent_impact"), "Major")],
+}
+
+
+@pytest.mark.parametrize("rule", sorted(RULE_MUTATIONS))
+def test_validator_rejects(bbw, rule):
+    """A label that omits the violations of one rule is rejected."""
+    changes = RULE_MUTATIONS[rule]
+    mutant = mutate(bbw.tara, *changes)
+    new = violations(mutant, bbw.item) - violations(bbw.tara, bbw.item)
+    assert any(v.rule == rule for v in new)
+    _, defect, _ = c3_case(bbw)
+    edits = []
+    for path, value in changes:
+        obj = bbw.tara
+        for step in path:
+            obj = obj[step]
+        edits.append(Edit(ptr_text(path), obj, value))
+    defect = replace(defect, edits=tuple(edits), evidence=())
+    assert check_case(bbw.tara, mutant, bbw.item, [defect], new) == []
+    without = {v for v in new if v.rule != rule}
+    problems = check_case(bbw.tara, mutant, bbw.item, [defect], without)
+    assert any("new violations differ from expected" in p and rule in p for p in problems)
