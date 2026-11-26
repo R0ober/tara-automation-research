@@ -60,11 +60,24 @@ def test_c1a_ids_are_unused(bbw, results):
             assert new.rsplit("-", 1)[0] == r.defect.edits[0].before.rsplit("-", 1)[0]
 
 
-def test_dangling_ids_change_one_character(bbw):
+def test_dangling_ids_letters_when_no_trailing_number(bbw):
     ctx = make_context(bbw.tara, bbw.item)
     ids = dangling_ids("COMP-BPSU", ctx)
     assert "COMP-BPCU" in ids and "COMP-BPSU" not in ids
+    assert all(len(x) == len("COMP-BPSU") and x.startswith("COMP-") for x in ids)
     assert all(sum(a != b for a, b in zip(x, "COMP-BPSU")) == 1 for x in ids)
+    assert all(not any(c.isdigit() for c in x) for x in ids)
+
+
+def test_dangling_ids_change_only_trailing_number(bbw):
+    ctx = make_context(bbw.tara, bbw.item)
+    ids = dangling_ids("ASSET-BRK-01", ctx)
+    assert "ASSET-BRK-07" in ids
+    assert not {"ASSET-BRK-00", "ASSET-BRK-01", "ASSET-BRK-02", "ASSET-BRK-04"} & set(ids)
+    assert all(x.startswith("ASSET-BRK-") and len(x) == len("ASSET-BRK-01") for x in ids)
+    assert len(ids) == 99 - 4
+    # A prefix of an existing ID is never chosen: CONN-BRK-0x stays two digits wide.
+    assert all(len(x) == len("CONN-BRK-02") for x in dangling_ids("CONN-BRK-02", ctx))
 
 
 def test_c1b_combinations(results):

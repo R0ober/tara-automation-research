@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import random
+import re
 import string
 
 from ...contract import Effect, Evidence
@@ -28,25 +29,27 @@ def expected_violations(site: Site) -> frozenset[Violation]:
     return frozenset(out)
 
 
+_TRAILING_NUMBER_RE = re.compile(r"^(?P<stem>.*?)(?P<number>\d+)$")
+
+
 def dangling_ids(value: str, ctx: Context) -> list[str]:
-    """Same-prefix IDs that differ in one character of the last segment and
-    occur nowhere in either document, sorted."""
-    head, sep, last = value.rpartition("-")
-    out = set()
-    for i, ch in enumerate(last):
-        if ch.isdigit():
-            pool = string.digits
-        elif ch.isupper():
-            pool = string.ascii_uppercase
-        else:
-            continue
-        for r in pool:
-            if r == ch:
-                continue
-            new = f"{head}{sep}{last[:i]}{r}{last[i + 1:]}"
-            if new not in ctx.known_ids and new not in ctx.text:
-                out.add(new)
-    return sorted(out)
+    """Plausible IDs that occur nowhere in either document, sorted.
+
+    If the ID ends in a number, only that number changes, with the same
+    width and never all zeros (ASSET-BRK-01 -> ASSET-BRK-07). Otherwise one
+    letter of the last segment changes (INT-SWD-HEADER -> INT-SWD-HEAXER).
+    """
+    m = _TRAILING_NUMBER_RE.match(value)
+    if m:
+        width = len(m["number"])
+        variants = (f"{m['stem']}{n:0{width}d}" for n in range(1, 10 ** width))
+    else:
+        head, sep, last = value.rpartition("-")
+        variants = (f"{head}{sep}{last[:i]}{r}{last[i + 1:]}"
+                    for i, ch in enumerate(last) if ch.isupper()
+                    for r in string.ascii_uppercase if r != ch)
+    return sorted({v for v in variants
+                   if v != value and v not in ctx.known_ids and v not in ctx.text})
 
 
 def apply_c1a(ctx: Context, site: Site, rng: random.Random) -> Candidate | Skip:
