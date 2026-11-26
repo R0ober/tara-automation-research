@@ -35,13 +35,17 @@ SUMMARY = "traceability_and_risk_summary"
 OVERALL = "overall_impact_rating"
 COMPONENT_KINDS = ("component", "instance")
 
-# Words that must never appear in a case. Codes are case-sensitive.
+# Markers of this tool that must never appear in a case: the MUT marker,
+# operator codes, rule names, defect IDs and label field names. Ordinary
+# English terms such as "message injection" are allowed. Case-sensitive.
+LABEL_FIELDS = ("defect_id", "accepted_locations", "expected_violations", "case_id",
+                "band_changed", "risk_changed")
 TRACE_RE = re.compile(
-    r"\b(?:MUT\w*|(?i:mutant\w*|mutat\w*|inject\w*)"
+    r"\b(?:MUT\w*"
     r"|[CUI][1-8][ab]?"
-    r"|R-(?:REF|SCORE|SUM|BAND|AGG|RISK|LEVEL|IMPACT|SUMMARY)"
+    r"|R-[A-Z]+"
     r"|d[0-9]+"
-    r"|defect_id|accepted_locations|expected_violations|case_id)\b"
+    r"|" + "|".join(LABEL_FIELDS) + r")\b"
 )
 
 # BBW writes "Low (Min Attack Potential = 15)"; OTA/ADAS writes only "High".

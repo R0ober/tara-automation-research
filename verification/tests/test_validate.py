@@ -71,13 +71,16 @@ def test_trace_regex_silent_on_baseline(baseline):
         assert TRACE_RE.findall(text) == []
 
 
-@pytest.mark.parametrize("text", ["MUT-1", "mutated value", "injected", "C1a", "C3", "U6",
-                                  "I1", "R-SUM", "d1", "defect_id", "case_id"])
+@pytest.mark.parametrize("text", ["MUT-1", "MUT", "C1a", "C1b", "C3", "U6", "I1", "R-SUM",
+                                  "R-LEVEL", "d1", "defect_id", "accepted_locations",
+                                  "expected_violations", "case_id", "risk_changed"])
 def test_trace_regex_hits(text):
     assert TRACE_RE.search(f"The {text} here.")
 
 
-@pytest.mark.parametrize("text", ["mutual", "I2C bus", "CRC-8", "COMP-BPSU", "1d", "ASIL-D"])
+@pytest.mark.parametrize("text", ["mutual", "I2C bus", "CRC-8", "COMP-BPSU", "1d", "ASIL-D",
+                                  "message injection", "injected frames", "a mutated value",
+                                  "fault injection"])
 def test_trace_regex_ignores(text):
     assert not TRACE_RE.search(f"The {text} here.")
 
@@ -285,10 +288,10 @@ def test_rejects_removed_baseline_violation(bbw):
 def test_rejects_trace(bbw):
     path = (*LEAF_PTR, "technical_detail")
     mutant, defect, expected = c3_case(bbw)
-    mutant = mutate(mutant, (path, "This value was injected."))
+    mutant = mutate(mutant, (path, "See C3 for this value."))
     defect = replace(defect, edits=(*defect.edits, Edit(ptr_text(path), bbw.tara[
         "threat_scenarios_and_attack_trees"][0]["attack_tree"]["children"][0]["technical_detail"],
-        "This value was injected.")))
+        "See C3 for this value.")))
     assert any("injection traces" in p
                for p in check_case(bbw.tara, mutant, bbw.item, [defect], expected))
 
