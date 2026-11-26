@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -10,7 +10,7 @@ import {
 	type ExtensionAPI,
 } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { resolveOutputPath, runBaseline } from "./runner.ts";
+import { absolutePath, resolveConfigPath, resolveOutputPath, runBaseline } from "./runner.ts";
 
 interface MaintenanceDetails {
 	summary: unknown;
@@ -18,35 +18,52 @@ interface MaintenanceDetails {
 	truncated: boolean;
 }
 
+const PATH_FIELDS: Record<string, true> = {
+	tara_path: true,
+	architecture_path: true,
+	changes_path: true,
+	output_path: true,
+};
+
+const RUNNING_REASON =
+	"This identical TARA analysis is already running. Wait for its tool result.";
+
+function invocationSignature(input: Record<string, unknown>, cwd: string): string {
+	const normalized = Object.entries(input)
+		.sort(([left], [right]) => left.localeCompare(right))
+		.map(([key, value]) => {
+			if (typeof value !== "string") return [key, value];
+			if (key === "config_path") return [key, resolveConfigPath(value)];
+			if (PATH_FIELDS[key]) return [key, absolutePath(value, cwd)];
+			return [key, value];
+		});
+	return JSON.stringify(normalized);
+}
+
 export default function taraMaintenance(pi: ExtensionAPI) {
 	const pendingInvocations = new Set<string>();
-	const completedInvocations = new Set<string>();
+	const temporaryDirectories = new Set<string>();
 
 	pi.on("session_start", () => {
 		pendingInvocations.clear();
-		completedInvocations.clear();
 	});
-	pi.on("tool_call", (event) => {
-		if (event.toolName !== "tara_maintenance") return;
-		const signature = JSON.stringify(
-			Object.entries(event.input).sort(([left], [right]) => left.localeCompare(right)),
+	pi.on("session_shutdown", async () => {
+		await Promise.all(
+			[...temporaryDirectories].map((directory) =>
+				rm(directory, { recursive: true, force: true }),
+			),
 		);
-		if (pendingInvocations.has(signature) || completedInvocations.has(signature)) {
+		temporaryDirectories.clear();
+	});
+	pi.on("tool_call", (event, ctx) => {
+		if (event.toolName !== "tara_maintenance") return;
+		const signature = invocationSignature(event.input, ctx.cwd);
+		if (pendingInvocations.has(signature)) {
 			return {
 				block: true,
-				reason:
-					"This identical TARA analysis already ran or is running. Do not retry it; summarize the existing tool result.",
+				reason: RUNNING_REASON,
 			};
 		}
-		pendingInvocations.add(signature);
-	});
-	pi.on("tool_result", (event) => {
-		if (event.toolName !== "tara_maintenance") return;
-		const signature = JSON.stringify(
-			Object.entries(event.input).sort(([left], [right]) => left.localeCompare(right)),
-		);
-		pendingInvocations.delete(signature);
-		if (!event.isError) completedInvocations.add(signature);
 	});
 
 	pi.registerTool({
@@ -80,49 +97,59 @@ export default function taraMaintenance(pi: ExtensionAPI) {
 		),
 
 		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
-			const absoluteOutputPath = params.output_path
-				? resolveOutputPath(params.output_path, ctx.cwd)
-				: undefined;
-			const paths = {
-				configPath: params.config_path,
-				taraPath: params.tara_path,
-				architecturePath: params.architecture_path,
-				changesPath: params.changes_path,
-				outputPath: absoluteOutputPath,
-			};
-			const run = () => runBaseline(paths, ctx.cwd, signal);
-			const result = absoluteOutputPath
-				? await withFileMutationQueue(absoluteOutputPath, run)
-				: await run();
-
-			const truncation = truncateHead(result.rendered, {
-				maxLines: DEFAULT_MAX_LINES,
-				maxBytes: DEFAULT_MAX_BYTES,
-			});
-			let outputPath = result.outputPath;
-			if (truncation.truncated && !outputPath) {
-				const temporaryDirectory = await mkdtemp(join(tmpdir(), "tara-maintenance-"));
-				outputPath = join(temporaryDirectory, "report.json");
-				await writeFile(outputPath, result.rendered, "utf8");
+			const signature = invocationSignature(params, ctx.cwd);
+			if (pendingInvocations.has(signature)) {
+				throw new Error(RUNNING_REASON);
 			}
+			pendingInvocations.add(signature);
+			try {
+				const absoluteOutputPath = params.output_path
+					? resolveOutputPath(params.output_path, ctx.cwd)
+					: undefined;
+				const paths = {
+					configPath: params.config_path,
+					taraPath: params.tara_path,
+					architecturePath: params.architecture_path,
+					changesPath: params.changes_path,
+					outputPath: absoluteOutputPath,
+				};
+				const run = () => runBaseline(paths, ctx.cwd, signal);
+				const result = absoluteOutputPath
+					? await withFileMutationQueue(absoluteOutputPath, run)
+					: await run();
 
-			let text = truncation.content;
-			if (truncation.truncated) {
-				text +=
-					`\n\n[Report truncated to ${truncation.outputLines} lines and ` +
-					`${formatSize(truncation.outputBytes)}. Complete report: ${outputPath}]`;
-			} else if (outputPath) {
-				text += `\n\n[Complete report: ${outputPath}]`;
+				const truncation = truncateHead(result.rendered, {
+					maxLines: DEFAULT_MAX_LINES,
+					maxBytes: DEFAULT_MAX_BYTES,
+				});
+				let outputPath = result.outputPath;
+				if (truncation.truncated && !outputPath) {
+					const temporaryDirectory = await mkdtemp(join(tmpdir(), "tara-maintenance-"));
+					temporaryDirectories.add(temporaryDirectory);
+					outputPath = join(temporaryDirectory, "report.json");
+					await writeFile(outputPath, result.rendered, "utf8");
+				}
+
+				let text = truncation.content;
+				if (truncation.truncated) {
+					text +=
+						`\n\n[Report truncated to ${truncation.outputLines} lines and ` +
+						`${formatSize(truncation.outputBytes)}. Complete report: ${outputPath}]`;
+				} else if (outputPath) {
+					text += `\n\n[Complete report: ${outputPath}]`;
+				}
+				const details: MaintenanceDetails = {
+					summary: result.report.summary,
+					outputPath,
+					truncated: truncation.truncated,
+				};
+				return {
+					content: [{ type: "text", text }],
+					details,
+				};
+			} finally {
+				pendingInvocations.delete(signature);
 			}
-			const details: MaintenanceDetails = {
-				summary: result.report.summary,
-				outputPath,
-				truncated: truncation.truncated,
-			};
-			return {
-				content: [{ type: "text", text }],
-				details,
-			};
 		},
 	});
 }

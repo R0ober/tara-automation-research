@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import unittest
 from pathlib import Path
 
@@ -110,6 +111,25 @@ class MaintenanceBaselineTests(unittest.TestCase):
             "LEAF-1",
         )
 
+    def test_existing_vulnerability_matched_only_by_cpe_is_not_flagged_again(self) -> None:
+        result = self.evaluate_one(
+            self.vulnerability(
+                cve_id="CVE-2020-12351",
+                affected_components=[],
+                affected_cpes=["cpe:2.3:a:bluez:bluez:5.54:*:*:*:*:*:*:*"],
+            )
+        )
+
+        self.assertEqual(result["decision"], "no_review")
+        self.assertEqual(
+            result["evidence"]["matched_components"][0]["component_id"],
+            "COMP-VDCM",
+        )
+        self.assertEqual(
+            result["evidence"]["existing_vulnerability_references"][0]["node_id"],
+            "LEAF-1",
+        )
+
     def test_existing_vulnerability_with_version_exclusion_requires_review(self) -> None:
         result = self.evaluate_one(
             self.vulnerability(
@@ -127,6 +147,52 @@ class MaintenanceBaselineTests(unittest.TestCase):
         self.assertEqual(result["decision"], "review_required")
         self.assertTrue(result["evidence"]["existing_vulnerability_references"])
         self.assertTrue(result["evidence"]["excluded_software"])
+
+    def test_existing_vulnerability_for_other_component_requires_review(self) -> None:
+        result = self.evaluate_one(
+            self.vulnerability(
+                cve_id="CVE-2020-12351",
+                affected_components=["COMP-EBCM"],
+            )
+        )
+
+        self.assertEqual(result["decision"], "review_required")
+        self.assertEqual(
+            result["evidence"]["matched_components"][0]["component_id"],
+            "COMP-EBCM",
+        )
+        self.assertEqual(
+            result["evidence"]["existing_vulnerability_references"][0]["node_id"],
+            "LEAF-1",
+        )
+        self.assertIn(
+            "not referenced by the existing TARA for any affected component",
+            result["rationale"],
+        )
+
+    def test_non_string_tara_index_fields_raise_input_errors(self) -> None:
+        cases = {
+            "target_component": {"id": "COMP-VDCM"},
+            "vulnerability_reference": 123,
+            "parent_component": ["COMP-VDCM"],
+            "tara_metadata": ["invalid"],
+        }
+        for field, value in cases.items():
+            with self.subTest(field=field):
+                tara = copy.deepcopy(self.tara)
+                if field == "tara_metadata":
+                    tara[field] = value
+                elif field == "parent_component":
+                    tara["threat_scenarios_and_attack_trees"][0]["targeted_asset"][
+                        field
+                    ] = value
+                else:
+                    tara["threat_scenarios_and_attack_trees"][0]["attack_tree"][
+                        "children"
+                    ][0][field] = value
+
+                with self.assertRaisesRegex(InputError, field):
+                    MaintenanceBaseline(tara, self.architecture)
 
     def test_exact_cpe_resolves_component_and_software(self) -> None:
         change = self.vulnerability(

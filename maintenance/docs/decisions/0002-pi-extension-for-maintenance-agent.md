@@ -1,6 +1,6 @@
 # 0002: Pi extension for the maintenance agent
 
-Status: Proposed
+Status: Accepted
 
 ## The problem
 
@@ -39,10 +39,10 @@ results are truncated in model context; the complete report is retained at a
 returned file path. Model-requested report paths must stay within
 `maintenance/`, and writes participate in Pi's file-mutation queue.
 
-Identical in-flight or successful calls are deduplicated within a Pi session to
-prevent repeated model invocations. Different inputs and retries after failure
-are not blocked. Actual and synthetic prompt commands are separate so model
-argument interpretation cannot substitute local data for examples.
+Only identical in-flight calls are deduplicated within a Pi session. Completed
+calls, different inputs, and retries after failure are not blocked. Actual and
+synthetic prompt commands are separate so model argument interpretation cannot
+substitute local data for examples.
 
 The runner auto-detects the editable-install virtual environment. Tracked
 example configuration and synthetic changes are separate from ignored local
@@ -50,8 +50,8 @@ configuration, working data, credentials, and generated reports.
 
 ## Validation
 
-Node tests execute the real Python baseline through the Pi runner, including
-configuration-selected artifacts, attachment-prefixed paths, output files, and
-input errors. Pi resource discovery is checked through RPC. A model-backed
-`/tara-maintenance` invocation is the final optional smoke test when valid
-provider credentials are available.
+Node tests execute the real Python baseline through the Pi runner and exercise
+the extension's invocation and temporary-file lifecycle, including canonical
+attachment paths, output files, and input errors. Pi resource discovery is
+checked through RPC. A model-backed `/tara-maintenance` invocation is the final
+optional smoke test when valid provider credentials are available.

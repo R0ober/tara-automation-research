@@ -77,6 +77,10 @@ class MaintenanceBaseline:
             raise InputError("TARA and architecture roots must be objects")
         self.tara = tara
         self.architecture = architecture
+        if not isinstance(self.tara.get("tara_metadata", {}), dict):
+            raise InputError("TARA 'tara_metadata' must be an object")
+        if not isinstance(self.architecture.get("item_definition", {}), dict):
+            raise InputError("Architecture 'item_definition' must be an object")
         self._validate_item_identity()
 
         self._component_names: dict[str, str] = {}
@@ -183,13 +187,21 @@ class MaintenanceBaseline:
                 continue
             scenario_id = str(scenario.get("threat_scenario_id", ""))
             asset = scenario.get("targeted_asset", {})
-            if isinstance(asset, dict) and asset.get("parent_component"):
-                self._component_scenarios[asset["parent_component"]].add(scenario_id)
+            if isinstance(asset, dict):
+                parent_component = asset.get("parent_component")
+                if parent_component is not None and not isinstance(parent_component, str):
+                    raise InputError("TARA 'parent_component' must be a string or null")
+                if parent_component:
+                    self._component_scenarios[parent_component].add(scenario_id)
             root = scenario.get("attack_tree")
             if isinstance(root, dict):
                 self._index_attack_node(root, scenario_id)
 
     def _index_attack_node(self, node: JsonObject, scenario_id: str) -> None:
+        for field in ("target_component", "vulnerability_reference"):
+            value = node.get(field)
+            if value is not None and not isinstance(value, str):
+                raise InputError(f"Attack node '{field}' must be a string or null")
         reference = AttackReference(
             scenario_id=scenario_id,
             node_id=str(node.get("node_id", "")),
@@ -321,11 +333,17 @@ class MaintenanceBaseline:
         existing_references = self._deduplicate_references(
             self._cve_attacks.get(change["cve_id"], [])
         )
+        applicable_references = [
+            reference
+            for reference in existing_references
+            if reference.target_component in matched_components
+        ]
         if existing_references:
             evidence["existing_vulnerability_references"] = [
                 reference.as_dict() for reference in existing_references
             ]
 
+        # Exclusion can leave matched_components empty; any existing reference still conflicts.
         if existing_references and range_evidence["excluded"]:
             decision = "review_required"
             rationale = (
@@ -348,7 +366,7 @@ class MaintenanceBaseline:
                     "No affected component or CPE rule could be linked to the reference "
                     "architecture; applicability to the item is unknown."
                 )
-        elif existing_references:
+        elif applicable_references:
             decision = "no_review"
             rationale = (
                 f"{change['cve_id']} is already referenced by the existing TARA; "
@@ -358,7 +376,7 @@ class MaintenanceBaseline:
             decision = "review_required"
             rationale = (
                 f"{change['cve_id']} affects at least one component in the item and is "
-                "not referenced by the existing TARA."
+                "not referenced by the existing TARA for any affected component."
             )
 
         return {

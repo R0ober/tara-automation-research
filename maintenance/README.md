@@ -31,15 +31,17 @@ Run all commands from `maintenance/`.
 
 ## Local setup
 
-The current environment is already initialized. To recreate it without
-overwriting existing local configuration:
+Initialize a fresh clone or recreate the environment without overwriting
+existing local configuration:
 
 ```bash
 ./scripts/bootstrap.sh
 ```
 
 The script creates `.venv/`, installs this package in editable mode, creates
-missing local files, and creates `output/`. The installed CLI is
+missing local files, and creates `output/`. Pip may download the
+`setuptools>=68` build backend, so the first setup requires network access
+unless that backend is already cached. The installed CLI is
 `.venv/bin/tara-maintenance`. Optional shell activation:
 
 ```bash
@@ -65,6 +67,9 @@ never put real credentials in tracked examples. `scripts/pi.sh` loads `.env`,
 including `TARA_MAINTENANCE_PROVIDER`, `TARA_MAINTENANCE_MODEL`, and provider
 credentials such as `DEEPSEEK_API_KEY`.
 
+Pi receives these provider settings, but the deterministic Python subprocess
+uses an allowlisted environment and does not inherit provider credentials.
+
 Configuration paths are resolved relative to `maintenance/`. Explicit CLI paths
 are resolved relative to the caller's working directory. Precedence is:
 
@@ -72,7 +77,10 @@ are resolved relative to the caller's working directory. Precedence is:
 2. `--config` or `TARA_MAINTENANCE_CONFIG`;
 3. `config/maintenance.json` when it exists.
 
-Use `--stdout` to override a configured output file.
+The versioned configuration schema rejects unknown keys instead of silently
+ignoring misspellings.
+
+For the standalone CLI, use `--stdout`, `--output -`, or `output_path: "-"`.
 
 For Pi tool calls, `output_path` must resolve within `maintenance/`; absolute
 or relative paths that escape that directory are rejected before Python runs.
@@ -99,10 +107,11 @@ Run the actual configured change file or the separate synthetic example:
 ```
 
 Pi loads `.pi/extensions/tara-maintenance/` and `.pi/prompts/` automatically
-after project trust. The runner auto-detects `.venv`. Duplicate identical calls
-in one session are blocked; different inputs and retries after failure remain
-available. Large results are truncated in model context, with a complete-report
-path returned. Review project-local extensions before trusting them: Pi
+after project trust. The runner auto-detects `.venv`. Only identical calls
+still running are deduplicated; completed calls can be repeated after inputs
+change or at the user's request. Large results are truncated in model context,
+with a complete-report path returned. Temporary complete reports are removed
+on session shutdown. Review project-local extensions before trusting them: Pi
 extensions execute with the user's operating-system permissions.
 
 ## Python CLI
@@ -197,7 +206,8 @@ is optional.
 }
 ```
 
-`affected_components` and `affected_cpes` are optional string arrays.
+A vulnerability requires a valid `cve_id`. `affected_components` and
+`affected_cpes` are optional string arrays.
 `affected_cpe_ranges` optionally adds rules with `cpe`, optional
 `match_criteria_id`, and the four snake-case version bounds. At least one
 applicability identifier or range is required unless `applicability_unknown` is
@@ -219,7 +229,8 @@ baseline does not infer applicability from `summary`.
 }
 ```
 
-`before` and `after` are required and may contain any JSON values. For objects,
+A component change requires a non-empty `component_id`. `before` and `after`
+are required and may contain any JSON values. For objects,
 the report lists changed top-level fields, including fields added or removed
 with a `null` value. Nested differences are reported under their top-level
 field. Non-object differences use the field name `value`.
@@ -229,7 +240,7 @@ field. Non-object differences use the field name `value`.
 | Input condition | Decision | Reason |
 | --- | --- | --- |
 | New CVE matches at least one known component | `review_required` | The item is affected and the TARA does not reference the CVE. |
-| Existing TARA CVE matches at least one known component | `no_review` | The baseline suppresses an already represented CVE. |
+| Existing TARA CVE references the same matched component | `no_review` | The baseline suppresses only CVE coverage for the affected component. |
 | Same-product installed version is outside all supplied vulnerable ranges | `no_review` | A new CVE has positive version-exclusion evidence. |
 | Existing TARA CVE conflicts with same-product version exclusion | `review_required` | Current evidence and the attack reference need analyst reconciliation. |
 | No supplied component ID or CPE rule matches the architecture | `unresolved` | Item applicability is unknown. |
@@ -275,14 +286,20 @@ report = evaluate_changes(
 
 ```bash
 .venv/bin/python -m unittest discover -s tests -v
-node --test tests/test_pi_runner.mjs
+node --test tests/test_pi_runner.mjs tests/test_pi_index.mjs
 ```
 
-The Python suite covers decision rules, malformed input, configuration loading
-and precedence, labeled evaluation, explicit example-data selection, shared BBW
-integration, and Pi response quality gates. The Node suite executes the real
-Python CLI through the Pi runner, including configured artifact paths,
-`@`-prefixed attachment paths, report files, and errors.
+Tests require the checked-out `shared/` artifacts. The Node integration tests
+use `.venv/bin/python` when available, otherwise `python3` on `PATH`; `PYTHON`
+can select another interpreter.
+
+The Python suite covers decision rules, malformed input, strict configuration
+loading and precedence, labeled evaluation, explicit example-data selection,
+shared BBW integration, and Pi response quality gates. The Node suites execute
+the real Python CLI through the Pi runner and exercise extension invocation
+guards, attachment aliases, truncation cleanup, configured paths, and errors.
+
+Temporary `.pi-index-*` report directories are ignored and removed by each test.
 
 To check Pi resource loading without a model call:
 

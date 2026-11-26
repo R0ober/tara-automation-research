@@ -1,6 +1,6 @@
 # 0003: NVD snapshots and version-aware applicability
 
-Status: Proposed
+Status: Accepted
 
 ## The problem
 

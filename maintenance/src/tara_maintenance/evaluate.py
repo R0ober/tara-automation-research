@@ -171,6 +171,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         if not config_path:
             raise InputError("Evaluation requires --config or config/maintenance.json")
         config = load_config(config_path)
+        missing = [
+            field
+            for field in ("tara_path", "architecture_path")
+            if config.get(field) is None
+        ]
+        if missing:
+            raise InputError(
+                f"Evaluation config {config_path} requires non-null: {', '.join(missing)}"
+            )
         tara_path = resolve_path(config["tara_path"], PROJECT_ROOT)
         architecture_path = resolve_path(config["architecture_path"], PROJECT_ROOT)
         dataset_path = resolve_path(args.dataset, Path.cwd())

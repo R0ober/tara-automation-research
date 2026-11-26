@@ -171,6 +171,20 @@ class CommandLineTests(unittest.TestCase):
             self.assertEqual(completed.stdout, "")
             self.assertFalse(output.exists())
 
+    def test_malformed_tara_returns_input_error_without_traceback(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            input_dir = Path(temporary_directory)
+            output = input_dir / "report.json"
+            self.tara["tara_metadata"] = ["invalid"]
+
+            completed = self.run_cli(input_dir, output)
+
+            self.assertEqual(completed.returncode, 2)
+            self.assertIn("tara_metadata", completed.stderr)
+            self.assertNotIn("Traceback", completed.stderr)
+            self.assertEqual(completed.stdout, "")
+            self.assertFalse(output.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

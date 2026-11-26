@@ -11,8 +11,6 @@ if [[ -f .env ]]; then
   set +a
 fi
 
-export PYTHON="${PYTHON:-$ROOT/.venv/bin/python}"
-
 PROVIDER_ARGS=()
 if [[ -n "${TARA_MAINTENANCE_PROVIDER:-}" ]]; then
   PROVIDER_ARGS=(--provider "$TARA_MAINTENANCE_PROVIDER")

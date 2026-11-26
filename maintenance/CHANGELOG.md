@@ -24,7 +24,8 @@ version.
 - Configuration precedence across CLI arguments, `--config`,
   `TARA_MAINTENANCE_CONFIG`, and local defaults.
 - Synthetic BBW change set demonstrating all decision outcomes.
-- Python unit/reference-data/CLI tests and Node tests for the real Pi runner.
+- Python unit/reference-data/CLI tests and Node tests for the real Pi runner and
+  extension invocation lifecycle.
 - Usage, evaluation, limitations, and agent development documentation.
 - ADR 0001 for the deterministic baseline and ADR 0002 for the Pi extension.
 
@@ -58,8 +59,8 @@ version.
 ### Fixed
 
 - Explicit DeepSeek provider selection avoids ambiguous model resolution.
-- Session-level guards prevent duplicate identical Pi tool executions while
-  allowing different inputs and failure retries.
+- In-flight-only Pi invocation guards prevent concurrent duplicates while
+  allowing completed calls and failure retries.
 - Regression gates detect corrected CVE IDs, incomplete CPEs, false CPE
   matching claims, and unsupported truncation statements.
 - Range-only vulnerability inputs are now evaluated without requiring a
@@ -74,3 +75,16 @@ version.
 - Reports and TARA overlays reject overwriting any input artifact; Pi capability
   text now describes wildcard and numeric-range matching.
 - Pi report outputs reject absolute and relative paths outside `maintenance/`.
+- Malformed nested TARA fields now raise controlled input errors, and existing
+  CVE suppression applies only to references targeting the matched component.
+- Versioned configs reject unknown keys; null evaluation paths and configured
+  `output_path: "-"` follow the documented CLI diagnostics and stdout contract.
+- Canonical Pi path aliases share in-flight guards, truncated-report temporary
+  directories are removed on shutdown, and provider credentials are not
+  forwarded to the deterministic Python subprocess.
+- Cross-component CVE rationales now match their retained evidence, and
+  CPE-only matches retain component-level existing-reference suppression.
+- Windows home variables remain available for `~` expansion, and same-batch
+  duplicate tool errors include explicit wait-for-result guidance.
+- Pi smoke validation reports malformed recommendations instead of raising
+  uncaught key or type errors.

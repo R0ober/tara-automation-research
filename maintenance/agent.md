@@ -13,8 +13,11 @@ configuration with `./scripts/bootstrap.sh`.
 
 ```bash
 .venv/bin/python -m unittest discover -s tests -v
-node --test tests/test_pi_runner.mjs
+node --test tests/test_pi_runner.mjs tests/test_pi_index.mjs
 ```
+
+Keep the tracked `shared/` artifacts checked out. Without `.venv`, the Node
+tests require `python3` on `PATH` or an explicit `PYTHON` interpreter.
 
 Smoke-test the explicit synthetic example:
 
@@ -25,7 +28,7 @@ Smoke-test the explicit synthetic example:
   --output /tmp/tara-maintenance-report.json
 ```
 
-Expected example counts: 4 total, 2 `review_required`, 1 `no_review`, and 1
+Expected example counts: 4 total, 3 `review_required`, 0 `no_review`, and 1
 `unresolved`. The synthetic CVEs are not real vulnerability claims.
 
 
@@ -49,8 +52,8 @@ to the actual command.
 
 ## Structure
 
-- `.pi/extensions/tara-maintenance/index.ts`: Pi tool registration, duplicate
-  invocation guard, output truncation, and queued report writes.
+- `.pi/extensions/tara-maintenance/index.ts`: Pi tool registration, in-flight
+  invocation guard, truncation lifecycle, and queued report writes.
 - `.pi/extensions/tara-maintenance/runner.ts`: argument-array Python subprocess
   adapter. It must not contain maintenance decision rules.
 - `.pi/prompts/`: separate actual and synthetic agent entry points.
@@ -66,6 +69,8 @@ to the actual command.
 - `tests/test_cli.py`: real subprocess CLI behavior.
 - `tests/test_configuration.py`: config precedence and example/local separation.
 - `tests/test_pi_runner.mjs`: real Python execution through the Pi adapter.
+- `tests/test_pi_index.mjs`: extension guard, path canonicalization, and
+  temporary-report lifecycle.
 - `tests/test_pi_smoke.py`: tool arguments and final-response quality gates.
 - `tests/test_cpe.py`: numeric range and wildcard boundaries.
 - `tests/test_nvd.py`: real NVD snapshots, ranges, and conflict decisions.
@@ -92,6 +97,7 @@ to the actual command.
   report but must never reclassify its decisions or duplicate matching rules.
 - Normalize Pi `@` path prefixes and spawn Python with an argument array, never
   a shell command string.
+- Forward only the allowlisted non-secret environment to the Python subprocess.
 - Never commit `.env`, `config/maintenance.json`, `data/*.json`, `output/`, or
   `.venv/`. Keep their tracked examples free of real credentials and data.
 - The actual default input is `data/changes.json`; synthetic data must be

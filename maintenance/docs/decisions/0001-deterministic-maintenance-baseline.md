@@ -1,6 +1,6 @@
 # 0001: Deterministic maintenance baseline
 
-Status: Proposed
+Status: Accepted
 
 ## The problem
 
@@ -31,8 +31,8 @@ version ranges, and existing-TARA conflict review.
 The baseline requires affected component identifiers or exact CPE strings. It
 does not evaluate CPE version ranges, CVSS changes, exploit maturity, natural
 language descriptions, or risk acceptance. A CVE already present in the TARA
-produces `no_review` after item applicability is established. New components
-outside the reference architecture are `unresolved`.
+produces `no_review` only when its reference targets the matched component.
+New components outside the reference architecture are `unresolved`.
 
 Component changes are supported only for components already in the reference
 architecture. The baseline flags any effective state difference for analyst

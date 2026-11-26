@@ -148,9 +148,9 @@ Agent quality gates check:
 - complete, supported CPE evidence and no false CPE-matching claims;
 - no unsupported output-truncation claims.
 
-The extension also blocks duplicate in-flight or successfully completed calls
-with identical arguments in one Pi session. Different inputs remain allowed,
-and failed invocations can be retried.
+The extension blocks only duplicate in-flight calls with identical canonical
+paths in one Pi session. Completed calls, different inputs, and retries after
+failure remain available.
 
 ### Iteration record
 
@@ -159,7 +159,7 @@ and failed invocations can be retried.
 | Unresolved or punctuated CPE citations were unsupported | Include unresolved evidence and strip sentence punctuation | CPE regression fixtures |
 | Model ID resolved to the wrong provider | Explicit provider and catalog model ID | Live DeepSeek call |
 | Conditional prompt arguments selected local empty data | Separate actual and example commands | Literal tool-argument gate |
-| Model repeated an identical tool call | Session-level invocation guard | Repeated independent Pi runs |
+| Model repeated an identical tool call | In-flight invocation guard | Concurrent and repeat-call extension tests |
 | CVE editorial self-correction appeared | Constrained table and identifier rules | Questioned-CVE gate |
 | Unsupported truncation descriptions appeared | Return explicit report path and constrain wording | Truncation-claim gate |
 | CPE wildcards were omitted | Require complete CPE evidence | CPE-membership gate |
