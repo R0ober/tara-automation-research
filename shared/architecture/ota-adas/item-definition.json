@@ -20,7 +20,9 @@
         "name": "Autonomous Emergency Braking (AEB) Request",
         "description": "COMP-ADAS periodically sends the requested deceleration to COMP-CGW over CONN-05 while AEB is active. COMP-CGW relays each request once over CONN-04 to COMP-EBCM, which controls hydraulic braking."
       }
-    ]
+    ],
+    "version": "1.0.0",
+    "valid_as_of": "2026-11-22"
   },
   "components": [
     {
@@ -30,7 +32,8 @@
       "trust_zone": "Untrusted_External",
       "os": {
         "name": "Ubuntu Server",
-        "version": "22.04 LTS"
+        "version": "22.04 LTS",
+        "identifier_status": "not_assigned"
       },
       "hosted_software": [
         {
@@ -40,7 +43,9 @@
           "role": "HTTPS API Gateway"
         }
       ],
-      "interfaces": ["INT-CELLULAR-WAN"]
+      "interfaces": [
+        "INT-CELLULAR-WAN"
+      ]
     },
     {
       "component_id": "COMP-ADAS",
@@ -48,7 +53,9 @@
       "type": "External_In_Vehicle_ECU",
       "trust_zone": "ADAS_Domain",
       "role": "Uses forward-sensor information to decide when automatic emergency braking is needed and request a deceleration.",
-      "interfaces": ["INT-ADAS-REQUEST"]
+      "interfaces": [
+        "INT-ADAS-REQUEST"
+      ]
     },
     {
       "component_id": "COMP-TCU",
@@ -89,10 +96,16 @@
             "runs_as_root": true,
             "verify_firmware_signature": false,
             "hardcoded_uds_seed_key": "0xDEADBEEF"
-          }
+          },
+          "identifier_status": "in_house"
         }
       ],
-      "interfaces": ["INT-CELLULAR-WAN", "INT-WIFI-AP", "INT-OBD2-DEBUG", "INT-ETH-INTERNAL"]
+      "interfaces": [
+        "INT-CELLULAR-WAN",
+        "INT-WIFI-AP",
+        "INT-OBD2-DEBUG",
+        "INT-ETH-INTERNAL"
+      ]
     },
     {
       "component_id": "COMP-CGW",
@@ -102,7 +115,8 @@
       "hardware": "Infineon AURIX TC397",
       "os": {
         "name": "AUTOSAR Classic",
-        "version": "R20-11"
+        "version": "R20-11",
+        "identifier_status": "not_assigned"
       },
       "hosted_software": [
         {
@@ -112,7 +126,8 @@
           "security_configuration": {
             "vlan_isolation_enabled": false,
             "uds_0x27_security_access_required_for_routing": false
-          }
+          },
+          "identifier_status": "in_house"
         }
       ],
       "forwarding_rules": [
@@ -139,7 +154,11 @@
         "trusted_firmware_signature_required": true,
         "on_check_failure": "Reject activation of the candidate image"
       },
-      "interfaces": ["INT-ETH-INTERNAL", "INT-CAN-SAFETY", "INT-ADAS-REQUEST"]
+      "interfaces": [
+        "INT-ETH-INTERNAL",
+        "INT-CAN-SAFETY",
+        "INT-ADAS-REQUEST"
+      ]
     },
     {
       "component_id": "COMP-EBCM",
@@ -167,7 +186,8 @@
           "security_configuration": {
             "secoc_mac_verification": false,
             "uds_flash_programming_locked": false
-          }
+          },
+          "identifier_status": "in_house"
         }
       ],
       "firmware_programming": {
@@ -179,7 +199,9 @@
         "trusted_firmware_signature_required": true,
         "on_check_failure": "Reject activation of the candidate image"
       },
-      "interfaces": ["INT-CAN-SAFETY"]
+      "interfaces": [
+        "INT-CAN-SAFETY"
+      ]
     }
   ],
   "connections": [
@@ -257,8 +279,15 @@
       "asset_id": "ASSET-01",
       "name": "OTA Firmware Binary Image",
       "parent_component": "COMP-TCU",
-      "associated_connections": ["CONN-01", "CONN-03", "CONN-04"],
-      "cybersecurity_properties": ["Integrity", "Authenticity"],
+      "associated_connections": [
+        "CONN-01",
+        "CONN-03",
+        "CONN-04"
+      ],
+      "cybersecurity_properties": [
+        "Integrity",
+        "Authenticity"
+      ],
       "damage_scenarios": [
         {
           "damage_id": "DS-01",
@@ -276,8 +305,15 @@
       "asset_id": "ASSET-02",
       "name": "AEB Deceleration Request",
       "parent_component": "COMP-EBCM",
-      "associated_connections": ["CONN-05", "CONN-04"],
-      "cybersecurity_properties": ["Integrity", "Authenticity", "Availability"],
+      "associated_connections": [
+        "CONN-05",
+        "CONN-04"
+      ],
+      "cybersecurity_properties": [
+        "Integrity",
+        "Authenticity",
+        "Availability"
+      ],
       "damage_scenarios": [
         {
           "damage_id": "DS-02",
@@ -295,12 +331,28 @@
       "asset_id": "ASSET-03",
       "name": "Vehicle GPS & Telemetry Logs",
       "parent_component": "COMP-TCU",
-      "associated_connections": ["CONN-01"],
-      "report_contents": ["collection timestamp", "vehicle health logs", "diagnostic trouble codes", "GPS coordinates"],
+      "associated_connections": [
+        "CONN-01"
+      ],
+      "report_contents": [
+        "collection timestamp",
+        "vehicle health logs",
+        "diagnostic trouble codes",
+        "GPS coordinates"
+      ],
       "local_retention": "The TCU queues pending reports in persistent storage and retries unacknowledged uploads. It removes a report when the backend acknowledges receipt. If the queue is full, the oldest pending report is discarded to make room for the newest.",
-      "local_read_access": ["TCU telemetry service account", "TCU root account"],
-      "backend_read_access": ["OEM telemetry ingestion service", "authorized OEM diagnostic support staff"],
-      "cybersecurity_properties": ["Confidentiality", "Privacy"],
+      "local_read_access": [
+        "TCU telemetry service account",
+        "TCU root account"
+      ],
+      "backend_read_access": [
+        "OEM telemetry ingestion service",
+        "authorized OEM diagnostic support staff"
+      ],
+      "cybersecurity_properties": [
+        "Confidentiality",
+        "Privacy"
+      ],
       "damage_scenarios": [
         {
           "damage_id": "DS-03",
@@ -313,6 +365,72 @@
           }
         }
       ]
+    }
+  ],
+  "interfaces": [
+    {
+      "interface_id": "INT-CELLULAR-WAN",
+      "name": "Cellular OTA & Telemetry Link",
+      "connection_id": "CONN-01",
+      "exposure": "external_wan",
+      "endpoints": [
+        "COMP-CLOUD",
+        "COMP-TCU"
+      ]
+    },
+    {
+      "interface_id": "INT-ADAS-REQUEST",
+      "name": "ADAS deceleration request input",
+      "connection_id": "CONN-05",
+      "exposure": "internal_bus",
+      "endpoints": [
+        "COMP-ADAS",
+        "COMP-CGW"
+      ]
+    },
+    {
+      "interface_id": "INT-WIFI-AP",
+      "name": "Cabin Wi-Fi Access Point",
+      "connection_id": "CONN-02",
+      "exposure": "external_wireless",
+      "endpoints": [
+        "COMP-TCU"
+      ]
+    },
+    {
+      "interface_id": "INT-OBD2-DEBUG",
+      "name": "Physical TCU Maintenance Console",
+      "connection_id": "CONN-06",
+      "exposure": "external_wired",
+      "endpoints": [
+        "COMP-TCU"
+      ]
+    },
+    {
+      "interface_id": "INT-ETH-INTERNAL",
+      "name": "In-Vehicle Automotive Ethernet",
+      "connection_id": "CONN-03",
+      "exposure": "internal_bus",
+      "endpoints": [
+        "COMP-TCU",
+        "COMP-CGW"
+      ]
+    },
+    {
+      "interface_id": "INT-CAN-SAFETY",
+      "name": "Chassis & Safety CAN-FD Bus",
+      "connection_id": "CONN-04",
+      "exposure": "internal_bus",
+      "endpoints": [
+        "COMP-CGW",
+        "COMP-EBCM"
+      ]
+    }
+  ],
+  "external_actors": [
+    {
+      "actor_id": "EXTERNAL_ATTACKER_SURFACE",
+      "description": "Sentinel endpoint in connections used for externally reachable links; not a component of the item."
     }
   ]
 }
