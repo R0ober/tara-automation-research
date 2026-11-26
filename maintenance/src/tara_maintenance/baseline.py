@@ -343,6 +343,7 @@ class MaintenanceBaseline:
                 reference.as_dict() for reference in existing_references
             ]
 
+        # Exclusion can leave matched_components empty; any existing reference still conflicts.
         if existing_references and range_evidence["excluded"]:
             decision = "review_required"
             rationale = (
@@ -375,7 +376,7 @@ class MaintenanceBaseline:
             decision = "review_required"
             rationale = (
                 f"{change['cve_id']} affects at least one component in the item and is "
-                "not referenced by the existing TARA."
+                "not referenced by the existing TARA for any affected component."
             )
 
         return {

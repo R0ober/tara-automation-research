@@ -111,6 +111,25 @@ class MaintenanceBaselineTests(unittest.TestCase):
             "LEAF-1",
         )
 
+    def test_existing_vulnerability_matched_only_by_cpe_is_not_flagged_again(self) -> None:
+        result = self.evaluate_one(
+            self.vulnerability(
+                cve_id="CVE-2020-12351",
+                affected_components=[],
+                affected_cpes=["cpe:2.3:a:bluez:bluez:5.54:*:*:*:*:*:*:*"],
+            )
+        )
+
+        self.assertEqual(result["decision"], "no_review")
+        self.assertEqual(
+            result["evidence"]["matched_components"][0]["component_id"],
+            "COMP-VDCM",
+        )
+        self.assertEqual(
+            result["evidence"]["existing_vulnerability_references"][0]["node_id"],
+            "LEAF-1",
+        )
+
     def test_existing_vulnerability_with_version_exclusion_requires_review(self) -> None:
         result = self.evaluate_one(
             self.vulnerability(
@@ -145,6 +164,10 @@ class MaintenanceBaselineTests(unittest.TestCase):
         self.assertEqual(
             result["evidence"]["existing_vulnerability_references"][0]["node_id"],
             "LEAF-1",
+        )
+        self.assertIn(
+            "not referenced by the existing TARA for any affected component",
+            result["rationale"],
         )
 
     def test_non_string_tara_index_fields_raise_input_errors(self) -> None:

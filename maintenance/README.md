@@ -289,11 +289,17 @@ report = evaluate_changes(
 node --test tests/test_pi_runner.mjs tests/test_pi_index.mjs
 ```
 
+Tests require the checked-out `shared/` artifacts. The Node integration tests
+use `.venv/bin/python` when available, otherwise `python3` on `PATH`; `PYTHON`
+can select another interpreter.
+
 The Python suite covers decision rules, malformed input, strict configuration
 loading and precedence, labeled evaluation, explicit example-data selection,
 shared BBW integration, and Pi response quality gates. The Node suites execute
 the real Python CLI through the Pi runner and exercise extension invocation
 guards, attachment aliases, truncation cleanup, configured paths, and errors.
+
+Temporary `.pi-index-*` report directories are ignored and removed by each test.
 
 To check Pi resource loading without a model call:
 

@@ -67,6 +67,41 @@ class PiSmokeValidationTests(unittest.TestCase):
                     failures,
                 )
 
+    def test_non_list_recommendations_return_validation_failure(self) -> None:
+        self.report["recommendations"] = {"change_id": "VULN-1"}
+
+        failures = validate_example_run(self.events, self.report)
+
+        self.assertIn("Report recommendations must be an array", failures)
+
+    def test_non_object_evidence_returns_validation_failure(self) -> None:
+        self.report["recommendations"][0]["evidence"] = []
+
+        failures = validate_example_run(self.events, self.report)
+
+        self.assertIn("Recommendation 0 evidence must be an object", failures)
+
+    def test_non_string_subject_returns_validation_failure(self) -> None:
+        self.report["recommendations"][0]["vulnerability_id"] = 123
+
+        failures = validate_example_run(self.events, self.report)
+
+        self.assertTrue(any("non-string subject" in failure for failure in failures))
+
+    def test_malformed_evidence_details_return_validation_failures(self) -> None:
+        cases = [
+            ({"matched_software": ["cpe:2.3:a:example:product:1.0"]}, "entries"),
+            ({"matched_software": [None]}, "entries"),
+            ({"unresolved_identifiers": []}, "unresolved_identifiers"),
+        ]
+        for evidence, expected in cases:
+            with self.subTest(evidence=evidence):
+                self.report["recommendations"][0]["evidence"] = evidence
+
+                failures = validate_example_run(self.events, self.report)
+
+                self.assertTrue(any(expected in failure for failure in failures), failures)
+
     def test_wrong_example_path_fails(self) -> None:
         self.events[0]["args"] = {
             **EXPECTED_ARGUMENTS,

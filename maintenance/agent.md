@@ -16,6 +16,9 @@ configuration with `./scripts/bootstrap.sh`.
 node --test tests/test_pi_runner.mjs tests/test_pi_index.mjs
 ```
 
+Keep the tracked `shared/` artifacts checked out. Without `.venv`, the Node
+tests require `python3` on `PATH` or an explicit `PYTHON` interpreter.
+
 Smoke-test the explicit synthetic example:
 
 ```bash

@@ -129,6 +129,31 @@ def validate_run(
             if not isinstance(evidence, dict):
                 errors.append(f"Recommendation {index} evidence must be an object")
                 recommendation = {**recommendation, "evidence": {}}
+            else:
+                normalized_evidence = dict(evidence)
+                for field in (
+                    "matched_software",
+                    "matched_cpe_rules",
+                    "excluded_software",
+                ):
+                    entries = evidence.get(field, [])
+                    if not isinstance(entries, list):
+                        errors.append(f"Recommendation {index} {field} must be an array")
+                        normalized_evidence[field] = []
+                        continue
+                    valid_entries = [item for item in entries if isinstance(item, dict)]
+                    if len(valid_entries) != len(entries):
+                        errors.append(
+                            f"Recommendation {index} {field} entries must be objects"
+                        )
+                    normalized_evidence[field] = valid_entries
+                unresolved = evidence.get("unresolved_identifiers", {})
+                if not isinstance(unresolved, dict):
+                    errors.append(
+                        f"Recommendation {index} unresolved_identifiers must be an object"
+                    )
+                    normalized_evidence["unresolved_identifiers"] = {}
+                recommendation = {**recommendation, "evidence": normalized_evidence}
             recommendations.append(recommendation)
     for recommendation in recommendations:
         change_id = recommendation["change_id"]

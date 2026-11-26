@@ -16,3 +16,6 @@ output/
 
 # Generated Pi/session files, if any
 .pi/sessions/
+
+# Node extension test temporary reports
+.pi-index-*/

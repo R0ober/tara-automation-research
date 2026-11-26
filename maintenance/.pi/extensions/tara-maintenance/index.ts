@@ -25,6 +25,9 @@ const PATH_FIELDS: Record<string, true> = {
 	output_path: true,
 };
 
+const RUNNING_REASON =
+	"This identical TARA analysis is already running. Wait for its tool result.";
+
 function invocationSignature(input: Record<string, unknown>, cwd: string): string {
 	const normalized = Object.entries(input)
 		.sort(([left], [right]) => left.localeCompare(right))
@@ -58,7 +61,7 @@ export default function taraMaintenance(pi: ExtensionAPI) {
 		if (pendingInvocations.has(signature)) {
 			return {
 				block: true,
-				reason: "This identical TARA analysis is already running. Wait for its tool result.",
+				reason: RUNNING_REASON,
 			};
 		}
 	});
@@ -96,7 +99,7 @@ export default function taraMaintenance(pi: ExtensionAPI) {
 		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
 			const signature = invocationSignature(params, ctx.cwd);
 			if (pendingInvocations.has(signature)) {
-				throw new Error("This identical TARA analysis is already running");
+				throw new Error(RUNNING_REASON);
 			}
 			pendingInvocations.add(signature);
 			try {

@@ -114,10 +114,12 @@ test("Pi extension deduplicates only running calls and canonicalizes paths", asy
 	assert.equal(extension.call(aliased), undefined);
 	const running = extension.execute(aliased);
 	assert.equal(extension.call(unaliased)?.block, true);
+	await assert.rejects(
+		extension.execute(unaliased),
+		/already running\. Wait for its tool result\./,
+	);
 	await running;
 	assert.equal(JSON.parse(await readFile(outputPath, "utf8")).summary.total, 4);
-	assert.equal(extension.call(unaliased), undefined);
-
 	// A later handler may block this accepted call before execute starts.
 	assert.equal(extension.call(unaliased), undefined);
 	assert.equal(extension.call(unaliased), undefined);

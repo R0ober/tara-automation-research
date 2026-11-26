@@ -82,5 +82,9 @@ version.
 - Canonical Pi path aliases share in-flight guards, truncated-report temporary
   directories are removed on shutdown, and provider credentials are not
   forwarded to the deterministic Python subprocess.
+- Cross-component CVE rationales now match their retained evidence, and
+  CPE-only matches retain component-level existing-reference suppression.
+- Windows home variables remain available for `~` expansion, and same-batch
+  duplicate tool errors include explicit wait-for-result guidance.
 - Pi smoke validation reports malformed recommendations instead of raising
   uncaught key or type errors.

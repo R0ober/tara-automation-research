@@ -22,6 +22,9 @@ const maintenanceRoot = fileURLToPath(new URL("../../../", import.meta.url));
 const INHERITED_ENVIRONMENT_VARIABLES = [
 	"PATH",
 	"HOME",
+	"USERPROFILE",
+	"HOMEDRIVE",
+	"HOMEPATH",
 	"LANG",
 	"LC_ALL",
 	"TMPDIR",
