@@ -27,3 +27,4 @@ node_modules/
 
 generation/ics-attack.json
 generation/enterprise-attack.json
+tmp*
