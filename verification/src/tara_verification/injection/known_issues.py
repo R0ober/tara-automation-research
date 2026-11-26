@@ -25,6 +25,7 @@ KNOWN_VIOLATIONS: dict[str, frozenset[tuple[str, str, str]]] = {
     "bbw": frozenset({
         ("R-REF", "AT-BRK-02-B2", "target_interface"),  # B1
     }),
+    "ota-adas": frozenset(),
 }
 
 # (object_id, field) pairs that hold an intentional null. No rule may report them.
