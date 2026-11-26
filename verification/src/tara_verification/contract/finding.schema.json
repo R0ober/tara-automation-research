@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tara_verification/contract/finding.schema.json",
+  "title": "Reviewer finding (shared by all reviewers)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["category", "location", "claim", "evidence"],
+  "properties": {
+    "category": {"enum": ["contradiction", "infeasible", "unsupported"]},
+    "location": {"$ref": "label.schema.json#/$defs/location"},
+    "claim": {"type": "string"},
+    "evidence": {"type": "array", "items": {"$ref": "label.schema.json#/$defs/evidence"}}
+  }
+}
