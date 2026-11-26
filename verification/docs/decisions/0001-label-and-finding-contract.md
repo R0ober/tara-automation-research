@@ -45,7 +45,22 @@ every label before it is written.
 - `base` records `system`, `tag`, `tara_sha256` and `item_sha256`. During
   development `tag` can be a commit. Dataset v1 must use a tag.
 - `effect` records `band_changed` and `risk_changed`. The injector computes
-  them.
+  them from the methodology tables. It does not use the validator.
+  - `band_changed` is true if the edit changes a feasibility band at the
+    edited node. The band can be stated (a C4 band edit) or implied by the
+    edited numbers (a C3 factor edit that moves the total into another band).
+  - `risk_changed` is true if a correct propagation of the edit would change
+    the inherent risk value. A null risk value never changes.
+  - Values per operator in milestone 1:
+
+    | Operator and site | `band_changed` | `risk_changed` |
+    |---|---|---|
+    | C1a, C1b | false | false |
+    | C3 factor score | band of the new total differs from the stated band | matrix value for the implied root band differs from the stated risk |
+    | C3 total score | false (the offset keeps the band) | false |
+    | C4 leaf band | true | false (a leaf band is not an input of the risk lookup) |
+    | C4 root band, `risk_determination` band | true | matrix value for the new band differs from the stated risk |
+    | C4 risk value and level | false | true |
 - A finding has `category`, `location`, `claim` and `evidence`. It uses the
   same location and evidence types as a label.
 

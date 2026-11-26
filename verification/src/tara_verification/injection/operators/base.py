@@ -4,7 +4,7 @@ Operators read methodology tables with their own helpers here; they never
 call validate.violations() or its helpers, so expected violations stay
 hand-written.
 
-Effect semantics:
+Effect semantics (normative definition in ADR 0001):
     band_changed  the edit changes a feasibility band, stated or implied by
                   the edited numbers, at the edited node.
     risk_changed  a correct propagation of the edit would change the
