@@ -3,7 +3,7 @@ from dataclasses import replace
 
 import pytest
 
-from tara_verification.injection.load import canonical
+from tara_verification.injection.load import BASELINE_REV, canonical
 from tara_verification.injection.operators import Candidate, apply, make_context
 from tara_verification.injection.sites import enumerate_sites
 from tara_verification.injection.write import (
@@ -54,8 +54,8 @@ def test_layout(tmp_path, bbw, candidates):
     assert (out / "dev" / "context" / "functional-specification.txt").read_bytes() == bbw.spec_bytes
     assert not list((out / "dev").rglob("*label*"))
     label = json.loads((out / "labels" / f"{ids[0]}.json").read_text("utf-8"))
-    assert label["base"] == {"system": "bbw", "tag": "5ed3ae1", "tara_sha256": bbw.tara_sha256,
-                             "item_sha256": bbw.item_sha256}
+    assert label["base"] == {"system": "bbw", "tag": BASELINE_REV,
+                             "tara_sha256": bbw.tara_sha256, "item_sha256": bbw.item_sha256}
     tara_text = (out / "dev" / "cases" / ids[0] / "tara.json").read_text("utf-8")
     assert case_id_of(tara_text) == ids[0]
 

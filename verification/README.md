@@ -35,7 +35,8 @@ Pipeline (`src/tara_verification/injection/`):
 - `known_issues.py` lists the known baseline issues (B1–B9).
 - The label and finding contract is in `src/tara_verification/contract/`.
   See [ADR 0001](docs/decisions/0001-label-and-finding-contract.md).
-- [`CLAUDE.md`](CLAUDE.md) records the design decisions (in Chinese).
+- The expected new violations of each operator are listed in
+  [ADR 0001](docs/decisions/0001-label-and-finding-contract.md).
 
 ## Setup
 

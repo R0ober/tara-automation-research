@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 # Development baseline: PR 18, squash-merged into main.
-BASELINE_REV = "5ed3ae1"
+BASELINE_REV = "5ed3ae193bf323f9a2a3b467f9d6d67f82e8d3f0"
 
 # SHA-256 of each input file at BASELINE_REV, keyed by system and role.
 BASELINE_SHA256 = {

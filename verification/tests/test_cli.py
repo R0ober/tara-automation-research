@@ -14,10 +14,11 @@ def test_cli_writes_dataset(tmp_path, repo):
     out = tmp_path / "v0"
     assert main(["--repo", str(repo), *ARGS, "--out", str(out)]) == 0
     manifest = json.loads((out / "manifest.json").read_text("utf-8"))
-    assert manifest["inputs"]["rev"] == "5ed3ae1"
+    assert manifest["inputs"]["rev"] == "5ed3ae193bf323f9a2a3b467f9d6d67f82e8d3f0"
     assert manifest["counts"]["C1b"] == {"sites": 4, "generated": 4, "skipped": 0,
                                          "rejected": 0, "duplicates": 0, "accepted": 4}
     assert manifest["skipped"] == [] and manifest["duplicates"] == []
+    assert manifest["known_violations"] == [["R-REF", "AT-BRK-02-B2", "target_interface"]]
     assert (out / "rejected.jsonl").read_text("utf-8") == ""
     assert manifest["total_cases"] == len(list((out / "dev" / "cases").iterdir()))
 

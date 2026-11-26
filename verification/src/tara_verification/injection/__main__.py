@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from .. import __version__
-from .known_issues import KNOWN_ISSUES
+from .known_issues import KNOWN_ISSUES, KNOWN_VIOLATIONS
 from .load import BASELINE_REV, BASELINE_SHA256, InputError, input_paths, load_inputs
 from .operators import Skip, apply, make_context
 from .sites import OPERATORS, enumerate_sites
@@ -74,6 +74,7 @@ def run(*, repo: Path, system: str, scenarios: list[str], operators: list[str], 
         "counts": counts,
         "total_cases": len(cases),
         "known_issues": [code for code, s, _ in KNOWN_ISSUES if s in (system, "all")],
+        "known_violations": [list(v) for v in sorted(KNOWN_VIOLATIONS.get(system, ()))],
         "skipped": [s.to_dict() for s in skipped],
         "duplicates": [d.to_dict() for d in duplicates],
     }

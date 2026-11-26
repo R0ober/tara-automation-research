@@ -17,7 +17,7 @@ NO_EFFECT = Effect(band_changed=False, risk_changed=False)
 
 
 def expected_violations(site: Site) -> frozenset[Violation]:
-    """Hand-written; see the expected-violation table in CLAUDE.md."""
+    """Hand-written; see the expected-violation table in ADR 0001."""
     ts = site.scenario_id
     out = {Violation("R-REF", site.object_id, site.field)}
     if site.field == "targeted_asset.asset_id":

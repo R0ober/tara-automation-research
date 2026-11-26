@@ -61,6 +61,31 @@ every label before it is written.
     | C4 leaf band | true | false (a leaf band is not an input of the risk lookup) |
     | C4 root band, `risk_determination` band | true | matrix value for the new band differs from the stated risk |
     | C4 risk value and level | false | true |
+- Each operator writes its expected new violations by hand, per site. It
+  never calls `validate.violations()`, because the validator would then check
+  itself. The validator accepts a case only if
+  `violations(case) - violations(base)` equals this set. Each violation is
+  `(rule, object_id, field)`. In the table, `TS` is the scenario ID, `leaf` is
+  the edited attack-tree node, `ROOT` is the root node of the attack tree,
+  and `summary.` stands for `traceability_and_risk_summary.`.
+
+    | Operator and site | Expected new violations |
+    |---|---|
+    | C1a on `targeted_asset.asset_id` | `R-REF (TS, targeted_asset.asset_id)`, `R-SUMMARY (TS, summary.asset_id)` |
+    | C1a on `associated_damage_scenario.damage_id` | `R-REF (TS, associated_damage_scenario.damage_id)`, `R-SUMMARY (TS, summary.damage_id)` |
+    | C1a on `summary.asset_id` or `summary.damage_id` | `R-REF` and `R-SUMMARY`, both on the edited summary field |
+    | C1a, C1b on any other reference field | `R-REF` on the edited field |
+    | C3 factor score | `R-SCORE (leaf, attack_potential.<factor>.score)`, `R-SUM (leaf, attack_potential.total_score)` |
+    | C3 total score (the band stays the same) | `R-SUM (leaf, attack_potential.total_score)`. Add `R-AGG (parent, aggregated_attack_potential_score)` if the parent aggregate no longer follows the gate rule |
+    | C4 node band (`attack_potential.feasibility_rating`) | `R-BAND (leaf, attack_potential.feasibility_rating)` |
+    | C4 root band (`aggregated_attack_feasibility`) | `R-BAND (ROOT, aggregated_attack_feasibility)`, `R-AGG (TS, risk_determination.aggregated_attack_feasibility)` |
+    | C4 `risk_determination.aggregated_attack_feasibility` | `R-AGG (TS, risk_determination.aggregated_attack_feasibility)`, `R-SUMMARY (TS, summary.inherent_feasibility)`. Add `R-RISK (TS, risk_determination.inherent_risk_value)` if the matrix value for the new band differs from the stated risk |
+    | C4 risk value and level, edited together | `R-RISK (TS, risk_determination.inherent_risk_value)`, `R-SUMMARY (TS, summary.inherent_risk)` |
+
+  C1b does not apply to asset, damage or connection fields. Baseline
+  violations, such as B1, cancel out in the subtraction. They are listed in
+  `known_violations` in `manifest.json`, so that evaluation does not count a
+  finding on them as a false positive.
 - A finding has `category`, `location`, `claim` and `evidence`. It uses the
   same location and evidence types as a label.
 
