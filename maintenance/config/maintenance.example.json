@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0",
+  "tara_path": "../shared/reference-tara/bbw/reference-tara.json",
+  "architecture_path": "../shared/architecture/bbw/item-definition.json",
+  "changes_path": "data/changes.json",
+  "output_path": "output/report.json"
+}

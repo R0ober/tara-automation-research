@@ -1,0 +1,74 @@
+{
+  "dataset_id": "nvd-bbw-selected-v2",
+  "source": "National Vulnerability Database (NVD) CVE API 2.0",
+  "license": "NIST publications are in the public domain under Title 17 U.S.C.",
+  "notice": "This product uses data from the NVD API but is not endorsed or certified by the NVD.",
+  "retrieved_at": "2026-11-22T09:54:53.515493+00:00",
+  "request_delay_seconds": 6.0,
+  "records": [
+    {
+      "cve_id": "CVE-2020-12351",
+      "file": "CVE-2020-12351.json",
+      "sha256": "a09129076ef3ba9c7f8aa4addcd91f3ebf9405162bc613c30e7ed5103676ab8f",
+      "source_url": "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2020-12351",
+      "api_timestamp": "2026-11-22T09:54:08.673",
+      "last_modified": "2026-06-17T02:51:40.773"
+    },
+    {
+      "cve_id": "CVE-2022-0847",
+      "file": "CVE-2022-0847.json",
+      "sha256": "285aa9a0bab97536d9144a3cc8c4714ef5b3f846a72593fac22140f50a937d2a",
+      "source_url": "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2022-0847",
+      "api_timestamp": "2026-11-22T09:54:15.100",
+      "last_modified": "2026-06-17T04:21:21.750"
+    },
+    {
+      "cve_id": "CVE-2021-34434",
+      "file": "CVE-2021-34434.json",
+      "sha256": "025140c0697c788f843eadac6bcad082d514fced7baa756c1948d99653e79647",
+      "source_url": "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2021-34434",
+      "api_timestamp": "2026-11-22T09:54:21.511",
+      "last_modified": "2026-06-17T03:55:51.627"
+    },
+    {
+      "cve_id": "CVE-2020-22284",
+      "file": "CVE-2020-22284.json",
+      "sha256": "10271130816e4cf5d1597e0c5b3c95ad5cc4e7abc0875d61f0cb5138a5791b62",
+      "source_url": "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2020-22284",
+      "api_timestamp": "2026-11-22T09:54:27.893",
+      "last_modified": "2026-06-17T03:04:13.497"
+    },
+    {
+      "cve_id": "CVE-2014-4883",
+      "file": "CVE-2014-4883.json",
+      "sha256": "24692c46654006089d8d7782b1cb78d2c61b169f91079ee20106ca457a42a1d2",
+      "source_url": "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2014-4883",
+      "api_timestamp": "2026-11-22T09:54:34.281",
+      "last_modified": "2026-06-17T00:10:44.350"
+    },
+    {
+      "cve_id": "CVE-2020-22283",
+      "file": "CVE-2020-22283.json",
+      "sha256": "dd072ba8b740ea6eb967a16971d201ef4f48a63fc2978d81ccabef9a05172ac7",
+      "source_url": "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2020-22283",
+      "api_timestamp": "2026-11-22T09:54:40.635",
+      "last_modified": "2026-06-17T03:04:13.383"
+    },
+    {
+      "cve_id": "CVE-2024-3935",
+      "file": "CVE-2024-3935.json",
+      "sha256": "5266ede3d7e10179f25e9b0b2fe6ce66cf912da779c67a8a46a3575d497714d7",
+      "source_url": "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2024-3935",
+      "api_timestamp": "2026-11-22T09:54:47.091",
+      "last_modified": "2026-06-17T07:45:30.607"
+    },
+    {
+      "cve_id": "CVE-2024-10525",
+      "file": "CVE-2024-10525.json",
+      "sha256": "42de32c6363f2823e7883a34b939ba605a4af7dea6c8010c3ac3b78c0b77c6c6",
+      "source_url": "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2024-10525",
+      "api_timestamp": "2026-11-22T09:54:53.453",
+      "last_modified": "2026-06-17T06:55:51.720"
+    }
+  ]
+}

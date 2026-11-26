@@ -1,0 +1,56 @@
+{
+  "dataset_id": "nvd-bbw-selected-v2-manual-labels",
+  "synthetic": false,
+  "independent_labels": false,
+  "label_method": "Manual review of eight NVD snapshots against the reference BBW architecture and existing TARA during this iteration; not an independent benchmark.",
+  "cases": [
+    {
+      "change_id": "NVD-CVE-2020-12351",
+      "expected_decision": "no_review",
+      "expected_components": [],
+      "label_rationale": "The current TARA does not reference this CVE, and the NVD ranges in this snapshot exclude installed kernel 5.10.70; no affected component is matched."
+    },
+    {
+      "change_id": "NVD-CVE-2022-0847",
+      "expected_decision": "review_required",
+      "expected_components": ["COMP-VDCM"],
+      "label_rationale": "NVD range 5.8 (inclusive) to 5.10.102 (exclusive) includes kernel 5.10.70, and the current TARA does not reference the CVE."
+    },
+    {
+      "change_id": "NVD-CVE-2021-34434",
+      "expected_decision": "review_required",
+      "expected_components": ["COMP-VDCM"],
+      "label_rationale": "NVD range 2.0.0 through 2.0.11 includes Mosquitto 2.0.10, and this CVE is absent from the TARA."
+    },
+    {
+      "change_id": "NVD-CVE-2020-22284",
+      "expected_decision": "review_required",
+      "expected_components": ["COMP-EBCM"],
+      "label_rationale": "The exact vulnerable CPE identifies lwIP 2.1.2 on COMP-EBCM, and this CVE is absent from the TARA."
+    },
+    {
+      "change_id": "NVD-CVE-2014-4883",
+      "expected_decision": "no_review",
+      "expected_components": [],
+      "label_rationale": "The vulnerable range ends at lwIP 1.4.1, excluding installed 2.1.2; this CVE is not in the TARA."
+    },
+    {
+      "change_id": "NVD-CVE-2020-22283",
+      "expected_decision": "no_review",
+      "expected_components": [],
+      "label_rationale": "The current TARA does not reference this CVE, and NVD marks only the git-head/N/A CPE rather than installed lwIP 2.1.2; the supplied record does not match the installed version."
+    },
+    {
+      "change_id": "NVD-CVE-2024-3935",
+      "expected_decision": "review_required",
+      "expected_components": ["COMP-VDCM"],
+      "label_rationale": "The version range includes Mosquitto 2.0.10. The bridge/topic-remapping precondition still requires review; a version match is not exploit confirmation."
+    },
+    {
+      "change_id": "NVD-CVE-2024-10525",
+      "expected_decision": "review_required",
+      "expected_components": ["COMP-VDCM"],
+      "label_rationale": "The version range includes Mosquitto 2.0.10. The libmosquitto client/callback precondition still requires review."
+    }
+  ]
+}
