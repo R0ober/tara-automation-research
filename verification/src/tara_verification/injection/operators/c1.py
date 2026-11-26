@@ -35,14 +35,15 @@ _TRAILING_NUMBER_RE = re.compile(r"^(?P<stem>.*?)(?P<number>\d+)$")
 def dangling_ids(value: str, ctx: Context) -> list[str]:
     """Plausible IDs that occur nowhere in either document, sorted.
 
-    If the ID ends in a number, only that number changes, with the same
-    width and never all zeros (ASSET-BRK-01 -> ASSET-BRK-07). Otherwise one
+    If the ID ends in a number, only that number changes, to a value from 1
+    to 9 with the same width (ASSET-BRK-01 -> ASSET-BRK-07), so the new ID
+    stays close to the existing ones. Otherwise one
     letter of the last segment changes (INT-SWD-HEADER -> INT-SWD-HEAXER).
     """
     m = _TRAILING_NUMBER_RE.match(value)
     if m:
         width = len(m["number"])
-        variants = (f"{m['stem']}{n:0{width}d}" for n in range(1, 10 ** width))
+        variants = (f"{m['stem']}{n:0{width}d}" for n in range(1, 10))
     else:
         head, sep, last = value.rpartition("-")
         variants = (f"{head}{sep}{last[:i]}{r}{last[i + 1:]}"

@@ -75,7 +75,8 @@ def test_dangling_ids_change_only_trailing_number(bbw):
     assert "ASSET-BRK-07" in ids
     assert not {"ASSET-BRK-00", "ASSET-BRK-01", "ASSET-BRK-02", "ASSET-BRK-04"} & set(ids)
     assert all(x.startswith("ASSET-BRK-") and len(x) == len("ASSET-BRK-01") for x in ids)
-    assert len(ids) == 99 - 4
+    assert ids == ["ASSET-BRK-05", "ASSET-BRK-06", "ASSET-BRK-07", "ASSET-BRK-08",
+                   "ASSET-BRK-09"]
     # A prefix of an existing ID is never chosen: CONN-BRK-0x stays two digits wide.
     assert all(len(x) == len("CONN-BRK-02") for x in dangling_ids("CONN-BRK-02", ctx))
 
