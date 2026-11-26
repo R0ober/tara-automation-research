@@ -1,3 +1,6 @@
 __pycache__/
 *.egg-info/
 .pytest_cache/
+
+# Generated datasets; v0 is not committed. v1 is decided later.
+datasets/v0/
