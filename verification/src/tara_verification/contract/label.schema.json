@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tara_verification/contract/label.schema.json",
+  "title": "Injected-defect label (ground truth, never visible to a reviewer)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case_id", "base", "split", "case_type", "seed", "defects"],
+  "properties": {
+    "case_id": {"type": "string", "pattern": "^c-[0-9a-f]{6,}$"},
+    "base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system", "tag", "tara_sha256", "item_sha256"],
+      "properties": {
+        "system": {"type": "string"},
+        "tag": {"type": "string"},
+        "tara_sha256": {"$ref": "#/$defs/sha256"},
+        "item_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "split": {"type": "string"},
+    "case_type": {"enum": ["single", "triple", "clean", "benign"]},
+    "seed": {"type": "integer"},
+    "defects": {"type": "array", "items": {"$ref": "#/$defs/defect"}}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario_id", "object_id", "field"],
+      "properties": {
+        "scenario_id": {"type": "string"},
+        "object_id": {"type": "string"},
+        "field": {"type": "string"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document", "object_id", "field", "quote", "relation"],
+      "properties": {
+        "document": {"enum": ["tara", "item_definition", "functional_specification"]},
+        "object_id": {"type": ["string", "null"]},
+        "field": {"type": ["string", "null"]},
+        "quote": {"type": ["string", "null"]},
+        "relation": {"enum": ["quote", "absent"]}
+      }
+    },
+    "defect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["defect_id", "category", "operator", "tier", "origin", "policy",
+                   "location", "accepted_locations", "evidence", "effect", "edits"],
+      "properties": {
+        "defect_id": {"type": "string"},
+        "category": {"enum": ["contradiction", "infeasible", "unsupported"]},
+        "operator": {"type": "string"},
+        "tier": {"enum": ["M", "S", "L"]},
+        "origin": {"enum": ["historical", "synthetic"]},
+        "policy": {"enum": ["local", "propagated"]},
+        "location": {"$ref": "#/$defs/location"},
+        "accepted_locations": {"type": "array", "items": {"$ref": "#/$defs/location"}},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+        "effect": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["band_changed", "risk_changed"],
+          "properties": {
+            "band_changed": {"type": "boolean"},
+            "risk_changed": {"type": "boolean"}
+          }
+        },
+        "edits": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "before", "after"],
+            "properties": {
+              "path": {"type": "string", "description": "RFC 6901 JSON pointer"},
+              "before": {},
+              "after": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}
