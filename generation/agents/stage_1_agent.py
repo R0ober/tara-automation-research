@@ -4,10 +4,9 @@ import importlib
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from tools.stage_1_tools import stage1_tools
-from tools.tool_dispatcher import get_item_definition, save_threat_scenario_to_db
+from generation.tools.stageOneTools.stage_1_tools import stage1_tools
+from generation.tools.stageOneTools.tool_dispatcher import get_item_definition, save_threat_scenario_to_db
 from APIcaller import search_mitre_attack
-from tools.tool_dispatcher import save_component_vulnerability
 from agents.iso_helper_agent import query_iso_expert
 
 try:
@@ -31,8 +30,6 @@ def execute_tool(name, args):
         return search_mitre_attack(args.get("keyword", ""), limit=5)
     elif name == "save_threat_scenario_to_db":
         return save_threat_scenario_to_db(**args)
-    elif name == "save_component_vulnerability":
-        return save_component_vulnerability(**args) 
     elif name == "consult_iso_expert":
         return query_iso_expert(args.get("question", ""))
     else:
@@ -41,26 +38,29 @@ def execute_tool(name, args):
 def run_stage1_agent():
     system_prompt = """
 You are the Stage 1 TARA Agent specializing in ISO/SAE 21434 Threat Analysis and Risk Assessment.
-Your task is MANDATORY data generation:
-1. First, call 'get_item_definition' to load the braking system architecture.
-2. Analyze the components, assets, and interfaces. for this step, you allso have access to the local MITRE ATT&CK database. You MUST call 'search_mitre_attack' for relevant threats (e.g., firmware, CAN bus, spoofing) for each component or interface you analyze.
-3. For each asset and threat identified, you MUST call the tool 'save_threat_scenario_to_db' to persist the asset, damage scenario, impact ratings, and threat scenario directly into 'tara_scenarios.db'. 
-The following is information that needs to be inserted in to the database for every asset and threat/damage scenario that you find: 
-    sset_id: str,
-    asset_name: str,
-    parent_component: str 
-    compromised_properties: list 
-    damage_id: str 
-    damage_description: str 
-    impact_ratings: dict
-    threat_scenario_id: str
-    threat_scenario_name: str 
-    threat_scenario_description: str 
-    stride_classification: list 
-4. Do NOT just output a text summary. You must execute the 'save_threat_scenario_to_db' tool for every threat scenario you discover.
-5. For each underlying vulnerability discovered on components or interfaces you MUST call 'save_component_vulnerability' so Stage 2 can build accurate attack trees from them.
-IMPORTANT: 
-- Whenever you are unsure about impact rating criteria (safety, financial, operational, privacy), damage scenario definitions, or compliance requirements, you MUST use the `consult_iso_expert` tool to look up the official rules from the standard before making a final rating.
+Your task is MANDATORY data generation across the target system:
+1. First, call 'get_item_definition' to load the complete system architecture and item definition JSON.
+2. Analyze all components, assets, and interfaces defined in the architecture. For this step, you also have access to the local MITRE ATT&CK database. You can call 'search_mitre_attack' for relevant threat techniques for each component or interface you analyze.
+3. For each asset and threat identified, you MUST call the tool 'save_threat_scenario_to_db' to persist the structured relational data directly into 'tara_scenarios.db'. 
+
+When calling 'save_threat_scenario_to_db', you must provide the following generalized arguments:
+- component_id: Unique identifier of the component (e.g., COMP-VDCM)
+- component_name: Name of the component
+- trust_zone: Trust zone where the component resides
+- asil_level: Safety integrity level (e.g., ASIL-D)
+- interfaces: List of interface IDs belonging to this component
+- asset_id: Unique identifier of the asset (e.g., ASSET-BRK-01)
+- asset_name: Name or description of the asset being targeted
+- cybersecurity_property: One of ['Confidentiality', 'Integrity', 'Availability']
+- damage_scenario: Adverse vehicle-level consequence resulting from compromise
+- safety_impact: Safety impact rating ['Severe', 'Major', 'Moderate', 'Negligible']
+- operational_impact: Operational impact rating description
+- threat_id: Unique threat scenario ID (e.g., TS-BRK-01)
+- threat_description: Detailed description of the threat scenario
+- root_cause: Underlying system flaw, missing control, or vulnerability root cause
+
+4. Do NOT just output a text summary. You must systematically execute the 'save_threat_scenario_to_db' tool for every threat scenario you discover across all components.
+5. Whenever you are unsure about impact rating criteria (safety, financial, operational, privacy), damage scenario definitions, or compliance requirements, you MUST use the `consult_iso_expert` tool to look up official rules from the standard before making a final rating.
 """
 
     messages = [
@@ -71,7 +71,7 @@ IMPORTANT:
     print("Stage 1 Agent: Threat Scenario & Impact Rating started...\n")
     
     turn_count = 0
-    max_turns = 10 
+    max_turns = 15 
 
     while turn_count < max_turns:
         turn_count += 1
@@ -79,18 +79,18 @@ IMPORTANT:
     # Turn 1 Force reading the item definition first
         if turn_count == 1:
             current_tool_choice = {"type": "function", "function": {"name": "get_item_definition"}}
-        # Turns 2..N-1 Force saving threat scenarios (or let it search MITRE)
+        # Turns 2..N-1 Force saving threat scenarios 
         elif turn_count < max_turns - 1:
             current_tool_choice = "required" # Forces ANY tool call 
-        # Final turn Allow it to finish with text
         else:
             current_tool_choice = "auto"
 
         response = client.chat.completions.create(
-            model="qwen3-5-9b:latest",
+            model="qwen3.5-65k",
             messages=messages,
             tools=stage1_tools,
-            tool_choice=current_tool_choice
+            tool_choice=current_tool_choice,
+
         )
         
         msg = response.choices[0].message
@@ -109,14 +109,12 @@ IMPORTANT:
                 result = execute_tool(fn_name, fn_args)
                 print(f"[Tool Result]: {result}\n")
                 
-                # Feed tool result back to the LLM
                 messages.append({
                     "role": "tool",
                     "tool_call_id": tool_call.id,
                     "content": json.dumps(result)
                 })
         else:
-            keep_looping = False
             print("\n Stage 1 Agent Completed Execution!")
             print(msg.content)
 

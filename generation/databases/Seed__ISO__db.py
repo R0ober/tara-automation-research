@@ -1,15 +1,14 @@
 import sqlite3
-import pymupdf  # PyMuPDF
+import pymupdf  
 
-PDF_PATH = "SS_ISO_SAE_21434_2021_EN.pdf"  
+PDF_PATH = "../SS_ISO_SAE_21434_2021_EN.pdf"  
 DB_PATH = "iso21434.db"
 
 def build_database():
-    doc = pymupdf.open(PDF_PATH)  #
+    doc = pymupdf.open(PDF_PATH)  
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # Create an FTS5 virtual table for fast, ranked text search
     cursor.execute("DROP TABLE IF EXISTS iso_chunks")
     cursor.execute("""
         CREATE VIRTUAL TABLE iso_chunks USING fts5(
@@ -20,7 +19,7 @@ def build_database():
 
     chunks_added = 0
     for page_index, page in enumerate(doc):
-        text = page.get_text("text")  #
+        text = page.get_text("text")  
         # Split page into paragraphs/sections by double newlines
         paragraphs = [p.strip() for p in text.split("\n\n") if len(p.strip()) > 60]
         

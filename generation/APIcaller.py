@@ -3,11 +3,12 @@ import sqlite3
 import requests
 import re
 
-DB_PATH = "./mitre_attack.db"
+MITRE_DB_PATH = "./databases/mitre_attack.db"
+TARA_DB_PATH = "./databases/tara_scenarios.db"
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # Allows dictionary-like access to rows
+    conn = sqlite3.connect(MITRE_DB_PATH)
+    conn.row_factory = sqlite3.Row  
     return conn
 
 # Callback 1: Standard SQL search over ICS + Enterprise MITRE ATT&CK
@@ -43,7 +44,7 @@ def check_component_cves(cpe_string: str, nvd_api_key: str = None):
         conn.close()
         return json.loads(cached["response_json"])
     
-    # Fetch from NIST NVD API if not cached
+    
     url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cpeName={cpe_string}"
     headers = {"apiKey": nvd_api_key} if nvd_api_key else {}
     
@@ -93,7 +94,7 @@ def search_local_iso_database(query: str, top_k: int = 4) -> str:
     
     fts_query = " OR ".join(words)
 
-    conn = sqlite3.connect("iso21434.db")
+    conn = sqlite3.connect(TARA_DB_PATH)
     cursor = conn.cursor()
     
     # bm25() ranks results by relevance (lower score = better match)

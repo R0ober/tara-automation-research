@@ -26,7 +26,7 @@ def query_iso_expert(question: str) -> str:
     Simulates an ISO expert agent that searches the standard 
     and answers compliance questions for the TARA pipeline.
     """
-    #Run a quick keyword or vector search against local ISO chunks
+  
     relevant_iso_text = search_local_iso_database(question) 
 
     system_prompt = f"""
@@ -40,12 +40,13 @@ def query_iso_expert(question: str) -> str:
     print(f"Consulting ISO Expert Agent with question: '{question}'\n")
 
     response = client.chat.completions.create(
-        model="qwen3-5-9b:latest",
+        model="qwen3.5-65k",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": question}
         ],
-        temperature=0.1 # Keep it deterministic and strict
+        temperature=0.1, 
+        
     )
     return response.choices[0].message.content
 
