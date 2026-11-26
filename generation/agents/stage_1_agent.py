@@ -71,18 +71,18 @@ IMPORTANT:
     print("Stage 1 Agent: Threat Scenario & Impact Rating started...\n")
     
     turn_count = 0
-    max_turns = 10 # Prevent infinite loops
+    max_turns = 10 
 
     while turn_count < max_turns:
         turn_count += 1
     
-    # Turn 1: Force reading the item definition first
+    # Turn 1 Force reading the item definition first
         if turn_count == 1:
             current_tool_choice = {"type": "function", "function": {"name": "get_item_definition"}}
-        # Turns 2..N-1: Force saving threat scenarios (or let it search MITRE)
+        # Turns 2..N-1 Force saving threat scenarios (or let it search MITRE)
         elif turn_count < max_turns - 1:
-            current_tool_choice = "required" # Forces ANY tool call (no chatting allowed)
-        # Final turn: Allow it to finish with text
+            current_tool_choice = "required" # Forces ANY tool call 
+        # Final turn Allow it to finish with text
         else:
             current_tool_choice = "auto"
 
@@ -106,7 +106,6 @@ IMPORTANT:
 
                 print(f"[Tool Call]: {fn_name} with args keys: {list(fn_args.keys())}")
                 
-                # Execute the actual Python function (which writes to SQLite!)
                 result = execute_tool(fn_name, fn_args)
                 print(f"[Tool Result]: {result}\n")
                 

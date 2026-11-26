@@ -18,7 +18,7 @@ except ModuleNotFoundError as exc:
 
 client = OpenAI(
     base_url="http://localhost:11434/v1",
-    api_key="ollama"  # Ollama doesn't require a real API key
+    api_key="ollama" 
 )
 
 def query_iso_expert(question: str) -> str:
@@ -26,7 +26,7 @@ def query_iso_expert(question: str) -> str:
     Simulates an ISO expert agent that searches the standard 
     and answers compliance questions for the TARA pipeline.
     """
-    # 1. (Optional) Run a quick keyword or vector search against your local ISO chunks
+    #Run a quick keyword or vector search against local ISO chunks
     relevant_iso_text = search_local_iso_database(question) 
 
     system_prompt = f"""
