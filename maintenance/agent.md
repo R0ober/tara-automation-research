@@ -77,7 +77,7 @@ to the actual command.
 ## Invariants
 
 - Keep the Python core and its tests independent of LLMs, networks, GPUs,
-  Minerva, and third-party Python packages. Pi and Node.js 22+ are explicitly
+  Minerva, and third-party Python packages. Pi and Node.js 22.18+ are explicitly
   adopted only for the optional agent interface.
 - Never turn missing applicability evidence into `no_review`; use `unresolved`.
 - Preserve one output recommendation per input change and preserve input order.

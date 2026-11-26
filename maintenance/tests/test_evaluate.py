@@ -8,7 +8,16 @@ from tara_maintenance.baseline import JsonObject
 from tara_maintenance.evaluate import evaluate_dataset
 
 MAINTENANCE_DIR = Path(__file__).resolve().parents[1]
-REFERENCE_DIR = MAINTENANCE_DIR.parent / "shared" / "reference-tara"
+TARA_PATH = (
+    MAINTENANCE_DIR.parent
+    / "shared"
+    / "reference-tara"
+    / "bbw"
+    / "reference-tara.json"
+)
+ARCHITECTURE_PATH = (
+    MAINTENANCE_DIR.parent / "shared" / "architecture" / "bbw" / "item-definition.json"
+)
 
 
 class EvaluationTests(unittest.TestCase):
@@ -72,13 +81,8 @@ class EvaluationTests(unittest.TestCase):
         dataset = load_json(
             MAINTENANCE_DIR / "experiments" / "datasets" / "synthetic-maintenance.json"
         )
-        tara = load_json(
-            REFERENCE_DIR / "TARA_AUTO_BBW_01_Attack_Trees_and_Risk_Treatment.json"
-        )
-        architecture = load_json(
-            REFERENCE_DIR
-            / "Electronic_Brake-by-Wire_(BBW)_&_Regenerative_Braking_Subsystem.json"
-        )
+        tara = load_json(TARA_PATH)
+        architecture = load_json(ARCHITECTURE_PATH)
 
         result = evaluate_dataset(tara, architecture, dataset)
 

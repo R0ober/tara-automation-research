@@ -10,7 +10,16 @@ from tara_maintenance.nvd import nvd_to_changes
 
 MAINTENANCE_DIR = Path(__file__).resolve().parents[1]
 NVD_DIR = MAINTENANCE_DIR / "experiments" / "datasets" / "nvd-bbw"
-REFERENCE_DIR = MAINTENANCE_DIR.parent / "shared" / "reference-tara"
+TARA_PATH = (
+    MAINTENANCE_DIR.parent
+    / "shared"
+    / "reference-tara"
+    / "bbw"
+    / "reference-tara.json"
+)
+ARCHITECTURE_PATH = (
+    MAINTENANCE_DIR.parent / "shared" / "architecture" / "bbw" / "item-definition.json"
+)
 CVE_IDS = (
     "CVE-2020-12351",
     "CVE-2022-0847",
@@ -29,13 +38,8 @@ class NvdIntegrationTests(unittest.TestCase):
     changes: list[JsonObject]
 
     def setUp(self) -> None:
-        self.tara = load_json(
-            REFERENCE_DIR / "TARA_AUTO_BBW_01_Attack_Trees_and_Risk_Treatment.json"
-        )
-        self.architecture = load_json(
-            REFERENCE_DIR
-            / "Electronic_Brake-by-Wire_(BBW)_&_Regenerative_Braking_Subsystem.json"
-        )
+        self.tara = load_json(TARA_PATH)
+        self.architecture = load_json(ARCHITECTURE_PATH)
         self.changes = [
             change
             for cve_id in CVE_IDS
@@ -52,19 +56,19 @@ class NvdIntegrationTests(unittest.TestCase):
         self.assertEqual(
             decisions,
             {
-                "CVE-2020-12351": "review_required",
-                "CVE-2022-0847": "no_review",
+                "CVE-2020-12351": "no_review",
+                "CVE-2022-0847": "review_required",
                 "CVE-2021-34434": "review_required",
                 "CVE-2020-22284": "review_required",
                 "CVE-2014-4883": "no_review",
-                "CVE-2020-22283": "review_required",
+                "CVE-2020-22283": "no_review",
                 "CVE-2024-3935": "review_required",
                 "CVE-2024-10525": "review_required",
             },
         )
         self.assertEqual(
             report["summary"],
-            {"total": 8, "review_required": 6, "no_review": 2, "unresolved": 0},
+            {"total": 8, "review_required": 5, "no_review": 3, "unresolved": 0},
         )
 
     def test_range_evidence_contains_nvd_match_criteria(self) -> None:
@@ -75,13 +79,13 @@ class NvdIntegrationTests(unittest.TestCase):
 
         dirty_pipe = recommendations["CVE-2022-0847"]["evidence"]["matched_cpe_rules"][0]
         mosquitto = recommendations["CVE-2021-34434"]["evidence"]["matched_cpe_rules"][0]
-        conflict = recommendations["CVE-2020-12351"]
+        excluded = recommendations["CVE-2020-12351"]
         self.assertEqual(dirty_pipe["match_criteria_id"], "22317905-77D0-46F0-A4F8-06B630002681")
         self.assertEqual(dirty_pipe["installed_version"], "5.10.70")
         self.assertEqual(mosquitto["match_criteria_id"], "07853BAC-AF86-4FF4-B0DB-FC0B91EE1E28")
         self.assertEqual(mosquitto["installed_version"], "2.0.10")
-        self.assertTrue(conflict["evidence"]["excluded_software"])
-        self.assertTrue(conflict["evidence"]["existing_vulnerability_references"])
+        self.assertTrue(excluded["evidence"]["excluded_software"])
+        self.assertFalse(excluded["evidence"].get("existing_vulnerability_references"))
         self.assertEqual(
             recommendations["CVE-2022-0847"]["evidence"]["source"]["last_modified"],
             "2026-06-17T04:21:21.750",

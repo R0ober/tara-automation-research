@@ -52,6 +52,8 @@ version.
   `/tara-maintenance-example` synthetic evaluation.
 - Simplify CPE `matched_by` evidence to `affected_cpes`.
 - Constrain model summaries to compact, row-verifiable evidence tables.
+- Migrate shared BBW inputs to the per-system architecture and reference-TARA
+  paths introduced by PR #9, with labels updated for the current TARA.
 
 ### Fixed
 
@@ -71,3 +73,4 @@ version.
   accepts unresolved CPEs and sentence punctuation.
 - Reports and TARA overlays reject overwriting any input artifact; Pi capability
   text now describes wildcard and numeric-range matching.
+- Pi report outputs reject absolute and relative paths outside `maintenance/`.

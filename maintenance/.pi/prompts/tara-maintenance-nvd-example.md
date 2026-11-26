@@ -16,9 +16,9 @@ After the tool returns:
    `change_id`, `subject`, `decision`, and `key_evidence`. Copy identifiers,
    decisions, and `matched_by` values verbatim. Include complete CPE strings or
    omit them. Never convert `unresolved` into `no_review`.
-3. For CVE-2020-12351, preserve the distinction between an existing TARA
-   reference and conflicting current version-range evidence. Do not claim that
-   NVD proves the entire item is unaffected.
+3. Do not claim that a CVE has an existing TARA reference unless that evidence
+   is present. Describe version exclusions as applying to the supplied software
+   version, not as proof that the entire item is unaffected.
 4. State the complete report path returned by the tool. Do not discuss output
    truncation unless the tool explicitly reports that truncation occurred.
 5. Do not add other sections, corrections, alternatives, editorial comments,

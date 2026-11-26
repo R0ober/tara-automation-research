@@ -7,7 +7,12 @@ from tara_maintenance import InputError, MaintenanceBaseline, evaluate_changes, 
 
 MAINTENANCE_DIR = Path(__file__).resolve().parents[1]
 REPOSITORY_ROOT = MAINTENANCE_DIR.parent
-REFERENCE_DIR = REPOSITORY_ROOT / "shared" / "reference-tara"
+TARA_PATH = (
+    REPOSITORY_ROOT / "shared" / "reference-tara" / "bbw" / "reference-tara.json"
+)
+ARCHITECTURE_PATH = (
+    REPOSITORY_ROOT / "shared" / "architecture" / "bbw" / "item-definition.json"
+)
 
 
 class MaintenanceBaselineTests(unittest.TestCase):
@@ -104,6 +109,24 @@ class MaintenanceBaselineTests(unittest.TestCase):
             result["evidence"]["existing_vulnerability_references"][0]["node_id"],
             "LEAF-1",
         )
+
+    def test_existing_vulnerability_with_version_exclusion_requires_review(self) -> None:
+        result = self.evaluate_one(
+            self.vulnerability(
+                cve_id="CVE-2020-12351",
+                affected_components=[],
+                affected_cpe_ranges=[
+                    {
+                        "cpe": "cpe:2.3:a:bluez:bluez:*:*:*:*:*:*:*:*",
+                        "version_end_including": "5.53",
+                    }
+                ],
+            )
+        )
+
+        self.assertEqual(result["decision"], "review_required")
+        self.assertTrue(result["evidence"]["existing_vulnerability_references"])
+        self.assertTrue(result["evidence"]["excluded_software"])
 
     def test_exact_cpe_resolves_component_and_software(self) -> None:
         change = self.vulnerability(
@@ -287,17 +310,12 @@ class MaintenanceBaselineTests(unittest.TestCase):
         )
 
     def test_shared_reference_artifacts_support_cve_maintenance(self) -> None:
-        tara = load_json(
-            REFERENCE_DIR / "TARA_AUTO_BBW_01_Attack_Trees_and_Risk_Treatment.json"
-        )
-        architecture = load_json(
-            REFERENCE_DIR
-            / "Electronic_Brake-by-Wire_(BBW)_&_Regenerative_Braking_Subsystem.json"
-        )
+        tara = load_json(TARA_PATH)
+        architecture = load_json(ARCHITECTURE_PATH)
         changes = {
             "changes": [
                 self.vulnerability(
-                    "EXISTING",
+                    "KNOWN",
                     cve_id="CVE-2020-12351",
                     affected_components=["COMP-VDCM"],
                 ),
@@ -316,7 +334,7 @@ class MaintenanceBaselineTests(unittest.TestCase):
 
         self.assertEqual(
             [item["decision"] for item in report["recommendations"]],
-            ["no_review", "review_required"],
+            ["review_required", "review_required"],
         )
         self.assertEqual(
             report["recommendations"][1]["evidence"]["matched_software"][0]["name"],

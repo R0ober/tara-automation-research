@@ -83,7 +83,8 @@ class ReviewedTaraTests(unittest.TestCase):
             Path(__file__).resolve().parents[2]
             / "shared"
             / "reference-tara"
-            / "TARA_AUTO_BBW_01_Attack_Trees_and_Risk_Treatment.json"
+            / "bbw"
+            / "reference-tara.json"
         )
         original = load_json(reference)
         metadata = original["tara_metadata"]

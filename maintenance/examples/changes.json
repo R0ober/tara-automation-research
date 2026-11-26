@@ -11,14 +11,14 @@
       "summary": "A synthetic new Mosquitto vulnerability used to demonstrate CPE matching."
     },
     {
-      "change_id": "VULN-EXISTING-001",
+      "change_id": "VULN-KNOWN-001",
       "type": "vulnerability",
       "cve_id": "CVE-2020-12351",
       "affected_components": [
         "COMP-VDCM"
       ],
-      "source": "Synthetic example based on the reference TARA",
-      "summary": "BleedingTooth is already referenced by an existing attack-tree leaf."
+      "source": "Synthetic example based on the reference architecture",
+      "summary": "BleedingTooth affects COMP-VDCM and is not referenced by the current TARA."
     },
     {
       "change_id": "VULN-UNRESOLVED-001",

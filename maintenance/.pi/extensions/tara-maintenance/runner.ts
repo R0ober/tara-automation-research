@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { delimiter, resolve } from "node:path";
+import { delimiter, isAbsolute, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export interface BaselinePaths {
@@ -23,6 +23,19 @@ const maintenanceRoot = fileURLToPath(new URL("../../../", import.meta.url));
 function absolutePath(path: string, cwd: string): string {
 	const withoutAttachmentPrefix = path.startsWith("@") ? path.slice(1) : path;
 	return resolve(cwd, withoutAttachmentPrefix);
+}
+
+export function resolveOutputPath(path: string, cwd: string): string {
+	const outputPath = absolutePath(path, cwd);
+	const relativeToMaintenance = relative(maintenanceRoot, outputPath);
+	if (
+		relativeToMaintenance === ".." ||
+		relativeToMaintenance.startsWith(`..${sep}`) ||
+		isAbsolute(relativeToMaintenance)
+	) {
+		throw new Error("TARA maintenance output_path must stay within maintenance/");
+	}
+	return outputPath;
 }
 
 /** Run the single Python implementation without invoking a shell. */
@@ -48,7 +61,7 @@ export async function runBaseline(
 		if (path) args.push(flag, absolutePath(path, cwd));
 	}
 	const outputPath = paths.outputPath
-		? absolutePath(paths.outputPath, cwd)
+		? resolveOutputPath(paths.outputPath, cwd)
 		: undefined;
 	if (outputPath) args.push("--output", outputPath);
 	else args.push("--stdout");

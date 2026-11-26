@@ -29,14 +29,15 @@ discussion less direct.
 
 ## Consequences
 
-The agent interface requires Node.js 22 or newer, Pi, Python, and a configured
+The agent interface requires Node.js 22.18 or newer, Pi, Python, and a configured
 model provider for model-generated summaries. Project-local Pi resources require
 project trust. The deterministic CLI and runner tests do not require model
 access.
 
 Pi spawns Python with an argument array and does not invoke a shell. Large tool
 results are truncated in model context; the complete report is retained at a
-returned file path. Report writes participate in Pi's file-mutation queue.
+returned file path. Model-requested report paths must stay within
+`maintenance/`, and writes participate in Pi's file-mutation queue.
 
 Identical in-flight or successful calls are deduplicated within a Pi session to
 prevent repeated model invocations. Different inputs and retries after failure

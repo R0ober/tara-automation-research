@@ -6,15 +6,15 @@
   "cases": [
     {
       "change_id": "NVD-CVE-2020-12351",
-      "expected_decision": "review_required",
+      "expected_decision": "no_review",
       "expected_components": [],
-      "label_rationale": "The TARA references this CVE, but the NVD ranges in this snapshot exclude installed kernel 5.10.70; review the conflict."
+      "label_rationale": "The current TARA does not reference this CVE, and the NVD ranges in this snapshot exclude installed kernel 5.10.70; no affected component is matched."
     },
     {
       "change_id": "NVD-CVE-2022-0847",
-      "expected_decision": "no_review",
+      "expected_decision": "review_required",
       "expected_components": ["COMP-VDCM"],
-      "label_rationale": "NVD range 5.8 (inclusive) to 5.10.102 (exclusive) includes kernel 5.10.70, and the TARA already references the CVE."
+      "label_rationale": "NVD range 5.8 (inclusive) to 5.10.102 (exclusive) includes kernel 5.10.70, and the current TARA does not reference the CVE."
     },
     {
       "change_id": "NVD-CVE-2021-34434",
@@ -36,9 +36,9 @@
     },
     {
       "change_id": "NVD-CVE-2020-22283",
-      "expected_decision": "review_required",
+      "expected_decision": "no_review",
       "expected_components": [],
-      "label_rationale": "The TARA references this CVE, while NVD marks only the git-head/N/A CPE rather than installed lwIP 2.1.2; review the applicability conflict."
+      "label_rationale": "The current TARA does not reference this CVE, and NVD marks only the git-head/N/A CPE rather than installed lwIP 2.1.2; the supplied record does not match the installed version."
     },
     {
       "change_id": "NVD-CVE-2024-3935",

@@ -1,6 +1,6 @@
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import {
 	DEFAULT_MAX_BYTES,
 	DEFAULT_MAX_LINES,
@@ -10,7 +10,7 @@ import {
 	type ExtensionAPI,
 } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { runBaseline } from "./runner.ts";
+import { resolveOutputPath, runBaseline } from "./runner.ts";
 
 interface MaintenanceDetails {
 	summary: unknown;
@@ -73,18 +73,15 @@ export default function taraMaintenance(pi: ExtensionAPI) {
 					Type.String({ description: "Overrides configured vulnerability/component change JSON path" }),
 				),
 				output_path: Type.Optional(
-					Type.String({ description: "Optional path for the complete JSON report" }),
+					Type.String({ description: "Optional report path within maintenance/" }),
 				),
 			},
 			{ additionalProperties: false },
 		),
 
 		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
-			const requestedOutputPath = params.output_path?.startsWith("@")
-				? params.output_path.slice(1)
-				: params.output_path;
-			const absoluteOutputPath = requestedOutputPath
-				? resolve(ctx.cwd, requestedOutputPath)
+			const absoluteOutputPath = params.output_path
+				? resolveOutputPath(params.output_path, ctx.cwd)
 				: undefined;
 			const paths = {
 				configPath: params.config_path,

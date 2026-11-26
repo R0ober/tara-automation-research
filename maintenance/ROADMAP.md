@@ -11,7 +11,7 @@ first experiment used four.
 NVD notice: this product uses data from the NVD API but is not endorsed or
 certified by the NVD.
 
-## Findings from the initial NVD experiment
+## Findings from the initial NVD experiment (pre-PR #9 TARA)
 
 The initial exact-CPE-only pipeline produced one `review_required` and three
 `unresolved` decisions:
@@ -87,8 +87,8 @@ users who request both a report and a TARA overlay in one command.
   product mapping.
 
 Acceptance: real NVD regression tests cover CVE-2022-0847, CVE-2021-34434,
-CVE-2020-22284, and the CVE-2020-12351 range conflict; boundary tests cover all
-four range operators.
+CVE-2020-22284, and the CVE-2020-12351 version exclusion; boundary tests cover
+all four range operators.
 
 Status: implemented for numeric/dotted versions and verified by unit tests plus
 the eight offline NVD snapshots. Full NVD Boolean configuration semantics remain
@@ -105,8 +105,9 @@ open under P1.
 Acceptance: a CVE already in the TARA can produce `review_required` when the
 same product's installed version is outside all supplied vulnerable ranges.
 
-Status: implemented for same-product version exclusion conflicts and verified
-with CVE-2020-12351. Content-update detection remains open.
+Status: implemented for same-product version exclusion conflicts and covered
+by a synthetic-TARA regression. The current shared TARA has no CVE references.
+Content-update detection remains open.
 
 ## P1: Trustworthy open-data maintenance
 

@@ -1,20 +1,27 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { runBaseline } from "../.pi/extensions/tara-maintenance/runner.ts";
 
 const maintenanceRoot = fileURLToPath(new URL("../", import.meta.url));
-const referenceDirectory = join(maintenanceRoot, "..", "shared", "reference-tara");
 const taraPath = join(
-	referenceDirectory,
-	"TARA_AUTO_BBW_01_Attack_Trees_and_Risk_Treatment.json",
+	maintenanceRoot,
+	"..",
+	"shared",
+	"reference-tara",
+	"bbw",
+	"reference-tara.json",
 );
 const architecturePath = join(
-	referenceDirectory,
-	"Electronic_Brake-by-Wire_(BBW)_&_Regenerative_Braking_Subsystem.json",
+	maintenanceRoot,
+	"..",
+	"shared",
+	"architecture",
+	"bbw",
+	"item-definition.json",
 );
 const changesPath = join(maintenanceRoot, "examples", "changes.json");
 
@@ -26,16 +33,17 @@ test("Pi runner evaluates the shared reference change set", async () => {
 
 	assert.deepEqual(result.report.summary, {
 		total: 4,
-		review_required: 2,
-		no_review: 1,
+		review_required: 3,
+		no_review: 0,
 		unresolved: 1,
 	});
 	assert.equal(result.outputPath, undefined);
 	assert.equal(JSON.parse(result.rendered).schema_version, "1.0");
 });
 
-test("Pi runner normalizes attachment prefixes and writes the requested report", async () => {
-	const temporaryDirectory = await mkdtemp(join(tmpdir(), "tara-pi-runner-"));
+test("Pi runner normalizes attachment prefixes and writes the requested report", async (t) => {
+	const temporaryDirectory = await mkdtemp(join(maintenanceRoot, ".pi-runner-"));
+	t.after(() => rm(temporaryDirectory, { recursive: true, force: true }));
 	const result = await runBaseline(
 		{
 			taraPath: `@${taraPath}`,
@@ -49,6 +57,23 @@ test("Pi runner normalizes attachment prefixes and writes the requested report",
 	assert.equal(result.outputPath, join(temporaryDirectory, "report.json"));
 	const savedReport = JSON.parse(await readFile(result.outputPath, "utf8"));
 	assert.equal(savedReport.summary.total, 4);
+});
+
+test("Pi runner refuses report writes outside maintenance", async (t) => {
+	const temporaryDirectory = await mkdtemp(join(tmpdir(), "tara-pi-runner-outside-"));
+	t.after(() => rm(temporaryDirectory, { recursive: true, force: true }));
+	const outputPath = join(temporaryDirectory, "report.json");
+
+	for (const requestedOutputPath of [relative(maintenanceRoot, outputPath), outputPath]) {
+		await assert.rejects(
+			runBaseline(
+				{ taraPath, architecturePath, changesPath, outputPath: requestedOutputPath },
+				maintenanceRoot,
+			),
+			/output_path must stay within maintenance/,
+		);
+	}
+	await assert.rejects(readFile(outputPath, "utf8"), { code: "ENOENT" });
 });
 
 test("Pi runner surfaces baseline input errors", async () => {

@@ -9,10 +9,11 @@ real records do not cover.
 | --- | --- | --- | --- |
 | New CVE, exact CPE | CVE-2020-22284 | Match COMP-EBCM; review | Covered |
 | New CVE, inclusive range | CVE-2021-34434 | Match Mosquitto 2.0.10; review | Covered |
-| Existing CVE, applicable range | CVE-2022-0847 | Match kernel 5.10.70; no duplicate review | Covered |
-| Existing CVE, version conflict | CVE-2020-12351 | Review TARA/NVD conflict | Covered |
+| New CVE, applicable range | CVE-2022-0847 | Match kernel 5.10.70; review | Covered |
+| New CVE, version exclusion | CVE-2020-12351 | Kernel 5.10.70 excluded; no review | Covered |
 | New CVE, unaffected older range | CVE-2014-4883 | lwIP 2.1.2 excluded; no review | Covered |
-| Existing CVE, N/A/git-head CPE | CVE-2020-22283 | Do not interpret `-` as all versions; review conflict | Covered |
+| New CVE, N/A/git-head CPE | CVE-2020-22283 | Do not interpret `-` as all versions; no matching installed version | Covered |
+| Existing CVE, version conflict | Synthetic TARA | Review TARA/NVD conflict | Covered |
 | New CVE with feature-specific description | CVE-2024-3935 | Version match triggers review, not exploit confirmation | Covered |
 | Additional real configuration record | CVE-2024-10525 | Exercise client/callback precondition and range | Covered |
 | Unknown component/product | Synthetic | Unresolved | Covered |

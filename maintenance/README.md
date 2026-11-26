@@ -23,7 +23,7 @@ The baseline:
 
 - Python 3.10 or newer for the deterministic core; no third-party Python
   runtime dependencies.
-- Node.js 22 or newer and Pi for the agent interface. Pi 1.5.2 is the tested
+- Node.js 22.18 or newer and Pi for the agent interface. Pi 1.5.2 is the tested
   version. A configured model provider is required only for model-generated
   explanations and follow-up.
 
@@ -73,6 +73,10 @@ are resolved relative to the caller's working directory. Precedence is:
 3. `config/maintenance.json` when it exists.
 
 Use `--stdout` to override a configured output file.
+
+For Pi tool calls, `output_path` must resolve within `maintenance/`; absolute
+or relative paths that escape that directory are rejected before Python runs.
+The standalone Python CLI does not impose this agent-specific restriction.
 
 ## Pi agent (recommended)
 
@@ -142,8 +146,8 @@ about real vulnerabilities. Its expected summary is:
 ```json
 {
   "total": 4,
-  "review_required": 2,
-  "no_review": 1,
+  "review_required": 3,
+  "no_review": 0,
   "unresolved": 1
 }
 ```

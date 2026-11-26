@@ -98,18 +98,19 @@ Convert and evaluate entirely offline:
 ```
 
 The initial exact-CPE-only run produced 1 `review_required` and 3 `unresolved`.
-After version-aware matching and existing-TARA conflict handling, the observed
-result on 2026-11-22 after expanding to eight records is:
+After version-aware matching and migration to the current per-system shared BBW
+artifacts, the observed result on 2026-11-26 is:
 
 | Total | Correct | Accuracy | Detection recall | False-positive rate | Evidence support | Unresolved |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | 8 | 8 | 1.0 | 1.0 | 0.0 | 1.0 | 0 |
 
-CVE-2020-12351 requires review because its TARA references conflict with the
-current same-product version exclusion. This is not a claim that the whole item
-is unaffected.
+The current TARA contains no CVE references. CVE-2020-12351 and
+CVE-2020-22283 therefore use their supplied version-exclusion evidence without
+an existing-reference conflict. This does not claim that the whole item is
+unaffected.
 
-The expanded decisions are 6 `review_required`, 2 `no_review`, and 0
+The current decisions are 5 `review_required`, 3 `no_review`, and 0
 `unresolved`. The feature-specific records trigger review of their stated
 preconditions, not automatic exploit confirmation.
 

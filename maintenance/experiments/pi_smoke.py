@@ -21,8 +21,8 @@ EXPECTED_ARGUMENTS = {
 }
 EXPECTED_SUMMARY = {
     "total": 4,
-    "review_required": 2,
-    "no_review": 1,
+    "review_required": 3,
+    "no_review": 0,
     "unresolved": 1,
 }
 
@@ -55,8 +55,8 @@ SCENARIOS = {
         },
         expected_summary={
             "total": 8,
-            "review_required": 6,
-            "no_review": 2,
+            "review_required": 5,
+            "no_review": 3,
             "unresolved": 0,
         },
         output_directory=ROOT / "output" / "pi-nvd-experiment",

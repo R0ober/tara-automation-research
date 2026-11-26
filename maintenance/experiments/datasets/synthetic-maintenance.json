@@ -15,7 +15,7 @@
       }
     },
     {
-      "expected_decision": "no_review",
+      "expected_decision": "review_required",
       "expected_components": ["COMP-VDCM"],
       "change": {
         "change_id": "SYN-VULN-EXISTING-BLUEZ",
@@ -59,7 +59,7 @@
       }
     },
     {
-      "expected_decision": "no_review",
+      "expected_decision": "review_required",
       "expected_components": ["COMP-VDCM"],
       "change": {
         "change_id": "SYN-VULN-EXISTING-KERNEL",

@@ -98,3 +98,16 @@ safety coverage without changing the eight-record expected labels.
   platform versus vulnerable CPEs, open/closed inventories, evidence ordering,
   decision mapping, malformed-input behavior, and 28 acceptance tests.
 - No behavior or metric changed in this documentation-only iteration.
+
+## Iteration 6: PR #9 shared-artifact migration
+
+- Updated all maintenance inputs and reference tests to
+  `shared/architecture/bbw/item-definition.json` and
+  `shared/reference-tara/bbw/reference-tara.json`.
+- Revalidated labels against the current shared TARA, which contains no CVE
+  references. The eight-record decisions are now 5 `review_required`, 3
+  `no_review`, and 0 `unresolved`; the synthetic example is 3/0/1.
+- Preserved existing-CVE and version-conflict coverage with controlled synthetic
+  TARA fixtures instead of attributing stale references to the shared TARA.
+- Confined Pi-requested report output to `maintenance/` and documented the
+  Node.js 22.18 minimum for direct TypeScript runner imports.
