@@ -28,7 +28,13 @@ def test_c1_sites(bbw):
         (TS, "traceability_and_risk_summary.damage_id"),
     ]
     assert coords(sites(bbw, "C1a")) == expected
-    assert coords(sites(bbw, "C1b")) == expected
+    assert coords(sites(bbw, "C1b")) == [
+        (TS, "targeted_asset.parent_component"),
+        ("AT-BRK-01-B3", "target_component"),
+        ("AT-BRK-01-B3", "target_interface"),
+        ("CSR-BRK-01.2", "target_component"),
+    ]
+    assert {s.kind for s in sites(bbw, "C1b")} == {"component", "interface"}
     assert [s.kind for s in sites(bbw, "C1a")] == [
         "asset", "component", "connection", "damage", "component", "interface",
         "component", "asset", "damage"]

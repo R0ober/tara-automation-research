@@ -11,6 +11,9 @@ from dataclasses import dataclass
 
 SUMMARY = "traceability_and_risk_summary"
 C1_OPERATORS = ("C1a", "C1b")
+# C1b matches the malformed references of the old TARA: component and
+# interface fields only (requirement target_component is a component field).
+C1B_KINDS = ("component", "interface")
 OPERATORS = ("C1a", "C1b", "C3", "C4")
 
 
@@ -43,6 +46,8 @@ def enumerate_sites(tara: dict, scenario_ids: list[str], operators: list[str]) -
         for op in operators:
             if op in C1_OPERATORS:
                 found = _reference_sites(tara, si, rows.get(ts))
+                if op == "C1b":
+                    found = [f for f in found if f[3] in C1B_KINDS]
             elif op == "C3":
                 found = _score_sites(tara, si, factors)
             else:

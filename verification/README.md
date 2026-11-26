@@ -69,8 +69,8 @@ Output:
 
 ```
 datasets/v0/
-  manifest.json             code commit, input hashes, seed, counts per operator
-  rejected.jsonl            skipped, rejected and duplicate candidates, with reasons
+  manifest.json             code commit, input hashes, seed, counts, skipped sites, duplicates
+  rejected.jsonl            candidates that failed validation, with reasons
   labels/<case_id>.json     ground truth; never give it to a reviewer
   dev/context/              item definition and functional specification
   dev/cases/<case_id>/tara.json
@@ -93,9 +93,9 @@ network.
 
 - Only one scenario (`TS-BRK-01`) and the `local` policy. `TS-BRK-01` has one
   attack step, so aggregation errors are not injected.
-- C1b has combination rules only for interface and component fields. Sites
-  that hold asset, connection or damage IDs are skipped and logged in
-  `rejected.jsonl`.
+- C1b applies only to component and interface fields, as in the malformed
+  references of the old TARA. Asset, damage and connection fields are not
+  C1b sites.
 - C1 covers only fields that hold item-definition IDs. TARA-internal
   references, such as `critical_attack_path`, come later with C2 and C5.
 - IDs inside free text are not edited or checked.

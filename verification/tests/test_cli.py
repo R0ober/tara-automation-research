@@ -15,7 +15,10 @@ def test_cli_writes_dataset(tmp_path, repo):
     assert main(["--repo", str(repo), *ARGS, "--out", str(out)]) == 0
     manifest = json.loads((out / "manifest.json").read_text("utf-8"))
     assert manifest["inputs"]["rev"] == "5ed3ae1"
-    assert manifest["counts"]["C1b"]["skipped"] == 5
+    assert manifest["counts"]["C1b"] == {"sites": 4, "generated": 4, "skipped": 0,
+                                         "rejected": 0, "duplicates": 0, "accepted": 4}
+    assert manifest["skipped"] == [] and manifest["duplicates"] == []
+    assert (out / "rejected.jsonl").read_text("utf-8") == ""
     assert manifest["total_cases"] == len(list((out / "dev" / "cases").iterdir()))
 
 

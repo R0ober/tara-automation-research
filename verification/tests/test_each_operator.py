@@ -38,14 +38,17 @@ def test_counts(results):
     for r in results:
         key = (r.site.operator, type(r).__name__)
         made[key] = made.get(key, 0) + 1
-    assert made == {("C1a", "Candidate"): 9, ("C1b", "Candidate"): 4, ("C1b", "Skip"): 5,
+    assert made == {("C1a", "Candidate"): 9, ("C1b", "Candidate"): 4,
                     ("C3", "Candidate"): 6, ("C4", "Candidate"): 4}
 
 
-def test_c1b_skips_kinds_without_rule(results):
-    skipped = {(r.site.kind, r.reason) for r in results if isinstance(r, Skip)}
-    assert {k for k, _ in skipped} == {"asset", "connection", "damage"}
-    assert all("no C1b combination rule" in reason for _, reason in skipped)
+def test_c1b_rejects_other_kinds_defensively(bbw):
+    from dataclasses import replace
+    ctx = make_context(bbw.tara, bbw.item)
+    (site,) = [s for s in enumerate_sites(bbw.tara, [TS], ["C1a"])
+               if s.field == "targeted_asset.asset_id"]
+    result = apply(ctx, replace(site, operator="C1b"), SEED)
+    assert isinstance(result, Skip) and "no C1b combination rule" in result.reason
 
 
 def test_c1a_ids_are_unused(bbw, results):

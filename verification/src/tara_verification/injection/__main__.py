@@ -32,14 +32,14 @@ def run(*, repo: Path, system: str, scenarios: list[str], operators: list[str], 
     sites = enumerate_sites(inputs.tara, scenarios, operators)
 
     counts = {op: dict.fromkeys(COUNT_KEYS, 0) for op in operators}
-    candidates, rejected = [], []
+    candidates, rejected, skipped = [], [], []
     for site in sites:
         c = counts[site.operator]
         c["sites"] += 1
         result = apply(ctx, site, seed)
         if isinstance(result, Skip):
             c["skipped"] += 1
-            rejected.append(rejected_from_skip(result))
+            skipped.append(rejected_from_skip(result))
             continue
         c["generated"] += 1
         problems = check_case(inputs.tara, result.mutant, inputs.item, [result.defect],
@@ -74,10 +74,12 @@ def run(*, repo: Path, system: str, scenarios: list[str], operators: list[str], 
         "counts": counts,
         "total_cases": len(cases),
         "known_issues": [code for code, s, _ in KNOWN_ISSUES if s in (system, "all")],
+        "skipped": [s.to_dict() for s in skipped],
+        "duplicates": [d.to_dict() for d in duplicates],
     }
     prepare_out(out, overwrite)
     write_dataset(out, inputs=inputs, split=split, seed=seed, cases=cases,
-                  rejected=rejected + duplicates, manifest=manifest)
+                  rejected=rejected, manifest=manifest)
     return manifest
 
 
@@ -146,6 +148,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"wrote {manifest['total_cases']} cases to {args.out}", file=sys.stderr)
     for op, c in manifest["counts"].items():
         print(f"  {op}: " + ", ".join(f"{k} {c[k]}" for k in COUNT_KEYS), file=sys.stderr)
+    for s in manifest["skipped"]:
+        print(f"  skipped {s['operator']} {s['object_id']}:{s['field']}: {s['reasons'][0]}",
+              file=sys.stderr)
     return 0
 
 

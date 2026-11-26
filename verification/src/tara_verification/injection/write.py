@@ -1,5 +1,8 @@
 """Write cases, labels, rejected cases and the manifest of a dataset.
 
+rejected.jsonl holds only candidates that failed validation. Skipped sites
+and duplicate content are listed in the manifest.
+
 Layout (labels stay outside the split directory that reviewers see):
 
     <out>/manifest.json
@@ -31,6 +34,7 @@ class DatasetError(Exception):
 
 @dataclass(frozen=True)
 class Rejected:
+    """A site that produced no case: skipped, failed validation, or duplicate."""
     operator: str
     scenario_id: str
     object_id: str
@@ -38,11 +42,13 @@ class Rejected:
     stage: str  # "skip", "validate" or "duplicate"
     reasons: tuple[str, ...]
 
+    def to_dict(self) -> dict:
+        return {"operator": self.operator, "scenario_id": self.scenario_id,
+                "object_id": self.object_id, "field": self.field,
+                "stage": self.stage, "reasons": list(self.reasons)}
+
     def to_json(self) -> str:
-        return json.dumps({"operator": self.operator, "scenario_id": self.scenario_id,
-                           "object_id": self.object_id, "field": self.field,
-                           "stage": self.stage, "reasons": list(self.reasons)},
-                          ensure_ascii=False)
+        return json.dumps(self.to_dict(), ensure_ascii=False)
 
 
 @dataclass(frozen=True)
@@ -133,6 +139,8 @@ def write_dataset(out: Path, *, inputs: Inputs, split: str, seed: int, cases: li
         label = build_label(case, inputs, split, seed)
         (labels / f"{case.case_id}.json").write_text(
             json.dumps(to_dict(label), indent=2, ensure_ascii=False) + "\n", "utf-8")
+    if any(r.stage != "validate" for r in rejected):
+        raise DatasetError("rejected.jsonl holds only validation failures")
     (out / "rejected.jsonl").write_text("".join(r.to_json() + "\n" for r in rejected), "utf-8")
     (out / "manifest.json").write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", "utf-8")
