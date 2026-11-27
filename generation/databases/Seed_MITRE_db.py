@@ -43,8 +43,8 @@ def seed_database():
     """)
 
     files = [
-        {"path": "./ics-attack.json", "domain": "ICS"},
-        {"path": "./enterprise-attack.json", "domain": "Enterprise"}
+        {"path": "../ics-attack.json", "domain": "ICS"},
+        {"path": "../enterprise-attack.json", "domain": "Enterprise"}
     ]
 
     cursor.execute("BEGIN TRANSACTION")
