@@ -1,0 +1,51 @@
+{
+  "changes": [
+    {
+      "change_id": "VULN-NEW-001",
+      "type": "vulnerability",
+      "cve_id": "CVE-2026-90001",
+      "affected_cpes": [
+        "cpe:2.3:a:eclipse:mosquitto:2.0.10:*:*:*:*:*:*:*"
+      ],
+      "source": "Synthetic example; not a real vulnerability report",
+      "summary": "A synthetic new Mosquitto vulnerability used to demonstrate CPE matching."
+    },
+    {
+      "change_id": "VULN-KNOWN-001",
+      "type": "vulnerability",
+      "cve_id": "CVE-2020-12351",
+      "affected_components": [
+        "COMP-VDCM"
+      ],
+      "source": "Synthetic example based on the reference architecture",
+      "summary": "BleedingTooth affects COMP-VDCM and is not referenced by the current TARA."
+    },
+    {
+      "change_id": "VULN-UNRESOLVED-001",
+      "type": "vulnerability",
+      "cve_id": "CVE-2026-90002",
+      "affected_components": [
+        "COMP-UNKNOWN"
+      ],
+      "source": "Synthetic example; not a real vulnerability report",
+      "summary": "No reference-architecture mapping is available for this record."
+    },
+    {
+      "change_id": "COMPONENT-001",
+      "type": "component_change",
+      "component_id": "COMP-VDCM",
+      "before": {
+        "security_configuration": {
+          "allow_diagnostic_brake_override_while_driving": true
+        }
+      },
+      "after": {
+        "security_configuration": {
+          "allow_diagnostic_brake_override_while_driving": false
+        }
+      },
+      "source": "Synthetic component-configuration snapshot",
+      "summary": "The diagnostic brake-override configuration changed."
+    }
+  ]
+}

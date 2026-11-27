@@ -1,0 +1,18 @@
+# Python virtual environment and build artifacts
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Local shell environment; .env.example is intentionally tracked
+.env
+
+# Real local configuration and working data; examples remain tracked
+config/maintenance.json
+data/*.json
+output/
+
+# Generated Pi/session files, if any
+.pi/sessions/
