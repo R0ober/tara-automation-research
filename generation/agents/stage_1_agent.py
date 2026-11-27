@@ -1,41 +1,31 @@
 # agents/stage1_agent.py
+import argparse
 import json
-import importlib
 import os
 import sys
+from pathlib import Path
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from generation.tools.stageOneTools.stage_1_tools import stage1_tools
-from generation.tools.stageOneTools.tool_dispatcher import get_item_definition, save_threat_scenario_to_db
+from tools.stageOneTools.stage_1_tools import stage1_tools
+from tools.stageOneTools.tool_dispatcher import get_item_definition, save_threat_scenario_to_db
 from APIcaller import search_mitre_attack
 from agents.iso_helper_agent import query_iso_expert
+from agents.model_client import create_client, read_model_settings
 
-try:
-    OpenAI = importlib.import_module("openai").OpenAI
-except ModuleNotFoundError as exc:
-    if exc.name != "openai":
-        raise
-    raise RuntimeError(
-        "The 'openai' package is required. Install it with: python -m pip install openai"
-    ) from exc
-
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY", "ollama"),
-    base_url=os.getenv("OPENAI_BASE_URL", "http://localhost:11434/v1")
-)
-def execute_tool(name, args):
+def execute_tool(name, args, *, item_definition, client, model):
     if name == "get_item_definition":
-        return get_item_definition()
+        return item_definition
     elif name == "search_mitre_attack":
         print(f"Searching MITRE ATT&CK for keyword: {args.get('keyword', '')}")
         return search_mitre_attack(args.get("keyword", ""), limit=5)
     elif name == "save_threat_scenario_to_db":
         return save_threat_scenario_to_db(**args)
     elif name == "consult_iso_expert":
-        return query_iso_expert(args.get("question", ""))
+        return query_iso_expert(args.get("question", ""), client=client, model=model)
     else:
         return {"error": f"Unknown tool: {name}"}
 
-def run_stage1_agent():
+def run_stage1_agent(*, item_definition, client, model):
     system_prompt = """
 You are the Stage 1 TARA Agent specializing in ISO/SAE 21434 Threat Analysis and Risk Assessment.
 Your task is MANDATORY data generation across the target system:
@@ -86,7 +76,7 @@ When calling 'save_threat_scenario_to_db', you must provide the following genera
             current_tool_choice = "auto"
 
         response = client.chat.completions.create(
-            model="qwen3.5-65k",
+            model=model,
             messages=messages,
             tools=stage1_tools,
             tool_choice=current_tool_choice,
@@ -106,7 +96,7 @@ When calling 'save_threat_scenario_to_db', you must provide the following genera
 
                 print(f"[Tool Call]: {fn_name} with args keys: {list(fn_args.keys())}")
                 
-                result = execute_tool(fn_name, fn_args)
+                result = execute_tool(fn_name, fn_args, item_definition=item_definition, client=client, model=model)
                 print(f"[Tool Result]: {result}\n")
                 
                 messages.append({
@@ -118,5 +108,26 @@ When calling 'save_threat_scenario_to_db', you must provide the following genera
             print("\n Stage 1 Agent Completed Execution!")
             print(msg.content)
 
+def main():
+    parser = argparse.ArgumentParser(description="Run Stage 1 on an item definition.")
+    parser.add_argument("--item", required=True, type=Path, help="Item definition JSON file.")
+    args = parser.parse_args()
+    try:
+        item_definition = get_item_definition(args.item)
+    except (OSError, ValueError) as error:
+        parser.error(f"Could not read {args.item}: {error}")
+    try:
+        base_url, model = read_model_settings()
+    except ValueError as error:
+        parser.error(str(error))
+    try:
+        client = create_client(base_url)
+    except ModuleNotFoundError as error:
+        if error.name != "openai":
+            raise
+        parser.exit(1, "Install the openai package to run Stage 1.\n")
+    run_stage1_agent(item_definition=item_definition, client=client, model=model)
+
+
 if __name__ == "__main__":
-    run_stage1_agent()
+    main()

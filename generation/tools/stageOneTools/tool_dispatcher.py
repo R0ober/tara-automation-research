@@ -2,7 +2,7 @@
 import sqlite3
 import json
 import os
-from APIcaller import search_mitre_attack
+from pathlib import Path
 
 TARADB_PATH = os.path.join(os.path.dirname(__file__), '../../databases/tara_scenarios.db')
 
@@ -12,16 +12,14 @@ def get_taradb_connection():
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 
-def get_item_definition():
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
-
-    json_path = os.path.join(project_root, 'shared', 'architecture', 'bbw', 'item-definition.json')
-    
-    if not os.path.exists(json_path):
-        return {"error": f"Item definition JSON file not found at: {json_path}"}
-        
-    with open(json_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+def get_item_definition(item_path: Path):
+    with item_path.open(encoding="utf-8") as item_file:
+        document = json.load(item_file)
+    definition = document.get("item_definition") if isinstance(document, dict) else None
+    item_id = definition.get("item_id") if isinstance(definition, dict) else None
+    if not isinstance(item_id, str) or not item_id.strip():
+        raise ValueError("Expected a non-empty item_definition.item_id.")
+    return document
 
 def save_threat_scenario_to_db(
     component_id: str,

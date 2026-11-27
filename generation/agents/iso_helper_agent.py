@@ -1,5 +1,4 @@
 
-import importlib
 import os
 import sys
 
@@ -7,21 +6,9 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from APIcaller import search_local_iso_database
-try:
-    OpenAI = importlib.import_module("openai").OpenAI
-except ModuleNotFoundError as exc:
-    if exc.name != "openai":
-        raise
-    raise RuntimeError(
-        "The 'openai' package is required. Install it with: python -m pip install openai"
-    ) from exc
 
-client = OpenAI(
-    base_url="http://localhost:11434/v1",
-    api_key="ollama" 
-)
 
-def query_iso_expert(question: str) -> str:
+def query_iso_expert(question: str, *, client, model: str) -> str:
     """
     Simulates an ISO expert agent that searches the standard 
     and answers compliance questions for the TARA pipeline.
@@ -40,7 +27,7 @@ def query_iso_expert(question: str) -> str:
     print(f"Consulting ISO Expert Agent with question: '{question}'\n")
 
     response = client.chat.completions.create(
-        model="qwen3.5-65k",
+        model=model,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": question}

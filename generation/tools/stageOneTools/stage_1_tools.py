@@ -5,7 +5,7 @@ stage1_tools = [
         "type": "function",
         "function": {
             "name": "get_item_definition",
-            "description": "Retrieve the vehicle braking system item definition, assets, components, and interfaces.",
+            "description": "Read the item definition selected for this run, including its assets, components, and interfaces.",
             "parameters": {
                 "type": "object",
                 "properties": {}, 
