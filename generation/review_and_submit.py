@@ -16,6 +16,7 @@ def main():
     parser = argparse.ArgumentParser(description="Review an item definition before submitting a Minerva job.")
     parser.add_argument("--item", required=True, type=Path, help="Item definition to review.")
     parser.add_argument("--job-yaml", required=True, type=Path, help="Job to submit after approval.")
+    parser.add_argument("--verbose", action="store_true", help="Show local job paths and all file transfers.")
     args = parser.parse_args()
 
     if not args.item.is_file():
@@ -30,6 +31,7 @@ def main():
         stdout=subprocess.PIPE,
     )
     if review.returncode != 0:
+        print("No job submitted.", file=sys.stderr)
         return review.returncode
 
     record = json.loads(review.stdout)
@@ -41,7 +43,10 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix="tara-reviewed-") as folder:
         (Path(folder) / "item-definition.json").write_bytes(item_bytes)
-        job = subprocess.run([sys.executable, SUBMIT, "--job-yaml", args.job_yaml, "--input-dir", folder])
+        command = [sys.executable, SUBMIT, "--job-yaml", args.job_yaml, "--input-dir", folder]
+        if args.verbose:
+            command.append("--verbose")
+        job = subprocess.run(command)
         return job.returncode
 
 

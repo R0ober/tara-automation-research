@@ -25,6 +25,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"runtime"
+	"strings"
 	"time"
 
 	"tarav/internal/approval"
@@ -363,11 +364,15 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 	}
 	url := "http://" + ln.Addr().String() + "/"
 	// In review mode stdout carries only the outcome JSON.
-	msg := stdout
 	if *review {
-		msg = stderr
+		display := file
+		if cwd, err := os.Getwd(); err == nil {
+			display = strings.TrimPrefix(file, cwd+string(os.PathSeparator))
+		}
+		fmt.Fprintf(stderr, "Reviewing  %s\n           %s\n\n", display, url)
+	} else {
+		fmt.Fprintf(stdout, "serving %s at %s (Ctrl-C to stop)\n", file, url)
 	}
-	fmt.Fprintf(msg, "serving %s at %s (Ctrl-C to stop)\n", file, url)
 	if *open {
 		if err := openBrowser(url); err != nil {
 			fmt.Fprintf(stderr, "tarav serve: could not open a browser: %v\n", err)
@@ -403,13 +408,14 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 		if raw != nil {
 			d.SHA256 = check.Hash(raw)
 		}
-		outcome = &render.Outcome{Denial: &d}
+		fmt.Fprintln(stderr, "Review interrupted.")
+		return printJSON(stdout, stderr, d, exitNotApproved)
 	}
 	if outcome.Record != nil {
-		fmt.Fprintf(stderr, "%s: approved for %s by %s\n", file, outcome.Record.Stage, outcome.Record.Reviewer)
+		fmt.Fprintf(stderr, "Approved by %s\n", outcome.Record.Reviewer)
 		return printJSON(stdout, stderr, outcome.Record, exitOK)
 	}
-	fmt.Fprintf(stderr, "%s: not approved for %s: %s\n", file, outcome.Denial.Stage, outcome.Denial.Reason)
+	fmt.Fprintf(stderr, "Review rejected.\nReason: %s\n", outcome.Denial.Reason)
 	return printJSON(stdout, stderr, outcome.Denial, exitNotApproved)
 }
 

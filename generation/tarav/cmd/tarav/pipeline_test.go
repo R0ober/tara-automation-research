@@ -178,7 +178,7 @@ func startReview(t *testing.T, item string, extra ...string) (base, token, versi
 	stdout, stderr, exit = &syncBuf{}, &syncBuf{}, make(chan int, 1)
 	args := append([]string{"serve", "--review", "--addr", "127.0.0.1:0", "--reviewer", "Ada"}, extra...)
 	go func() { exit <- run(append(args, item), stdout, stderr) }()
-	urlRE := regexp.MustCompile(`at (http://\S+/) `)
+	urlRE := regexp.MustCompile(`(http://\S+/)`)
 	for i := 0; i < 200 && base == ""; i++ {
 		if m := urlRE.FindStringSubmatch(stderr.String()); m != nil {
 			base = m[1]
