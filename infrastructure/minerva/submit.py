@@ -59,10 +59,12 @@ def create_run_directory():
 
 def upload_job(remote_dir, image_path, input_dir, script_path, verbose):
     destination = f"minerva:{remote_dir}"
+    uploaded = []
     if image_path is not None:
         size_mib = image_path.stat().st_size / (1024 * 1024)
         print(f"Uploading {image_path.name} ({size_mib:.1f} MiB)...", flush=True)
         subprocess.run(["scp", *SSH_OPTIONS, image_path, f"{destination}/image.sif"], check=True)
+        uploaded.append("image.sif")
     else:
         print("Uploading job files...", flush=True)
     # OpenSSH scp shows its progress meter when stdout is a terminal.
@@ -71,7 +73,10 @@ def upload_job(remote_dir, image_path, input_dir, script_path, verbose):
     if input_dir is not None:
         subprocess.run(["scp", *SSH_OPTIONS, "-r", input_dir.resolve(), f"{destination}/input"],
                        check=True, stdout=output)
+        uploaded.append("input/")
     subprocess.run(["scp", *SSH_OPTIONS, script_path, f"{destination}/job.sh"], check=True, stdout=output)
+    uploaded.append("job.sh")
+    print(f"Uploaded   {', '.join(uploaded)}", flush=True)
 
 
 def submit_job(remote_dir):
