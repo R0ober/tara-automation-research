@@ -1,0 +1,59 @@
+{
+  "$schema": "https://tarav.local/schema/item-definition/1.1.0",
+  "item_definition": {
+    "item_id": "ITEM-PROT",
+    "name": "Schema 1.1.0: explicit protection on a connection and a message"
+  },
+  "components": [
+    {
+      "component_id": "COMP-S",
+      "name": "Sender",
+      "trust_zone": "Zone_1",
+      "interfaces": ["INT-CAN"]
+    },
+    {
+      "component_id": "COMP-R",
+      "name": "Receiver",
+      "trust_zone": "Zone_2",
+      "interfaces": ["INT-CAN"]
+    }
+  ],
+  "connections": [
+    {
+      "connection_id": "CONN-1",
+      "source_component": "COMP-S",
+      "target_component": "COMP-R",
+      "encrypted": false,
+      "protection": {
+        "e2e_crc": true,
+        "mac": false
+      },
+      "messages": [
+        {
+          "can_id": "0x100",
+          "name": "Torque_Request",
+          "source_component": "COMP-S",
+          "target_component": "COMP-R",
+          "protection": {
+            "e2e_crc": true,
+            "mac": true,
+            "freshness": true
+          }
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "ASSET-1",
+      "name": "Torque request",
+      "parent_component": "COMP-R",
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-1",
+          "description": "Unintended torque"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://tarav.local/schema/item-definition/1.1.0",
+  "item_definition": {
+    "item_id": "ITEM-MIN",
+    "name": "L017 positive: unknown edges and an edge whose level a missing flag could raise"
+  },
+  "components": [
+    {
+      "component_id": "COMP-A",
+      "name": "A",
+      "trust_zone": "Zone_1",
+      "interfaces": [
+        "INT-BUS",
+        "INT-OBD"
+      ]
+    },
+    {
+      "component_id": "COMP-B",
+      "name": "B",
+      "trust_zone": "Zone_2",
+      "interfaces": [
+        "INT-BUS"
+      ],
+      "security_configuration": {
+        "secoc_mac_enabled": false,
+        "e2e_crc_enabled": false
+      }
+    }
+  ],
+  "connections": [
+    {
+      "connection_id": "CONN-UNKNOWN",
+      "source_component": "COMP-A",
+      "target_component": "COMP-A"
+    },
+    {
+      "connection_id": "CONN-AT-LEAST-MAC",
+      "source_component": "COMP-A",
+      "target_component": "COMP-B",
+      "encrypted": false,
+      "protection": {
+        "mac": true
+      }
+    },
+    {
+      "connection_id": "CONN-ENTRY",
+      "source_component": "EXTERNAL_TESTER",
+      "target_component": "COMP-A",
+      "entry_points": [
+        {
+          "interface_id": "INT-OBD",
+          "encrypted": false
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "ASSET-1",
+      "name": "a",
+      "parent_component": "COMP-B",
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-1"
+        }
+      ]
+    }
+  ]
+}

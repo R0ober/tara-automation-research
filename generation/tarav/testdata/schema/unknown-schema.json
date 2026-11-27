@@ -1,0 +1,49 @@
+{
+  "$schema": "https://tarav.local/schema/item-definition/9.9.9",
+  "item_definition": {
+    "item_id": "ITEM-MIN",
+    "name": "Minimal item"
+  },
+  "components": [
+    {
+      "component_id": "COMP-A",
+      "name": "A",
+      "trust_zone": "Zone_1",
+      "interfaces": [
+        "INT-BUS"
+      ]
+    },
+    {
+      "component_id": "COMP-B",
+      "name": "B",
+      "trust_zone": "Zone_2",
+      "interfaces": [
+        "INT-BUS"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "connection_id": "CONN-1",
+      "source_component": "COMP-A",
+      "target_component": "COMP-B",
+      "interface_id": "INT-BUS"
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "ASSET-1",
+      "name": "Command",
+      "parent_component": "COMP-B",
+      "associated_connections": [
+        "CONN-1"
+      ],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-1",
+          "description": "Wrong actuation"
+        }
+      ]
+    }
+  ]
+}

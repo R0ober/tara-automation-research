@@ -1,0 +1,132 @@
+{
+  "$schema": "https://tarav.local/schema/item-definition/1.0.0",
+  "item_definition": {
+    "item_id": "ITEM-MIN",
+    "name": "L001 negative: every reference site used, all resolve (EXTERNAL_* counts as defined)"
+  },
+  "components": [
+    {
+      "component_id": "COMP-GW",
+      "name": "Gateway",
+      "trust_zone": "Zone_1",
+      "interfaces": [
+        "INT-BUS",
+        "INT-DBG",
+        "INT-OBD"
+      ],
+      "physical_access": {
+        "interface_id": "INT-DBG"
+      },
+      "diagnostic_services": [
+        {
+          "service_id": "0x31",
+          "request_connection": "CONN-1",
+          "execution_connection": "CONN-2"
+        }
+      ],
+      "forwarding_rules": [
+        {
+          "input_connection": "CONN-1",
+          "output_connection": "CONN-2"
+        }
+      ]
+    },
+    {
+      "component_id": "COMP-ACT",
+      "name": "Actuator",
+      "trust_zone": "Zone_2",
+      "interfaces": [
+        "INT-BUS"
+      ],
+      "instances": [
+        {
+          "instance_id": "COMP-ACT-L"
+        },
+        {
+          "instance_id": "COMP-ACT-R"
+        }
+      ]
+    },
+    {
+      "component_id": "COMP-SNS",
+      "name": "Sensor",
+      "trust_zone": "Zone_2",
+      "interfaces": [
+        "INT-BUS"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "connection_id": "CONN-1",
+      "source_component": "EXTERNAL_TESTER",
+      "target_component": "COMP-GW",
+      "interface_id": "INT-OBD",
+      "entry_points": [
+        {
+          "interface_id": "INT-OBD"
+        }
+      ],
+      "diagnostic_access": {
+        "request_handler_component": "COMP-GW",
+        "brake_override_service": {
+          "service_id": "0x31",
+          "entry_interfaces": [
+            "INT-OBD"
+          ]
+        },
+        "downstream_routes": [
+          {
+            "target_component": "COMP-ACT",
+            "via_connection": "CONN-2",
+            "entry_interfaces": [
+              "INT-OBD"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "connection_id": "CONN-2",
+      "source_component": "COMP-GW",
+      "target_component": "COMP-ACT",
+      "target_instances": [
+        "COMP-ACT-L",
+        "COMP-ACT-R"
+      ],
+      "adjacent_components": [
+        "COMP-SNS"
+      ],
+      "messages": [
+        {
+          "can_id": "0x100",
+          "name": "Cmd",
+          "source_component": "COMP-SNS",
+          "target_component": "COMP-ACT",
+          "payload_fields": [
+            {
+              "name": "torque",
+              "target_instance": "COMP-ACT-L"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "ASSET-1",
+      "name": "Torque command",
+      "parent_component": "COMP-ACT",
+      "associated_connections": [
+        "CONN-2"
+      ],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-1",
+          "description": "wrong torque"
+        }
+      ]
+    }
+  ]
+}

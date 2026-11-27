@@ -1,0 +1,23 @@
+[
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "connection edge CONN-UNKNOWN: protection is unknown; not stated: encrypted, mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/0",
+    "element_id": "CONN-UNKNOWN"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "connection edge CONN-AT-LEAST-MAC: protection is at least mac; not stated: freshness (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/1",
+    "element_id": "CONN-AT-LEAST-MAC"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "entry edge CONN-ENTRY#ep:INT-OBD: protection is unknown; not stated: mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/2/entry_points/0",
+    "element_id": "CONN-ENTRY"
+  }
+]

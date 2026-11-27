@@ -1,0 +1,41 @@
+{
+  "$schema": "https://tarav.local/schema/item-definition/1.0.0",
+  "item_definition": {
+    "item_id": "ITEM-MIN",
+    "name": "L003 negative: every asset has a damage scenario"
+  },
+  "components": [
+    {
+      "component_id": "COMP-A",
+      "name": "A",
+      "trust_zone": "Zone_1",
+      "interfaces": []
+    }
+  ],
+  "connections": [],
+  "assets": [
+    {
+      "asset_id": "ASSET-1",
+      "name": "one",
+      "parent_component": "COMP-A",
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-1"
+        }
+      ]
+    },
+    {
+      "asset_id": "ASSET-2",
+      "name": "two",
+      "parent_component": "COMP-A",
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-2"
+        },
+        {
+          "damage_id": "DS-3"
+        }
+      ]
+    }
+  ]
+}

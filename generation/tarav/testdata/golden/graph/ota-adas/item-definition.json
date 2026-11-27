@@ -1,0 +1,382 @@
+{
+  "item": {
+    "item_id": "AUTO-OTA-ADAS-01",
+    "name": "Telematics, OTA Update \u0026 ADAS Actuation Subsystem"
+  },
+  "zones": [
+    {
+      "id": "zone:Untrusted_External",
+      "label": "Untrusted External",
+      "trust_zone": "Untrusted_External"
+    },
+    {
+      "id": "zone:ADAS_Domain",
+      "label": "ADAS Domain",
+      "trust_zone": "ADAS_Domain"
+    },
+    {
+      "id": "zone:DMZ_Connectivity",
+      "label": "DMZ Connectivity",
+      "trust_zone": "DMZ_Connectivity"
+    },
+    {
+      "id": "zone:Internal_Backbone",
+      "label": "Internal Backbone",
+      "trust_zone": "Internal_Backbone"
+    },
+    {
+      "id": "zone:Safety_Critical_Chassis",
+      "label": "Safety Critical Chassis",
+      "trust_zone": "Safety_Critical_Chassis"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "COMP-CLOUD",
+      "kind": "component",
+      "label": "OEM OTA \u0026 Telemetry Cloud Backend",
+      "name": "OEM OTA \u0026 Telemetry Cloud Backend",
+      "zone": "zone:Untrusted_External",
+      "element_id": "COMP-CLOUD",
+      "json_path": "/components/0"
+    },
+    {
+      "id": "COMP-ADAS",
+      "kind": "component",
+      "label": "ADAS",
+      "name": "Advanced Driver Assistance Systems (ADAS) Controller",
+      "zone": "zone:ADAS_Domain",
+      "element_id": "COMP-ADAS",
+      "json_path": "/components/1"
+    },
+    {
+      "id": "COMP-TCU",
+      "kind": "component",
+      "label": "TCU",
+      "name": "Telematics Control Unit (TCU)",
+      "zone": "zone:DMZ_Connectivity",
+      "element_id": "COMP-TCU",
+      "json_path": "/components/2"
+    },
+    {
+      "id": "COMP-CGW",
+      "kind": "component",
+      "label": "CGW",
+      "name": "Central Gateway ECU (CGW)",
+      "zone": "zone:Internal_Backbone",
+      "element_id": "COMP-CGW",
+      "json_path": "/components/3"
+    },
+    {
+      "id": "COMP-EBCM",
+      "kind": "component",
+      "label": "EBCM",
+      "name": "Electronic Brake Control Module (EBCM)",
+      "zone": "zone:Safety_Critical_Chassis",
+      "asil": "ASIL-D",
+      "element_id": "COMP-EBCM",
+      "json_path": "/components/4"
+    },
+    {
+      "id": "ep:INT-WIFI-AP",
+      "kind": "entry",
+      "label": "WIFI-AP",
+      "reaches": [
+        "COMP-TCU"
+      ],
+      "reach": {
+        "nodes": [
+          "COMP-CLOUD",
+          "COMP-TCU",
+          "COMP-CGW",
+          "COMP-EBCM",
+          "ep:INT-WIFI-AP"
+        ],
+        "edges": [
+          "CONN-01",
+          "CONN-02",
+          "CONN-03",
+          "CONN-04"
+        ]
+      },
+      "element_id": "INT-WIFI-AP",
+      "json_path": "/connections/1"
+    },
+    {
+      "id": "ep:INT-OBD2-DEBUG",
+      "kind": "entry",
+      "label": "OBD2-DEBUG",
+      "reaches": [
+        "COMP-TCU"
+      ],
+      "reach": {
+        "nodes": [
+          "COMP-CLOUD",
+          "COMP-TCU",
+          "COMP-CGW",
+          "COMP-EBCM",
+          "ep:INT-OBD2-DEBUG"
+        ],
+        "edges": [
+          "CONN-01",
+          "CONN-03",
+          "CONN-04",
+          "CONN-06"
+        ]
+      },
+      "element_id": "INT-OBD2-DEBUG",
+      "json_path": "/connections/5"
+    }
+  ],
+  "edges": [
+    {
+      "id": "CONN-01",
+      "kind": "connection",
+      "source": "COMP-TCU",
+      "target": "COMP-CLOUD",
+      "label": "01 · HTTPS",
+      "protection": {
+        "level": "encrypted",
+        "rationale": "encrypted true (connection); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/0/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-01",
+      "json_path": "/connections/0"
+    },
+    {
+      "id": "CONN-02",
+      "kind": "connection",
+      "source": "ep:INT-WIFI-AP",
+      "target": "COMP-TCU",
+      "label": "02 · DHCP",
+      "protection": {
+        "level": "encrypted",
+        "rationale": "encrypted true (connection); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/1/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-02",
+      "json_path": "/connections/1"
+    },
+    {
+      "id": "CONN-03",
+      "kind": "connection",
+      "source": "COMP-TCU",
+      "target": "COMP-CGW",
+      "label": "03 · DoIP",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (connection); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/2/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-03",
+      "json_path": "/connections/2"
+    },
+    {
+      "id": "CONN-04",
+      "kind": "connection",
+      "source": "COMP-CGW",
+      "target": "COMP-EBCM",
+      "label": "04 · CAN",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (connection); mac false (COMP-EBCM brake_torque_controller security_configuration.secoc_mac_verification, receiver); freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/3/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": true,
+          "on": false,
+          "json_path": "/components/4/hosted_software/0/security_configuration/secoc_mac_verification",
+          "source": "COMP-EBCM brake_torque_controller security_configuration.secoc_mac_verification, receiver"
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-04",
+      "json_path": "/connections/3"
+    },
+    {
+      "id": "CONN-05",
+      "kind": "connection",
+      "source": "COMP-ADAS",
+      "target": "COMP-CGW",
+      "label": "05",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "encrypted",
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted not stated; mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": false,
+          "on": false
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-05",
+      "json_path": "/connections/4"
+    },
+    {
+      "id": "CONN-06",
+      "kind": "connection",
+      "source": "ep:INT-OBD2-DEBUG",
+      "target": "COMP-TCU",
+      "label": "06 · Manufacturer-specific",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (connection); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/5/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-06",
+      "json_path": "/connections/5"
+    }
+  ],
+  "assets": [
+    {
+      "id": "ASSET-01",
+      "label": "A01",
+      "name": "OTA Firmware Binary Image",
+      "component": "COMP-TCU",
+      "connections": [
+        "CONN-01",
+        "CONN-03",
+        "CONN-04"
+      ],
+      "json_path": "/assets/0"
+    },
+    {
+      "id": "ASSET-02",
+      "label": "A02",
+      "name": "AEB Deceleration Request",
+      "component": "COMP-EBCM",
+      "connections": [
+        "CONN-05",
+        "CONN-04"
+      ],
+      "json_path": "/assets/1"
+    },
+    {
+      "id": "ASSET-03",
+      "label": "A03",
+      "name": "Vehicle GPS \u0026 Telemetry Logs",
+      "component": "COMP-TCU",
+      "connections": [
+        "CONN-01"
+      ],
+      "json_path": "/assets/2"
+    }
+  ]
+}

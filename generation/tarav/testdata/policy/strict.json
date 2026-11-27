@@ -1,0 +1,6 @@
+{
+  "fail_on": "warning",
+  "rules": {
+    "L003": "warning"
+  }
+}

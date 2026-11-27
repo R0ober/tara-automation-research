@@ -1,0 +1,30 @@
+[
+  {
+    "rule": "L002",
+    "severity": "error",
+    "message": "damage scenario ID \"ASSET-1\" is already used by an asset at /assets/0/asset_id",
+    "json_path": "/assets/0/damage_scenarios/1/damage_id",
+    "element_id": "ASSET-1"
+  },
+  {
+    "rule": "L002",
+    "severity": "error",
+    "message": "component ID \"COMP-A\" is already used by a component at /components/0/component_id",
+    "json_path": "/components/2/component_id",
+    "element_id": "COMP-A"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "connection edge CONN-1: protection is unknown; not stated: encrypted, mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/0",
+    "element_id": "CONN-1"
+  },
+  {
+    "rule": "L002",
+    "severity": "error",
+    "message": "connection ID \"CONN-1\" is already used by an instance at /components/1/instances/0/instance_id",
+    "json_path": "/connections/0/connection_id",
+    "element_id": "CONN-1"
+  }
+]

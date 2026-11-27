@@ -1,0 +1,7 @@
+{
+  "fail_on": "error",
+  "rules": {
+    "L017": "off",
+    "L003": "info"
+  }
+}

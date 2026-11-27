@@ -1,0 +1,23 @@
+[
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "entry edge CONN-1#ep:INT-OBD: protection is unknown; not stated: encrypted, mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/0/entry_points/0",
+    "element_id": "CONN-1"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "connection edge CONN-2: protection is unknown; not stated: encrypted, mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/1",
+    "element_id": "CONN-2"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "message edge CONN-2#msg:0x100: protection is unknown; not stated: encrypted, mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/1/messages/0",
+    "element_id": "CONN-2"
+  }
+]

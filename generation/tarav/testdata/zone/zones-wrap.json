@@ -1,0 +1,249 @@
+{
+  "item_definition": {
+    "item_id": "TEST-ZONES-01",
+    "name": "Zone Wrapping Test Fixture",
+    "standard_reference": "ISO/SAE 21434:2021",
+    "system_boundary": "Synthetic fixture for viewer layout testing: several components per trust zone, a multi-instance component, and zones whose members connect in opposite directions.",
+    "functions": [
+      {
+        "function_id": "FUNC-Z-01",
+        "name": "Layout Test Function",
+        "description": "Placeholder function; this fixture exists only to test zone wrapping in the viewer."
+      }
+    ],
+    "modeling_assumptions": [
+      "Synthetic test data. Not a real architecture."
+    ]
+  },
+  "components": [
+    {
+      "component_id": "COMP-GW",
+      "name": "Central Gateway (GW)",
+      "type": "Gateway_ECU",
+      "trust_zone": "Chassis_Backbone_Zone",
+      "asil_level": "ASIL-B",
+      "hardware": "Test MCU A",
+      "os": { "name": "Test RTOS", "version": "1.0.0" },
+      "hosted_software": [
+        { "name": "gateway_router", "version": "1.0.0", "role": "Routes traffic between backbone, sensing and cabin buses" }
+      ],
+      "interfaces": ["INT-ETH-BACKBONE", "INT-CAN-SENSE-B", "INT-CAN-HMI"]
+    },
+    {
+      "component_id": "COMP-DCM",
+      "name": "Domain Controller (DCM)",
+      "type": "Domain_Controller_HPC",
+      "trust_zone": "Chassis_Backbone_Zone",
+      "asil_level": "ASIL-B",
+      "hardware": "Test SoC B",
+      "os": { "name": "Test Linux", "version": "1.0.0" },
+      "hosted_software": [
+        { "name": "motion_coordinator", "version": "1.0.0", "role": "Sends actuation requests to the actuator controller" }
+      ],
+      "interfaces": ["INT-ETH-BACKBONE", "INT-CAN-ACT-CTRL"]
+    },
+    {
+      "component_id": "COMP-TCU",
+      "name": "Telematics Control Unit With An Intentionally Long Display Name To Test Label Wrapping (TCU)",
+      "type": "Telematics_ECU",
+      "trust_zone": "Chassis_Backbone_Zone",
+      "asil_level": "QM",
+      "hardware": "Test Modem C",
+      "os": { "name": "Test Linux", "version": "1.0.0" },
+      "hosted_software": [
+        { "name": "telematics_agent", "version": "1.0.0", "role": "Cellular connectivity" }
+      ],
+      "interfaces": ["INT-ETH-BACKBONE", "INT-LTE"]
+    },
+    {
+      "component_id": "COMP-ACTCTRL",
+      "name": "Actuator Controller (ACTCTRL)",
+      "type": "ECU_Safety_Critical",
+      "trust_zone": "Actuation_Zone",
+      "asil_level": "ASIL-D",
+      "hardware": "Test MCU D",
+      "os": { "name": "Test RTOS", "version": "1.0.0" },
+      "hosted_software": [
+        { "name": "actuator_controller", "version": "1.0.0", "role": "Distributes per-instance commands to the actuators" }
+      ],
+      "interfaces": ["INT-CAN-ACT-CTRL", "INT-CANFD-ACT", "INT-CAN-SENSE-A"]
+    },
+    {
+      "component_id": "COMP-ACT",
+      "name": "Wheel Actuator (ACT x4)",
+      "instances": [
+        { "instance_id": "COMP-ACT-FL", "wheel_position": "front-left" },
+        { "instance_id": "COMP-ACT-FR", "wheel_position": "front-right" },
+        { "instance_id": "COMP-ACT-RL", "wheel_position": "rear-left" },
+        { "instance_id": "COMP-ACT-RR", "wheel_position": "rear-right" }
+      ],
+      "type": "Smart_Actuator_Node",
+      "trust_zone": "Actuation_Zone",
+      "asil_level": "ASIL-D",
+      "hardware": "Test MCU E",
+      "os": { "name": "Bare-Metal Firmware", "version": "1.0.0" },
+      "hosted_software": [
+        { "name": "actuator_driver", "version": "1.0.0", "role": "Applies the command assigned to its instance" }
+      ],
+      "interfaces": ["INT-CANFD-ACT"]
+    },
+    {
+      "component_id": "COMP-SENS-A",
+      "name": "Sensor A (SENS-A)",
+      "type": "Smart_Sensor_Node",
+      "trust_zone": "Sensing_Zone",
+      "asil_level": "ASIL-C",
+      "hardware": "Test Sensor F",
+      "os": { "name": "Bare-Metal Firmware", "version": "1.0.0" },
+      "hosted_software": [
+        { "name": "sensor_a_fw", "version": "1.0.0", "role": "Reports to the actuator controller" }
+      ],
+      "interfaces": ["INT-CAN-SENSE-A"]
+    },
+    {
+      "component_id": "COMP-SENS-B",
+      "name": "Sensor B (SENS-B)",
+      "type": "Smart_Sensor_Node",
+      "trust_zone": "Sensing_Zone",
+      "asil_level": "ASIL-C",
+      "hardware": "Test Sensor G",
+      "os": { "name": "Bare-Metal Firmware", "version": "1.0.0" },
+      "hosted_software": [
+        { "name": "sensor_b_fw", "version": "1.0.0", "role": "Reports to the gateway" }
+      ],
+      "interfaces": ["INT-CAN-SENSE-B"]
+    },
+    {
+      "component_id": "COMP-HMI",
+      "name": "Driver Display (HMI)",
+      "type": "Infotainment_ECU",
+      "trust_zone": "Cabin_Zone",
+      "asil_level": "QM",
+      "hardware": "Test SoC H",
+      "os": { "name": "Test Linux", "version": "1.0.0" },
+      "hosted_software": [
+        { "name": "hmi_app", "version": "1.0.0", "role": "Shows status from the gateway" }
+      ],
+      "interfaces": ["INT-CAN-HMI"]
+    }
+  ],
+  "connections": [
+    {
+      "connection_id": "CONN-Z-01",
+      "name": "Cellular Link",
+      "source_component": "EXTERNAL_ATTACKER_SURFACE",
+      "target_component": "COMP-TCU",
+      "medium": "LTE",
+      "protocol": "Test protocol",
+      "entry_points": [
+        {
+          "interface_id": "INT-LTE",
+          "medium": "LTE",
+          "protocol": "Test protocol",
+          "access_requirement": "Remote network access",
+          "encrypted": true
+        }
+      ],
+      "encrypted": true,
+      "authenticated": "Test value"
+    },
+    {
+      "connection_id": "CONN-Z-02",
+      "name": "Backbone Ethernet GW-DCM",
+      "source_component": "COMP-GW",
+      "target_component": "COMP-DCM",
+      "medium": "100BASE-T1",
+      "protocol": "SOME/IP",
+      "encrypted": false,
+      "authenticated": "None"
+    },
+    {
+      "connection_id": "CONN-Z-03",
+      "name": "Backbone Ethernet GW-TCU",
+      "source_component": "COMP-GW",
+      "target_component": "COMP-TCU",
+      "medium": "100BASE-T1",
+      "protocol": "SOME/IP",
+      "encrypted": false,
+      "authenticated": "None"
+    },
+    {
+      "connection_id": "CONN-Z-04",
+      "name": "DCM to Actuator Controller",
+      "source_component": "COMP-DCM",
+      "target_component": "COMP-ACTCTRL",
+      "medium": "CAN-FD",
+      "protocol": "Raw CAN-FD",
+      "encrypted": false,
+      "authenticated": "None"
+    },
+    {
+      "connection_id": "CONN-Z-05",
+      "name": "Actuator Sub-bus",
+      "source_component": "COMP-ACTCTRL",
+      "target_component": "COMP-ACT",
+      "target_instances": ["COMP-ACT-FL", "COMP-ACT-FR", "COMP-ACT-RL", "COMP-ACT-RR"],
+      "medium": "CAN-FD",
+      "protocol": "Raw CAN-FD",
+      "encrypted": false,
+      "authenticated": "None",
+      "physical_access": {
+        "location": "Exterior harness",
+        "required_access": "Physical contact with the wiring",
+        "required_equipment": "CAN-FD interface",
+        "cabin_access_required": false
+      }
+    },
+    {
+      "connection_id": "CONN-Z-06",
+      "name": "Sensor A to Actuator Controller",
+      "source_component": "COMP-SENS-A",
+      "target_component": "COMP-ACTCTRL",
+      "medium": "CAN",
+      "protocol": "Raw CAN",
+      "encrypted": false,
+      "authenticated": "None"
+    },
+    {
+      "connection_id": "CONN-Z-07",
+      "name": "Sensor B to Gateway",
+      "source_component": "COMP-SENS-B",
+      "target_component": "COMP-GW",
+      "medium": "CAN",
+      "protocol": "Raw CAN",
+      "encrypted": false,
+      "authenticated": "None"
+    },
+    {
+      "connection_id": "CONN-Z-08",
+      "name": "HMI to Gateway",
+      "source_component": "COMP-HMI",
+      "target_component": "COMP-GW",
+      "medium": "CAN",
+      "protocol": "Raw CAN",
+      "encrypted": false,
+      "authenticated": "None"
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "ASSET-Z-01",
+      "name": "Actuator Command",
+      "parent_component": "COMP-ACT",
+      "associated_connections": ["CONN-Z-05"],
+      "cybersecurity_properties": ["Integrity", "Availability"],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-Z-01",
+          "description": "Placeholder damage scenario for layout testing.",
+          "expected_sfop_impact": {
+            "Safety": "Moderate",
+            "Financial": "Moderate",
+            "Operational": "Moderate",
+            "Privacy": "Negligible"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "connection edge CONN-03: protection is unknown; not stated: mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/2",
+    "element_id": "CONN-03"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "connection edge CONN-04: protection is unknown; not stated: e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/3",
+    "element_id": "CONN-04"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "connection edge CONN-05: protection is unknown; not stated: encrypted, mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/4",
+    "element_id": "CONN-05"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "connection edge CONN-06: protection is unknown; not stated: mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/5",
+    "element_id": "CONN-06"
+  }
+]

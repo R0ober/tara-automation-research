@@ -1,0 +1,40 @@
+{
+  "$schema": "https://tarav.local/schema/item-definition/1.0.0",
+  "item_definition": {
+    "item_id": "ITEM-MIN",
+    "name": "L003 positive: one asset missing damage_scenarios, one with an empty list"
+  },
+  "components": [
+    {
+      "component_id": "COMP-A",
+      "name": "A",
+      "trust_zone": "Zone_1",
+      "interfaces": []
+    }
+  ],
+  "connections": [],
+  "assets": [
+    {
+      "asset_id": "ASSET-OK",
+      "name": "covered",
+      "parent_component": "COMP-A",
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-1",
+          "description": "d"
+        }
+      ]
+    },
+    {
+      "asset_id": "ASSET-MISSING",
+      "name": "no list",
+      "parent_component": "COMP-A"
+    },
+    {
+      "asset_id": "ASSET-EMPTY",
+      "name": "empty list",
+      "parent_component": "COMP-A",
+      "damage_scenarios": []
+    }
+  ]
+}

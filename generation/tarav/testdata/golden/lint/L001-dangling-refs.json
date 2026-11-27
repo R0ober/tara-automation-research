@@ -1,0 +1,177 @@
+[
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "asset ASSET-1: associated_connections \"CONN-NOPE-ASSET\" is not a defined connection",
+    "json_path": "/assets/0/associated_connections/0",
+    "element_id": "ASSET-1"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "asset ASSET-1: parent_component \"COMP-NOPE-PARENT\" is not a defined component",
+    "json_path": "/assets/0/parent_component",
+    "element_id": "ASSET-1"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "component COMP-GW: diagnostic_services.execution_connection \"CONN-NOPE-EXEC\" is not a defined connection",
+    "json_path": "/components/0/diagnostic_services/0/execution_connection",
+    "element_id": "COMP-GW"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "component COMP-GW: diagnostic_services.request_connection \"CONN-NOPE-REQ\" is not a defined connection",
+    "json_path": "/components/0/diagnostic_services/0/request_connection",
+    "element_id": "COMP-GW"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "component COMP-GW: forwarding_rules.input_connection \"CONN-NOPE-IN\" is not a defined connection",
+    "json_path": "/components/0/forwarding_rules/0/input_connection",
+    "element_id": "COMP-GW"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "component COMP-GW: forwarding_rules.output_connection \"CONN-NOPE-OUT\" is not a defined connection",
+    "json_path": "/components/0/forwarding_rules/0/output_connection",
+    "element_id": "COMP-GW"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "component COMP-GW: physical_access.interface_id \"INT-NOPE-PHYS\" is not a defined interface",
+    "json_path": "/components/0/physical_access/interface_id",
+    "element_id": "COMP-GW"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "connection edge CONN-1: protection is unknown; not stated: encrypted, mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/0",
+    "element_id": "CONN-1"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-1: brake_override_service.entry_interfaces \"INT-NOPE-BOS\" is not a defined interface",
+    "json_path": "/connections/0/diagnostic_access/brake_override_service/entry_interfaces/0",
+    "element_id": "CONN-1"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-1: downstream_routes.entry_interfaces \"INT-NOPE-ROUTE\" is not a defined interface",
+    "json_path": "/connections/0/diagnostic_access/downstream_routes/0/entry_interfaces/0",
+    "element_id": "CONN-1"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-1: downstream_routes.target_component \"COMP-NOPE-ROUTE\" is not a defined component",
+    "json_path": "/connections/0/diagnostic_access/downstream_routes/0/target_component",
+    "element_id": "CONN-1"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-1: downstream_routes.via_connection \"CONN-NOPE-VIA\" is not a defined connection",
+    "json_path": "/connections/0/diagnostic_access/downstream_routes/0/via_connection",
+    "element_id": "CONN-1"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-1: diagnostic_access.request_handler_component \"COMP-NOPE-HANDLER\" is not a defined component",
+    "json_path": "/connections/0/diagnostic_access/request_handler_component",
+    "element_id": "CONN-1"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "entry edge CONN-1#ep:INT-NOPE-EP: protection is unknown; not stated: encrypted, mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/0/entry_points/0",
+    "element_id": "CONN-1"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-1: entry_points.interface_id \"INT-NOPE-EP\" is not a defined interface",
+    "json_path": "/connections/0/entry_points/0/interface_id",
+    "element_id": "CONN-1"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-1: interface_id \"INT-NOPE-CONN\" is not a defined interface",
+    "json_path": "/connections/0/interface_id",
+    "element_id": "CONN-1"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-1: source_component \"COMP-NOPE-SRC\" is not a defined component",
+    "json_path": "/connections/0/source_component",
+    "element_id": "CONN-1"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "connection edge CONN-2: protection is unknown; not stated: encrypted, mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/1",
+    "element_id": "CONN-2"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-2: adjacent_components \"COMP-NOPE-ADJ\" is not a defined component",
+    "json_path": "/connections/1/adjacent_components/0",
+    "element_id": "CONN-2"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "message edge CONN-2#msg:0x100: protection is unknown; not stated: encrypted, mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/1/messages/0",
+    "element_id": "CONN-2"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-2: payload_fields.target_instance \"COMP-NOPE-PAYLOAD\" is not a defined instance",
+    "json_path": "/connections/1/messages/0/payload_fields/0/target_instance",
+    "element_id": "CONN-2"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-2: messages.source_component \"COMP-NOPE-MSRC\" is not a defined component",
+    "json_path": "/connections/1/messages/0/source_component",
+    "element_id": "CONN-2"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-2: messages.target_component \"COMP-NOPE-MTGT\" is not a defined component",
+    "json_path": "/connections/1/messages/0/target_component",
+    "element_id": "CONN-2"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-2: target_component \"COMP-NOPE-TGT\" is not a defined component",
+    "json_path": "/connections/1/target_component",
+    "element_id": "CONN-2"
+  },
+  {
+    "rule": "L001",
+    "severity": "error",
+    "message": "connection CONN-2: target_instances \"COMP-NOPE-INST\" is not a defined instance",
+    "json_path": "/connections/1/target_instances/1",
+    "element_id": "CONN-2"
+  }
+]

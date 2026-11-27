@@ -1,0 +1,132 @@
+{
+  "$schema": "https://tarav.local/schema/item-definition/1.0.0",
+  "item_definition": {
+    "item_id": "ITEM-MIN",
+    "name": "L001 positive: one dangling reference at every reference site"
+  },
+  "components": [
+    {
+      "component_id": "COMP-GW",
+      "name": "Gateway",
+      "trust_zone": "Zone_1",
+      "interfaces": [
+        "INT-BUS",
+        "INT-DBG",
+        "INT-OBD"
+      ],
+      "physical_access": {
+        "interface_id": "INT-NOPE-PHYS"
+      },
+      "diagnostic_services": [
+        {
+          "service_id": "0x31",
+          "request_connection": "CONN-NOPE-REQ",
+          "execution_connection": "CONN-NOPE-EXEC"
+        }
+      ],
+      "forwarding_rules": [
+        {
+          "input_connection": "CONN-NOPE-IN",
+          "output_connection": "CONN-NOPE-OUT"
+        }
+      ]
+    },
+    {
+      "component_id": "COMP-ACT",
+      "name": "Actuator",
+      "trust_zone": "Zone_2",
+      "interfaces": [
+        "INT-BUS"
+      ],
+      "instances": [
+        {
+          "instance_id": "COMP-ACT-L"
+        },
+        {
+          "instance_id": "COMP-ACT-R"
+        }
+      ]
+    },
+    {
+      "component_id": "COMP-SNS",
+      "name": "Sensor",
+      "trust_zone": "Zone_2",
+      "interfaces": [
+        "INT-BUS"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "connection_id": "CONN-1",
+      "source_component": "COMP-NOPE-SRC",
+      "target_component": "COMP-GW",
+      "interface_id": "INT-NOPE-CONN",
+      "entry_points": [
+        {
+          "interface_id": "INT-NOPE-EP"
+        }
+      ],
+      "diagnostic_access": {
+        "request_handler_component": "COMP-NOPE-HANDLER",
+        "brake_override_service": {
+          "service_id": "0x31",
+          "entry_interfaces": [
+            "INT-NOPE-BOS"
+          ]
+        },
+        "downstream_routes": [
+          {
+            "target_component": "COMP-NOPE-ROUTE",
+            "via_connection": "CONN-NOPE-VIA",
+            "entry_interfaces": [
+              "INT-NOPE-ROUTE"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "connection_id": "CONN-2",
+      "source_component": "COMP-GW",
+      "target_component": "COMP-NOPE-TGT",
+      "target_instances": [
+        "COMP-ACT-L",
+        "COMP-NOPE-INST"
+      ],
+      "adjacent_components": [
+        "COMP-NOPE-ADJ"
+      ],
+      "messages": [
+        {
+          "can_id": "0x100",
+          "name": "Cmd",
+          "source_component": "COMP-NOPE-MSRC",
+          "target_component": "COMP-NOPE-MTGT",
+          "payload_fields": [
+            {
+              "name": "torque",
+              "target_instance": "COMP-NOPE-PAYLOAD"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "ASSET-1",
+      "name": "Torque command",
+      "parent_component": "COMP-NOPE-PARENT",
+      "associated_connections": [
+        "CONN-NOPE-ASSET"
+      ],
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-1",
+          "description": "wrong torque"
+        }
+      ]
+    }
+  ]
+}

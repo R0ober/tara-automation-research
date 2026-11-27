@@ -1,0 +1,30 @@
+[
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "entry edge CONN-BRK-01#ep:INT-OBD2-CAN: protection is unknown; not stated: mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/0/entry_points/1",
+    "element_id": "CONN-BRK-01"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "message edge CONN-BRK-02#msg:0x1A0: protection is unknown; not stated: mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/1/messages/1",
+    "element_id": "CONN-BRK-02"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "connection edge CONN-BRK-03: protection is unknown; not stated: mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/2",
+    "element_id": "CONN-BRK-03"
+  },
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "connection edge CONN-BRK-04: protection is unknown; not stated: e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/3",
+    "element_id": "CONN-BRK-04"
+  }
+]

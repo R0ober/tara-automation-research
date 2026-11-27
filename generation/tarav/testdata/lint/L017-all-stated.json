@@ -1,0 +1,78 @@
+{
+  "$schema": "https://tarav.local/schema/item-definition/1.1.0",
+  "item_definition": {
+    "item_id": "ITEM-MIN",
+    "name": "L017 negative: every drawn edge fully stated (key table, explicit protection, encrypted entry point)"
+  },
+  "components": [
+    {
+      "component_id": "COMP-A",
+      "name": "A",
+      "trust_zone": "Zone_1",
+      "interfaces": [
+        "INT-BUS",
+        "INT-OBD"
+      ]
+    },
+    {
+      "component_id": "COMP-B",
+      "name": "B",
+      "trust_zone": "Zone_2",
+      "interfaces": [
+        "INT-BUS"
+      ],
+      "security_configuration": {
+        "secoc_mac_enabled": false,
+        "e2e_crc_enabled": false
+      }
+    }
+  ],
+  "connections": [
+    {
+      "connection_id": "CONN-NONE",
+      "source_component": "COMP-A",
+      "target_component": "COMP-B",
+      "encrypted": false
+    },
+    {
+      "connection_id": "CONN-MACF",
+      "source_component": "COMP-B",
+      "target_component": "COMP-A",
+      "encrypted": false,
+      "protection": {
+        "mac": true,
+        "freshness": true
+      },
+      "messages": [
+        {
+          "can_id": "0x10",
+          "name": "same endpoints, folded"
+        }
+      ]
+    },
+    {
+      "connection_id": "CONN-ENTRY",
+      "source_component": "EXTERNAL_TESTER",
+      "target_component": "COMP-A",
+      "encrypted": false,
+      "entry_points": [
+        {
+          "interface_id": "INT-OBD",
+          "encrypted": true
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "ASSET-1",
+      "name": "a",
+      "parent_component": "COMP-B",
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-1"
+        }
+      ]
+    }
+  ]
+}

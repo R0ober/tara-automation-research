@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tarav.local/schema/item-definition/1.0.0",
+  "title": "TARA item definition",
+  "description": "Item definition consumed by tarav. v1.0.0 requires only the common core (SPEC D7); every other field is optional and unknown fields are allowed.",
+  "type": "object",
+  "required": ["item_definition", "components", "connections", "assets"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "item_definition": {
+      "type": "object",
+      "required": ["item_id", "name"],
+      "properties": {
+        "item_id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" }
+      }
+    },
+    "components": { "type": "array", "items": { "$ref": "#/$defs/component" } },
+    "connections": { "type": "array", "items": { "$ref": "#/$defs/connection" } },
+    "assets": { "type": "array", "items": { "$ref": "#/$defs/asset" } }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+    "ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+    "text": { "type": "string", "minLength": 1 },
+    "component": {
+      "type": "object",
+      "required": ["component_id", "name", "trust_zone"],
+      "properties": {
+        "component_id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" },
+        "trust_zone": { "$ref": "#/$defs/id" },
+        "type": { "type": "string" },
+        "asil_level": { "type": "string" },
+        "interfaces": { "$ref": "#/$defs/ids" },
+        "instances": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["instance_id"],
+            "properties": { "instance_id": { "$ref": "#/$defs/id" } }
+          }
+        },
+        "physical_access": {
+          "type": "object",
+          "properties": { "interface_id": { "$ref": "#/$defs/id" } }
+        },
+        "hosted_software": { "type": "array", "items": { "type": "object" } },
+        "diagnostic_services": { "type": "array", "items": { "type": "object" } },
+        "forwarding_rules": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "connection": {
+      "type": "object",
+      "required": ["connection_id", "source_component", "target_component"],
+      "properties": {
+        "connection_id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "source_component": { "$ref": "#/$defs/id" },
+        "target_component": { "$ref": "#/$defs/id" },
+        "target_instances": { "$ref": "#/$defs/ids" },
+        "adjacent_components": { "$ref": "#/$defs/ids" },
+        "interface_id": { "$ref": "#/$defs/id" },
+        "encrypted": { "type": "boolean" },
+        "entry_points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["interface_id"],
+            "properties": { "interface_id": { "$ref": "#/$defs/id" } }
+          }
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source_component": { "$ref": "#/$defs/id" },
+              "target_component": { "$ref": "#/$defs/id" }
+            }
+          }
+        },
+        "physical_access": { "type": "object" },
+        "diagnostic_access": { "type": "object" }
+      }
+    },
+    "asset": {
+      "type": "object",
+      "required": ["asset_id", "name", "parent_component"],
+      "properties": {
+        "asset_id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" },
+        "parent_component": { "$ref": "#/$defs/id" },
+        "associated_connections": { "$ref": "#/$defs/ids" },
+        "damage_scenarios": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["damage_id"],
+            "properties": { "damage_id": { "$ref": "#/$defs/id" } }
+          }
+        }
+      }
+    }
+  }
+}

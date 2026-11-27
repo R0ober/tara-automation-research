@@ -1,0 +1,123 @@
+{
+  "$schema": "https://tarav.local/schema/item-definition/1.1.0",
+  "item_definition": {
+    "item_id": "ITEM-GRAPH",
+    "name": "Graph edge cases the samples do not cover"
+  },
+  "components": [
+    {
+      "component_id": "COMP-A",
+      "name": "Alpha Controller (ALC)",
+      "trust_zone": "Zone_One_Zone",
+      "asil_level": "ASIL-B",
+      "interfaces": [
+        "INT-BUS",
+        "INT-DBG"
+      ]
+    },
+    {
+      "component_id": "COMP-B",
+      "name": "Plain name",
+      "trust_zone": "Zone_Two",
+      "interfaces": [
+        "INT-BUS"
+      ],
+      "instances": [
+        {
+          "instance_id": "COMP-B-1"
+        },
+        {
+          "instance_id": "COMP-B-2"
+        }
+      ]
+    },
+    {
+      "component_id": "COMP-A",
+      "name": "Duplicate of COMP-A (L002), not drawn twice",
+      "trust_zone": "Zone_Two",
+      "interfaces": []
+    }
+  ],
+  "connections": [
+    {
+      "connection_id": "CONN-EXT-BOTH",
+      "source_component": "EXTERNAL_BACKEND",
+      "target_component": "EXTERNAL_PHONE",
+      "protocol": "Plain HTTPS; legacy"
+    },
+    {
+      "connection_id": "CONN-INT-EP",
+      "source_component": "COMP-A",
+      "target_component": "COMP-B",
+      "encrypted": false,
+      "protection": {
+        "e2e_crc": true,
+        "mac": true,
+        "freshness": false
+      },
+      "target_instances": [
+        "COMP-B-2"
+      ],
+      "entry_points": [
+        {
+          "interface_id": "INT-DBG"
+        }
+      ],
+      "messages": [
+        {
+          "can_id": "0x10",
+          "name": "folded"
+        },
+        {
+          "can_id": "0x20",
+          "name": "to the outside",
+          "target_component": "EXTERNAL_BACKEND"
+        }
+      ],
+      "diagnostic_access": {
+        "request_handler_component": "COMP-A",
+        "downstream_routes": [
+          {
+            "target_component": "COMP-B",
+            "protocol": "UDS"
+          },
+          {
+            "target_component": ""
+          }
+        ]
+      }
+    },
+    {
+      "connection_id": "CONN-TAP",
+      "source_component": "EXTERNAL_TESTER",
+      "target_component": "COMP-B",
+      "physical_access": {
+        "required_access": "harness"
+      },
+      "diagnostic_access": {
+        "downstream_routes": [
+          {
+            "target_component": "COMP-A"
+          }
+        ]
+      }
+    },
+    {
+      "connection_id": "CONN-DANGLING",
+      "source_component": "COMP-A",
+      "target_component": "COMP-NOWHERE"
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "ASSETX",
+      "name": "no dash",
+      "parent_component": "COMP-A",
+      "damage_scenarios": [
+        {
+          "damage_id": "DS-1"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,393 @@
+{
+  "item": {
+    "item_id": "ITEM-GRAPH",
+    "name": "Graph edge cases the samples do not cover",
+    "schema": "https://tarav.local/schema/item-definition/1.1.0"
+  },
+  "zones": [
+    {
+      "id": "zone:Zone_One_Zone",
+      "label": "Zone One",
+      "trust_zone": "Zone_One_Zone"
+    },
+    {
+      "id": "zone:Zone_Two",
+      "label": "Zone Two",
+      "trust_zone": "Zone_Two"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "COMP-A",
+      "kind": "component",
+      "label": "ALC",
+      "name": "Alpha Controller (ALC)",
+      "zone": "zone:Zone_One_Zone",
+      "asil": "ASIL-B",
+      "element_id": "COMP-A",
+      "json_path": "/components/0"
+    },
+    {
+      "id": "COMP-B",
+      "kind": "component",
+      "label": "Plain name",
+      "name": "Plain name",
+      "zone": "zone:Zone_Two",
+      "instance_count": 2,
+      "element_id": "COMP-B",
+      "json_path": "/components/1"
+    },
+    {
+      "id": "COMP-B-1",
+      "kind": "instance",
+      "label": "1",
+      "parent": "COMP-B",
+      "element_id": "COMP-B-1",
+      "json_path": "/components/1/instances/0"
+    },
+    {
+      "id": "COMP-B-2",
+      "kind": "instance",
+      "label": "2",
+      "parent": "COMP-B",
+      "element_id": "COMP-B-2",
+      "json_path": "/components/1/instances/1"
+    },
+    {
+      "id": "ep:INT-DBG",
+      "kind": "entry",
+      "label": "DBG",
+      "reaches": [
+        "COMP-A",
+        "COMP-B"
+      ],
+      "reach": {
+        "nodes": [
+          "COMP-B",
+          "COMP-B-1",
+          "COMP-B-2",
+          "ep:INT-DBG"
+        ],
+        "edges": [
+          "CONN-INT-EP#ep:INT-DBG"
+        ]
+      },
+      "element_id": "INT-DBG",
+      "json_path": "/connections/1/entry_points/0"
+    },
+    {
+      "id": "ep:CONN-TAP",
+      "kind": "entry",
+      "label": "TAP",
+      "reaches": [
+        "COMP-B"
+      ],
+      "reach": {
+        "nodes": [
+          "COMP-B",
+          "COMP-B-1",
+          "COMP-B-2",
+          "ep:CONN-TAP"
+        ],
+        "edges": [
+          "CONN-TAP"
+        ]
+      },
+      "element_id": "CONN-TAP",
+      "json_path": "/connections/2"
+    },
+    {
+      "id": "ep:CONN-TAP#physical_access",
+      "kind": "entry",
+      "label": "physical: TAP",
+      "physical": true,
+      "reaches": [
+        "COMP-B"
+      ],
+      "reach": {
+        "nodes": [
+          "COMP-B",
+          "COMP-B-1",
+          "COMP-B-2",
+          "ep:CONN-TAP#physical_access"
+        ],
+        "edges": [
+          "phys:CONN-TAP#physical_access:COMP-B"
+        ]
+      },
+      "element_id": "CONN-TAP",
+      "json_path": "/connections/2/physical_access"
+    },
+    {
+      "id": "EXTERNAL_BACKEND",
+      "kind": "external",
+      "label": "BACKEND",
+      "element_id": "EXTERNAL_BACKEND",
+      "json_path": "/connections/0"
+    },
+    {
+      "id": "EXTERNAL_PHONE",
+      "kind": "external",
+      "label": "PHONE",
+      "element_id": "EXTERNAL_PHONE",
+      "json_path": "/connections/0"
+    }
+  ],
+  "edges": [
+    {
+      "id": "phys:CONN-TAP#physical_access:COMP-B",
+      "kind": "physical",
+      "source": "ep:CONN-TAP#physical_access",
+      "target": "COMP-B",
+      "label": "physical",
+      "element_id": "CONN-TAP",
+      "json_path": "/connections/2/physical_access"
+    },
+    {
+      "id": "CONN-EXT-BOTH",
+      "kind": "connection",
+      "source": "EXTERNAL_BACKEND",
+      "target": "EXTERNAL_PHONE",
+      "label": "EXT-BOTH · HTTPS",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "encrypted",
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted not stated; mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": false,
+          "on": false
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-EXT-BOTH",
+      "json_path": "/connections/0"
+    },
+    {
+      "id": "CONN-INT-EP",
+      "kind": "connection",
+      "source": "COMP-A",
+      "target": "COMP-B",
+      "target_instances": [
+        "COMP-B-2"
+      ],
+      "label": "INT-EP · 0x10",
+      "protection": {
+        "level": "mac",
+        "rationale": "encrypted false (connection); mac true (connection protection); freshness false (connection protection); e2e_crc true (connection protection)"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/1/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/1/protection/e2e_crc",
+          "source": "connection protection"
+        },
+        "mac": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/1/protection/mac",
+          "source": "connection protection"
+        },
+        "freshness": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/1/protection/freshness",
+          "source": "connection protection"
+        }
+      },
+      "element_id": "CONN-INT-EP",
+      "json_path": "/connections/1"
+    },
+    {
+      "id": "CONN-INT-EP#msg:0x20",
+      "kind": "message",
+      "source": "COMP-A",
+      "target": "EXTERNAL_BACKEND",
+      "label": "0x20",
+      "protection": {
+        "level": "mac",
+        "rationale": "encrypted false (connection); mac true (connection protection); freshness false (connection protection); e2e_crc true (connection protection)"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/1/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/1/protection/e2e_crc",
+          "source": "connection protection"
+        },
+        "mac": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/1/protection/mac",
+          "source": "connection protection"
+        },
+        "freshness": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/1/protection/freshness",
+          "source": "connection protection"
+        }
+      },
+      "element_id": "CONN-INT-EP",
+      "json_path": "/connections/1/messages/1"
+    },
+    {
+      "id": "CONN-INT-EP#ep:INT-DBG",
+      "kind": "entry",
+      "source": "ep:INT-DBG",
+      "target": "COMP-B",
+      "label": "DBG",
+      "protection": {
+        "level": "mac",
+        "rationale": "encrypted false (connection); mac true (connection protection); freshness false (connection protection); e2e_crc true (connection protection)"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/1/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/1/protection/e2e_crc",
+          "source": "connection protection"
+        },
+        "mac": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/1/protection/mac",
+          "source": "connection protection"
+        },
+        "freshness": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/1/protection/freshness",
+          "source": "connection protection"
+        }
+      },
+      "element_id": "CONN-INT-EP",
+      "json_path": "/connections/1/entry_points/0"
+    },
+    {
+      "id": "diag:CONN-INT-EP:0",
+      "kind": "diagnostic",
+      "source": "COMP-A",
+      "target": "COMP-B",
+      "label": "diag · UDS",
+      "element_id": "CONN-INT-EP",
+      "json_path": "/connections/1/diagnostic_access/downstream_routes/0"
+    },
+    {
+      "id": "CONN-TAP",
+      "kind": "connection",
+      "source": "ep:CONN-TAP",
+      "target": "COMP-B",
+      "label": "TAP",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "encrypted",
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted not stated; mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": false,
+          "on": false
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-TAP",
+      "json_path": "/connections/2"
+    },
+    {
+      "id": "CONN-DANGLING",
+      "kind": "connection",
+      "source": "COMP-A",
+      "target": "COMP-NOWHERE",
+      "label": "DANGLING",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "encrypted",
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted not stated; mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": false,
+          "on": false
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-DANGLING",
+      "json_path": "/connections/3"
+    }
+  ],
+  "assets": [
+    {
+      "id": "ASSETX",
+      "label": "ASSETX",
+      "name": "no dash",
+      "component": "COMP-A",
+      "json_path": "/assets/0"
+    }
+  ]
+}

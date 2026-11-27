@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'self'">
+<title>{{TITLE}}</title>
+<style>
+{{CSS}}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title"></h1><span class="id" id="itemid"></span>
+  <span class="spacer"></span>
+  <input id="search" type="search" placeholder="Search components, IDs, software, CPEs…" autocomplete="off">
+  <div class="menu" id="layers-menu">
+    <button class="btn" data-menu>Layers ▾</button>
+    <div class="pop" id="layers"></div>
+  </div>
+  <button id="lintbadge" title="Show lint findings"></button>
+  <div id="review" hidden></div>
+  <span class="tag">tarav {{VERSION}}</span>
+</header>
+<div id="cy"></div>
+<div id="banner"></div>
+<div id="status"></div>
+<div id="tip"></div>
+<div id="decided" role="status" hidden></div>
+<dialog id="review-dialog"></dialog>
+<aside id="pane" aria-label="Details"></aside>
+<div id="findings">
+  <div class="bar">
+    <b>Lint findings</b>
+    <span class="muted" style="font-size:11px">click a row to show its element</span>
+    <span style="flex:1"></span>
+    <span id="filters"></span>
+    <button class="btn" id="findings-close" style="padding:1px 8px" title="Close">✕</button>
+  </div>
+  <div class="list" id="findings-list"></div>
+</div>
+<button type="button" id="fit" title="Fit the whole graph in view (F)">Fit</button>
+<div id="legend" class="min">
+  <button class="toggle" id="legend-toggle">Legend ▸</button>
+  <div class="grid">
+    <h5>Edges — protection level (plan §6, derived)</h5>
+    <i class="ln" style="border-color:var(--p-none)"></i><span>none (all flags stated false)</span>
+    <i class="ln" style="border-color:var(--p-crc)"></i><span>CRC only (integrity, not authenticity)</span>
+    <i class="ln" style="border-color:var(--p-mac)"></i><span>MAC</span>
+    <i class="ln" style="border-color:var(--p-mac_freshness)"></i><span>MAC + freshness</span>
+    <i class="ln" style="border-color:var(--p-encrypted)"></i><span>encrypted</span>
+    <i class="ln" style="border-color:var(--p-unknown)"></i><span>unknown (flags not stated, L017)</span>
+    <h5>Edges — kind</h5>
+    <i class="ln thin" style="border-color:var(--muted)"></i><span>message-level edge</span>
+    <i class="ln dash" style="border-color:var(--p-physical)"></i><span>physical access path (no protection level)</span>
+    <i class="ln dash" style="border-color:var(--p-diagnostic)"></i><span>diagnostic route (downstream forwarding)</span>
+    <h5>Nodes</h5>
+    <svg width="18" height="18"><path d="M9 1 17 9 9 17 1 9Z" fill="#1c1c1a"/></svg><span>remote entry point</span>
+    <svg width="18" height="18"><path d="M9 2 16 9 9 16 2 9Z" fill="#fff" stroke="#1c1c1a" stroke-width="2"/></svg><span>physical access point</span>
+    <span class="asil" style="font-size:9px;padding:0 3px">D</span><span>ASIL level</span>
+    <span class="sev-dot" style="background:var(--bad);margin-left:5px"></span><span>has lint errors or warnings</span>
+    <span style="font-weight:700;font-size:10px">×4▸</span><span>collapsed instances — double-click to expand</span>
+    <span style="font-weight:700;font-size:10px;color:#c0392b">⚠</span><span>edge label: the edge has lint findings</span>
+    <span style="font-weight:700;font-size:10px">▣ 3</span><span>collapsed zone — double-click a zone to fold or unfold; merged edges show their weakest level</span>
+    <h5>Reachability</h5>
+    <span></span><span>Click an entry point to dim everything it cannot reach following declared directions. Topology only, not attack feasibility.</span>
+  </div>
+</div>
+<script type="application/json" id="tarav-graph">{{GRAPH}}</script>
+<script type="application/json" id="tarav-findings">{{FINDINGS}}</script>
+<script type="application/json" id="tarav-links">{{LINKS}}</script>
+<script type="application/json" id="tarav-item">{{ITEM}}</script>
+<script type="application/json" id="tarav-config">{{CONFIG}}</script>
+{{VENDOR}}
+<script>
+{{JS}}
+</script>
+</body>
+</html>

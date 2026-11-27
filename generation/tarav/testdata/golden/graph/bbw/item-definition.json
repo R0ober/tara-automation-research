@@ -1,0 +1,554 @@
+{
+  "item": {
+    "item_id": "AUTO-BBW-01",
+    "name": "Electronic Brake-by-Wire (BBW) \u0026 Regenerative Braking Subsystem"
+  },
+  "zones": [
+    {
+      "id": "zone:Cabin_Pedal_Box_Zone",
+      "label": "Cabin Pedal Box",
+      "trust_zone": "Cabin_Pedal_Box_Zone"
+    },
+    {
+      "id": "zone:Chassis_Backbone_Zone",
+      "label": "Chassis Backbone",
+      "trust_zone": "Chassis_Backbone_Zone"
+    },
+    {
+      "id": "zone:Powertrain_HV_Zone",
+      "label": "Powertrain HV",
+      "trust_zone": "Powertrain_HV_Zone"
+    },
+    {
+      "id": "zone:Safety_Critical_Braking_Zone",
+      "label": "Safety Critical Braking",
+      "trust_zone": "Safety_Critical_Braking_Zone"
+    },
+    {
+      "id": "zone:Wheel_End_Actuator_Zone",
+      "label": "Wheel End Actuator",
+      "trust_zone": "Wheel_End_Actuator_Zone"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "COMP-BPSU",
+      "kind": "component",
+      "label": "BPSU",
+      "name": "Brake Pedal Sensor Unit (BPSU)",
+      "zone": "zone:Cabin_Pedal_Box_Zone",
+      "asil": "ASIL-D",
+      "element_id": "COMP-BPSU",
+      "json_path": "/components/0"
+    },
+    {
+      "id": "COMP-VDCM",
+      "kind": "component",
+      "label": "VDCM",
+      "name": "Vehicle Motion \u0026 Chassis Domain Controller (VDCM)",
+      "zone": "zone:Chassis_Backbone_Zone",
+      "asil": "ASIL-D",
+      "element_id": "COMP-VDCM",
+      "json_path": "/components/1"
+    },
+    {
+      "id": "COMP-RIC",
+      "kind": "component",
+      "label": "RIC",
+      "name": "Regenerative Inverter Controller (RIC)",
+      "zone": "zone:Powertrain_HV_Zone",
+      "asil": "ASIL-C",
+      "element_id": "COMP-RIC",
+      "json_path": "/components/2"
+    },
+    {
+      "id": "COMP-EBCM",
+      "kind": "component",
+      "label": "EBCM",
+      "name": "Electronic Brake Control Module (EBCM)",
+      "zone": "zone:Safety_Critical_Braking_Zone",
+      "asil": "ASIL-D",
+      "element_id": "COMP-EBCM",
+      "json_path": "/components/3"
+    },
+    {
+      "id": "COMP-EMBA",
+      "kind": "component",
+      "label": "EMBA",
+      "name": "Smart Electro-Mechanical Brake Caliper Actuator (EMBA x4)",
+      "zone": "zone:Wheel_End_Actuator_Zone",
+      "asil": "ASIL-D",
+      "instance_count": 4,
+      "element_id": "COMP-EMBA",
+      "json_path": "/components/4"
+    },
+    {
+      "id": "COMP-EMBA-FL",
+      "kind": "instance",
+      "label": "FL",
+      "parent": "COMP-EMBA",
+      "asil": "ASIL-D",
+      "element_id": "COMP-EMBA-FL",
+      "json_path": "/components/4/instances/0"
+    },
+    {
+      "id": "COMP-EMBA-FR",
+      "kind": "instance",
+      "label": "FR",
+      "parent": "COMP-EMBA",
+      "asil": "ASIL-D",
+      "element_id": "COMP-EMBA-FR",
+      "json_path": "/components/4/instances/1"
+    },
+    {
+      "id": "COMP-EMBA-RL",
+      "kind": "instance",
+      "label": "RL",
+      "parent": "COMP-EMBA",
+      "asil": "ASIL-D",
+      "element_id": "COMP-EMBA-RL",
+      "json_path": "/components/4/instances/2"
+    },
+    {
+      "id": "COMP-EMBA-RR",
+      "kind": "instance",
+      "label": "RR",
+      "parent": "COMP-EMBA",
+      "asil": "ASIL-D",
+      "element_id": "COMP-EMBA-RR",
+      "json_path": "/components/4/instances/3"
+    },
+    {
+      "id": "ep:INT-SWD-HEADER",
+      "kind": "entry",
+      "label": "SWD-HEADER",
+      "physical": true,
+      "reaches": [
+        "COMP-BPSU"
+      ],
+      "reach": {
+        "nodes": [
+          "COMP-BPSU",
+          "COMP-VDCM",
+          "COMP-EBCM",
+          "COMP-EMBA",
+          "COMP-EMBA-FL",
+          "COMP-EMBA-FR",
+          "COMP-EMBA-RL",
+          "COMP-EMBA-RR",
+          "ep:INT-SWD-HEADER"
+        ],
+        "edges": [
+          "phys:INT-SWD-HEADER:COMP-BPSU",
+          "diag:CONN-BRK-01:0",
+          "CONN-BRK-02",
+          "CONN-BRK-03",
+          "CONN-BRK-04"
+        ]
+      },
+      "element_id": "INT-SWD-HEADER",
+      "json_path": "/components/0/physical_access"
+    },
+    {
+      "id": "ep:INT-BLE-DIAG",
+      "kind": "entry",
+      "label": "BLE-DIAG",
+      "reaches": [
+        "COMP-VDCM"
+      ],
+      "reach": {
+        "nodes": [
+          "COMP-VDCM",
+          "COMP-EBCM",
+          "COMP-EMBA",
+          "COMP-EMBA-FL",
+          "COMP-EMBA-FR",
+          "COMP-EMBA-RL",
+          "COMP-EMBA-RR",
+          "ep:INT-BLE-DIAG"
+        ],
+        "edges": [
+          "CONN-BRK-01#ep:INT-BLE-DIAG",
+          "diag:CONN-BRK-01:0",
+          "CONN-BRK-03",
+          "CONN-BRK-04"
+        ]
+      },
+      "element_id": "INT-BLE-DIAG",
+      "json_path": "/connections/0/entry_points/0"
+    },
+    {
+      "id": "ep:INT-OBD2-CAN",
+      "kind": "entry",
+      "label": "OBD2-CAN",
+      "reaches": [
+        "COMP-VDCM"
+      ],
+      "reach": {
+        "nodes": [
+          "COMP-VDCM",
+          "COMP-EBCM",
+          "COMP-EMBA",
+          "COMP-EMBA-FL",
+          "COMP-EMBA-FR",
+          "COMP-EMBA-RL",
+          "COMP-EMBA-RR",
+          "ep:INT-OBD2-CAN"
+        ],
+        "edges": [
+          "CONN-BRK-01#ep:INT-OBD2-CAN",
+          "diag:CONN-BRK-01:0",
+          "CONN-BRK-03",
+          "CONN-BRK-04"
+        ]
+      },
+      "element_id": "INT-OBD2-CAN",
+      "json_path": "/connections/0/entry_points/1"
+    },
+    {
+      "id": "ep:CONN-BRK-04#physical_access",
+      "kind": "entry",
+      "label": "Exterior wheel-well harness",
+      "physical": true,
+      "reaches": [
+        "COMP-EBCM",
+        "COMP-EMBA"
+      ],
+      "reach": {
+        "nodes": [
+          "COMP-EBCM",
+          "COMP-EMBA",
+          "COMP-EMBA-FL",
+          "COMP-EMBA-FR",
+          "COMP-EMBA-RL",
+          "COMP-EMBA-RR",
+          "ep:CONN-BRK-04#physical_access"
+        ],
+        "edges": [
+          "phys:CONN-BRK-04#physical_access:COMP-EBCM",
+          "phys:CONN-BRK-04#physical_access:COMP-EMBA",
+          "CONN-BRK-04"
+        ]
+      },
+      "element_id": "CONN-BRK-04",
+      "json_path": "/connections/3/physical_access"
+    }
+  ],
+  "edges": [
+    {
+      "id": "phys:INT-SWD-HEADER:COMP-BPSU",
+      "kind": "physical",
+      "source": "ep:INT-SWD-HEADER",
+      "target": "COMP-BPSU",
+      "label": "physical",
+      "element_id": "COMP-BPSU",
+      "json_path": "/components/0/physical_access"
+    },
+    {
+      "id": "phys:CONN-BRK-04#physical_access:COMP-EBCM",
+      "kind": "physical",
+      "source": "ep:CONN-BRK-04#physical_access",
+      "target": "COMP-EBCM",
+      "label": "physical",
+      "element_id": "CONN-BRK-04",
+      "json_path": "/connections/3/physical_access"
+    },
+    {
+      "id": "phys:CONN-BRK-04#physical_access:COMP-EMBA",
+      "kind": "physical",
+      "source": "ep:CONN-BRK-04#physical_access",
+      "target": "COMP-EMBA",
+      "target_instances": [
+        "COMP-EMBA-FL",
+        "COMP-EMBA-FR",
+        "COMP-EMBA-RL",
+        "COMP-EMBA-RR"
+      ],
+      "label": "physical",
+      "element_id": "CONN-BRK-04",
+      "json_path": "/connections/3/physical_access"
+    },
+    {
+      "id": "CONN-BRK-01#ep:INT-BLE-DIAG",
+      "kind": "entry",
+      "source": "ep:INT-BLE-DIAG",
+      "target": "COMP-VDCM",
+      "label": "BLE-DIAG",
+      "protection": {
+        "level": "encrypted",
+        "rationale": "encrypted true (entry point); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/0/entry_points/0/encrypted",
+          "source": "entry point"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-BRK-01",
+      "json_path": "/connections/0/entry_points/0"
+    },
+    {
+      "id": "CONN-BRK-01#ep:INT-OBD2-CAN",
+      "kind": "entry",
+      "source": "ep:INT-OBD2-CAN",
+      "target": "COMP-VDCM",
+      "label": "OBD2-CAN",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (entry point); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/0/entry_points/1/encrypted",
+          "source": "entry point"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-BRK-01",
+      "json_path": "/connections/0/entry_points/1"
+    },
+    {
+      "id": "diag:CONN-BRK-01:0",
+      "kind": "diagnostic",
+      "source": "COMP-VDCM",
+      "target": "COMP-EBCM",
+      "label": "diag · DoIP",
+      "element_id": "CONN-BRK-01",
+      "json_path": "/connections/0/diagnostic_access/downstream_routes/0"
+    },
+    {
+      "id": "CONN-BRK-02",
+      "kind": "connection",
+      "source": "COMP-BPSU",
+      "target": "COMP-VDCM",
+      "label": "BRK-02 · 0x080",
+      "protection": {
+        "level": "crc",
+        "rationale": "encrypted false (connection); mac false (COMP-BPSU pedal_feel_and_travel_encoder security_configuration.secoc_mac_enabled, sender); freshness not stated; e2e_crc true (COMP-BPSU pedal_feel_and_travel_encoder security_configuration.e2e_crc_enabled, sender)"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/1/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": true,
+          "on": true,
+          "json_path": "/components/0/hosted_software/0/security_configuration/e2e_crc_enabled",
+          "source": "COMP-BPSU pedal_feel_and_travel_encoder security_configuration.e2e_crc_enabled, sender"
+        },
+        "mac": {
+          "set": true,
+          "on": false,
+          "json_path": "/components/0/hosted_software/0/security_configuration/secoc_mac_enabled",
+          "source": "COMP-BPSU pedal_feel_and_travel_encoder security_configuration.secoc_mac_enabled, sender"
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-BRK-02",
+      "json_path": "/connections/1"
+    },
+    {
+      "id": "CONN-BRK-02#msg:0x1A0",
+      "kind": "message",
+      "source": "COMP-RIC",
+      "target": "COMP-VDCM",
+      "label": "0x1A0",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (connection); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/1/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-BRK-02",
+      "json_path": "/connections/1/messages/1"
+    },
+    {
+      "id": "CONN-BRK-03",
+      "kind": "connection",
+      "source": "COMP-VDCM",
+      "target": "COMP-EBCM",
+      "label": "BRK-03 · SOME/IP",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (connection); mac not stated; freshness false (COMP-EBCM abs_esc_clamping_controller security_configuration.secoc_freshness_counter_enabled, receiver); e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/2/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": true,
+          "on": false,
+          "json_path": "/components/3/hosted_software/1/security_configuration/secoc_freshness_counter_enabled",
+          "source": "COMP-EBCM abs_esc_clamping_controller security_configuration.secoc_freshness_counter_enabled, receiver"
+        }
+      },
+      "element_id": "CONN-BRK-03",
+      "json_path": "/connections/2"
+    },
+    {
+      "id": "CONN-BRK-04",
+      "kind": "connection",
+      "source": "COMP-EBCM",
+      "target": "COMP-EMBA",
+      "target_instances": [
+        "COMP-EMBA-FL",
+        "COMP-EMBA-FR",
+        "COMP-EMBA-RL",
+        "COMP-EMBA-RR"
+      ],
+      "label": "BRK-04 · 0x040",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (connection); mac false (COMP-EMBA caliper_piston_servo_driver security_configuration.command_authentication_mac, receiver); freshness false (COMP-EMBA caliper_piston_servo_driver security_configuration.secoc_freshness_counter_enabled, receiver); e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/3/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": true,
+          "on": false,
+          "json_path": "/components/4/hosted_software/0/security_configuration/command_authentication_mac",
+          "source": "COMP-EMBA caliper_piston_servo_driver security_configuration.command_authentication_mac, receiver"
+        },
+        "freshness": {
+          "set": true,
+          "on": false,
+          "json_path": "/components/4/hosted_software/0/security_configuration/secoc_freshness_counter_enabled",
+          "source": "COMP-EMBA caliper_piston_servo_driver security_configuration.secoc_freshness_counter_enabled, receiver"
+        }
+      },
+      "element_id": "CONN-BRK-04",
+      "json_path": "/connections/3"
+    }
+  ],
+  "assets": [
+    {
+      "id": "ASSET-BRK-01",
+      "label": "A01",
+      "name": "Driver Pedal Travel \u0026 Braking Demand Signal (CAN ID 0x080)",
+      "component": "COMP-BPSU",
+      "connections": [
+        "CONN-BRK-02"
+      ],
+      "json_path": "/assets/0"
+    },
+    {
+      "id": "ASSET-BRK-02",
+      "label": "A02",
+      "name": "Regenerative Torque Feedback and Friction Torque Request (CAN ID 0x1A0 and SOME/IP 0x1020)",
+      "component": "COMP-VDCM",
+      "connections": [
+        "CONN-BRK-02",
+        "CONN-BRK-03"
+      ],
+      "json_path": "/assets/1"
+    },
+    {
+      "id": "ASSET-BRK-03",
+      "label": "A03",
+      "name": "Wheel Caliper Clamping Force Command (CAN ID 0x040)",
+      "component": "COMP-EMBA",
+      "connections": [
+        "CONN-BRK-04"
+      ],
+      "json_path": "/assets/2"
+    },
+    {
+      "id": "ASSET-BRK-04",
+      "label": "A04",
+      "name": "EBCM \u0026 Caliper Actuator Control Firmware",
+      "component": "COMP-EBCM",
+      "connections": [
+        "CONN-BRK-03",
+        "CONN-BRK-04"
+      ],
+      "json_path": "/assets/3"
+    }
+  ]
+}

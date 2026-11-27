@@ -1,0 +1,16 @@
+[
+  {
+    "rule": "L003",
+    "severity": "error",
+    "message": "asset ASSET-MISSING has no damage_scenarios; every asset needs at least one damage scenario",
+    "json_path": "/assets/1",
+    "element_id": "ASSET-MISSING"
+  },
+  {
+    "rule": "L003",
+    "severity": "error",
+    "message": "asset ASSET-EMPTY has an empty damage_scenarios list; every asset needs at least one damage scenario",
+    "json_path": "/assets/2/damage_scenarios",
+    "element_id": "ASSET-EMPTY"
+  }
+]

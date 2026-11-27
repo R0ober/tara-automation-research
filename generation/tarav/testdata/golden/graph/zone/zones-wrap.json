@@ -1,0 +1,530 @@
+{
+  "item": {
+    "item_id": "TEST-ZONES-01",
+    "name": "Zone Wrapping Test Fixture"
+  },
+  "zones": [
+    {
+      "id": "zone:Chassis_Backbone_Zone",
+      "label": "Chassis Backbone",
+      "trust_zone": "Chassis_Backbone_Zone"
+    },
+    {
+      "id": "zone:Actuation_Zone",
+      "label": "Actuation",
+      "trust_zone": "Actuation_Zone"
+    },
+    {
+      "id": "zone:Sensing_Zone",
+      "label": "Sensing",
+      "trust_zone": "Sensing_Zone"
+    },
+    {
+      "id": "zone:Cabin_Zone",
+      "label": "Cabin",
+      "trust_zone": "Cabin_Zone"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "COMP-GW",
+      "kind": "component",
+      "label": "GW",
+      "name": "Central Gateway (GW)",
+      "zone": "zone:Chassis_Backbone_Zone",
+      "asil": "ASIL-B",
+      "element_id": "COMP-GW",
+      "json_path": "/components/0"
+    },
+    {
+      "id": "COMP-DCM",
+      "kind": "component",
+      "label": "DCM",
+      "name": "Domain Controller (DCM)",
+      "zone": "zone:Chassis_Backbone_Zone",
+      "asil": "ASIL-B",
+      "element_id": "COMP-DCM",
+      "json_path": "/components/1"
+    },
+    {
+      "id": "COMP-TCU",
+      "kind": "component",
+      "label": "TCU",
+      "name": "Telematics Control Unit With An Intentionally Long Display Name To Test Label Wrapping (TCU)",
+      "zone": "zone:Chassis_Backbone_Zone",
+      "asil": "QM",
+      "element_id": "COMP-TCU",
+      "json_path": "/components/2"
+    },
+    {
+      "id": "COMP-ACTCTRL",
+      "kind": "component",
+      "label": "ACTCTRL",
+      "name": "Actuator Controller (ACTCTRL)",
+      "zone": "zone:Actuation_Zone",
+      "asil": "ASIL-D",
+      "element_id": "COMP-ACTCTRL",
+      "json_path": "/components/3"
+    },
+    {
+      "id": "COMP-ACT",
+      "kind": "component",
+      "label": "ACT",
+      "name": "Wheel Actuator (ACT x4)",
+      "zone": "zone:Actuation_Zone",
+      "asil": "ASIL-D",
+      "instance_count": 4,
+      "element_id": "COMP-ACT",
+      "json_path": "/components/4"
+    },
+    {
+      "id": "COMP-ACT-FL",
+      "kind": "instance",
+      "label": "FL",
+      "parent": "COMP-ACT",
+      "asil": "ASIL-D",
+      "element_id": "COMP-ACT-FL",
+      "json_path": "/components/4/instances/0"
+    },
+    {
+      "id": "COMP-ACT-FR",
+      "kind": "instance",
+      "label": "FR",
+      "parent": "COMP-ACT",
+      "asil": "ASIL-D",
+      "element_id": "COMP-ACT-FR",
+      "json_path": "/components/4/instances/1"
+    },
+    {
+      "id": "COMP-ACT-RL",
+      "kind": "instance",
+      "label": "RL",
+      "parent": "COMP-ACT",
+      "asil": "ASIL-D",
+      "element_id": "COMP-ACT-RL",
+      "json_path": "/components/4/instances/2"
+    },
+    {
+      "id": "COMP-ACT-RR",
+      "kind": "instance",
+      "label": "RR",
+      "parent": "COMP-ACT",
+      "asil": "ASIL-D",
+      "element_id": "COMP-ACT-RR",
+      "json_path": "/components/4/instances/3"
+    },
+    {
+      "id": "COMP-SENS-A",
+      "kind": "component",
+      "label": "SENS-A",
+      "name": "Sensor A (SENS-A)",
+      "zone": "zone:Sensing_Zone",
+      "asil": "ASIL-C",
+      "element_id": "COMP-SENS-A",
+      "json_path": "/components/5"
+    },
+    {
+      "id": "COMP-SENS-B",
+      "kind": "component",
+      "label": "SENS-B",
+      "name": "Sensor B (SENS-B)",
+      "zone": "zone:Sensing_Zone",
+      "asil": "ASIL-C",
+      "element_id": "COMP-SENS-B",
+      "json_path": "/components/6"
+    },
+    {
+      "id": "COMP-HMI",
+      "kind": "component",
+      "label": "HMI",
+      "name": "Driver Display (HMI)",
+      "zone": "zone:Cabin_Zone",
+      "asil": "QM",
+      "element_id": "COMP-HMI",
+      "json_path": "/components/7"
+    },
+    {
+      "id": "ep:INT-LTE",
+      "kind": "entry",
+      "label": "LTE",
+      "reaches": [
+        "COMP-TCU"
+      ],
+      "reach": {
+        "nodes": [
+          "COMP-TCU",
+          "ep:INT-LTE"
+        ],
+        "edges": [
+          "CONN-Z-01#ep:INT-LTE"
+        ]
+      },
+      "element_id": "INT-LTE",
+      "json_path": "/connections/0/entry_points/0"
+    },
+    {
+      "id": "ep:CONN-Z-05#physical_access",
+      "kind": "entry",
+      "label": "Exterior harness",
+      "physical": true,
+      "reaches": [
+        "COMP-ACTCTRL",
+        "COMP-ACT"
+      ],
+      "reach": {
+        "nodes": [
+          "COMP-ACTCTRL",
+          "COMP-ACT",
+          "COMP-ACT-FL",
+          "COMP-ACT-FR",
+          "COMP-ACT-RL",
+          "COMP-ACT-RR",
+          "ep:CONN-Z-05#physical_access"
+        ],
+        "edges": [
+          "phys:CONN-Z-05#physical_access:COMP-ACTCTRL",
+          "phys:CONN-Z-05#physical_access:COMP-ACT",
+          "CONN-Z-05"
+        ]
+      },
+      "element_id": "CONN-Z-05",
+      "json_path": "/connections/4/physical_access"
+    }
+  ],
+  "edges": [
+    {
+      "id": "phys:CONN-Z-05#physical_access:COMP-ACTCTRL",
+      "kind": "physical",
+      "source": "ep:CONN-Z-05#physical_access",
+      "target": "COMP-ACTCTRL",
+      "label": "physical",
+      "element_id": "CONN-Z-05",
+      "json_path": "/connections/4/physical_access"
+    },
+    {
+      "id": "phys:CONN-Z-05#physical_access:COMP-ACT",
+      "kind": "physical",
+      "source": "ep:CONN-Z-05#physical_access",
+      "target": "COMP-ACT",
+      "target_instances": [
+        "COMP-ACT-FL",
+        "COMP-ACT-FR",
+        "COMP-ACT-RL",
+        "COMP-ACT-RR"
+      ],
+      "label": "physical",
+      "element_id": "CONN-Z-05",
+      "json_path": "/connections/4/physical_access"
+    },
+    {
+      "id": "CONN-Z-01#ep:INT-LTE",
+      "kind": "entry",
+      "source": "ep:INT-LTE",
+      "target": "COMP-TCU",
+      "label": "LTE",
+      "protection": {
+        "level": "encrypted",
+        "rationale": "encrypted true (entry point); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/0/entry_points/0/encrypted",
+          "source": "entry point"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-Z-01",
+      "json_path": "/connections/0/entry_points/0"
+    },
+    {
+      "id": "CONN-Z-02",
+      "kind": "connection",
+      "source": "COMP-GW",
+      "target": "COMP-DCM",
+      "label": "Z-02 · SOME/IP",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (connection); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/1/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-Z-02",
+      "json_path": "/connections/1"
+    },
+    {
+      "id": "CONN-Z-03",
+      "kind": "connection",
+      "source": "COMP-GW",
+      "target": "COMP-TCU",
+      "label": "Z-03 · SOME/IP",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (connection); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/2/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-Z-03",
+      "json_path": "/connections/2"
+    },
+    {
+      "id": "CONN-Z-04",
+      "kind": "connection",
+      "source": "COMP-DCM",
+      "target": "COMP-ACTCTRL",
+      "label": "Z-04 · CAN-FD",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (connection); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/3/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-Z-04",
+      "json_path": "/connections/3"
+    },
+    {
+      "id": "CONN-Z-05",
+      "kind": "connection",
+      "source": "COMP-ACTCTRL",
+      "target": "COMP-ACT",
+      "target_instances": [
+        "COMP-ACT-FL",
+        "COMP-ACT-FR",
+        "COMP-ACT-RL",
+        "COMP-ACT-RR"
+      ],
+      "label": "Z-05 · CAN-FD",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (connection); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/4/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-Z-05",
+      "json_path": "/connections/4"
+    },
+    {
+      "id": "CONN-Z-06",
+      "kind": "connection",
+      "source": "COMP-SENS-A",
+      "target": "COMP-ACTCTRL",
+      "label": "Z-06 · CAN",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (connection); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/5/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-Z-06",
+      "json_path": "/connections/5"
+    },
+    {
+      "id": "CONN-Z-07",
+      "kind": "connection",
+      "source": "COMP-SENS-B",
+      "target": "COMP-GW",
+      "label": "Z-07 · CAN",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (connection); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/6/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-Z-07",
+      "json_path": "/connections/6"
+    },
+    {
+      "id": "CONN-Z-08",
+      "kind": "connection",
+      "source": "COMP-HMI",
+      "target": "COMP-GW",
+      "label": "Z-08 · CAN",
+      "protection": {
+        "level": "unknown",
+        "missing": [
+          "mac",
+          "e2e_crc"
+        ],
+        "rationale": "encrypted false (connection); mac not stated; freshness not stated; e2e_crc not stated"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/7/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": false,
+          "on": false
+        },
+        "mac": {
+          "set": false,
+          "on": false
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-Z-08",
+      "json_path": "/connections/7"
+    }
+  ],
+  "assets": [
+    {
+      "id": "ASSET-Z-01",
+      "label": "A01",
+      "name": "Actuator Command",
+      "component": "COMP-ACT",
+      "connections": [
+        "CONN-Z-05"
+      ],
+      "json_path": "/assets/0"
+    }
+  ]
+}

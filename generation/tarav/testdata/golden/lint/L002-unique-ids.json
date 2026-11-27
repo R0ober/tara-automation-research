@@ -1,0 +1,9 @@
+[
+  {
+    "rule": "L017",
+    "severity": "warning",
+    "message": "connection edge CONN-1: protection is unknown; not stated: encrypted, mac, e2e_crc (set them in `protection` or the receiver's security_configuration)",
+    "json_path": "/connections/0",
+    "element_id": "CONN-1"
+  }
+]

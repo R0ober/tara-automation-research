@@ -1,0 +1,4 @@
+# Vendored frontend libraries (SPEC D4: offline, no CDN at runtime).
+# Fetched 2026-11-25 from cdn.jsdelivr.net/npm (npm package contents). Checksums: SHA256SUMS.
+cytoscape.min.js    cytoscape@3.30.2      dist/cytoscape.min.js     MIT
+elk.bundled.js      elkjs@0.9.3           lib/elk.bundled.js        EPL-2.0

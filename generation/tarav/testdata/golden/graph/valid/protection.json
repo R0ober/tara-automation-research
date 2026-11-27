@@ -1,0 +1,126 @@
+{
+  "item": {
+    "item_id": "ITEM-PROT",
+    "name": "Schema 1.1.0: explicit protection on a connection and a message",
+    "schema": "https://tarav.local/schema/item-definition/1.1.0"
+  },
+  "zones": [
+    {
+      "id": "zone:Zone_1",
+      "label": "Zone 1",
+      "trust_zone": "Zone_1"
+    },
+    {
+      "id": "zone:Zone_2",
+      "label": "Zone 2",
+      "trust_zone": "Zone_2"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "COMP-S",
+      "kind": "component",
+      "label": "Sender",
+      "name": "Sender",
+      "zone": "zone:Zone_1",
+      "element_id": "COMP-S",
+      "json_path": "/components/0"
+    },
+    {
+      "id": "COMP-R",
+      "kind": "component",
+      "label": "Receiver",
+      "name": "Receiver",
+      "zone": "zone:Zone_2",
+      "element_id": "COMP-R",
+      "json_path": "/components/1"
+    }
+  ],
+  "edges": [
+    {
+      "id": "CONN-1",
+      "kind": "connection",
+      "source": "COMP-S",
+      "target": "COMP-R",
+      "label": "1",
+      "protection": {
+        "level": "crc",
+        "rationale": "encrypted false (connection); mac false (connection protection); freshness not stated; e2e_crc true (connection protection)"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/0/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/0/protection/e2e_crc",
+          "source": "connection protection"
+        },
+        "mac": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/0/protection/mac",
+          "source": "connection protection"
+        },
+        "freshness": {
+          "set": false,
+          "on": false
+        }
+      },
+      "element_id": "CONN-1",
+      "json_path": "/connections/0"
+    },
+    {
+      "id": "CONN-1#msg:0x100",
+      "kind": "message",
+      "source": "COMP-S",
+      "target": "COMP-R",
+      "label": "0x100",
+      "protection": {
+        "level": "mac_freshness",
+        "rationale": "encrypted false (connection); mac true (message 0x100 protection); freshness true (message 0x100 protection); e2e_crc true (message 0x100 protection)"
+      },
+      "flags": {
+        "encrypted": {
+          "set": true,
+          "on": false,
+          "json_path": "/connections/0/encrypted",
+          "source": "connection"
+        },
+        "e2e_crc": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/0/messages/0/protection/e2e_crc",
+          "source": "message 0x100 protection"
+        },
+        "mac": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/0/messages/0/protection/mac",
+          "source": "message 0x100 protection"
+        },
+        "freshness": {
+          "set": true,
+          "on": true,
+          "json_path": "/connections/0/messages/0/protection/freshness",
+          "source": "message 0x100 protection"
+        }
+      },
+      "element_id": "CONN-1",
+      "json_path": "/connections/0/messages/0"
+    }
+  ],
+  "assets": [
+    {
+      "id": "ASSET-1",
+      "label": "A1",
+      "name": "Torque request",
+      "component": "COMP-R",
+      "json_path": "/assets/0"
+    }
+  ]
+}
