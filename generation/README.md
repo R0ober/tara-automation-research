@@ -13,16 +13,28 @@ This subproject generates TARA content from the shared reference architecture:
 
 ## Current status
 
-Not started. No implementation exists.
+Stage 1 reads an item definition and calls tools through a model server.
 
 ## Planned implementation
 
 Not yet defined. Record important technical decisions as ADRs in
 [`docs/decisions/`](docs/decisions/). Use the [ADR template](../docs/adr-template.md).
 
-## Setup
+## Run Stage 1 locally
 
-Not yet defined.
+Start a model server and prepare the Stage 1 databases before running the agent.
+For a local Ollama server with, run this command from the repository root.
+
+```bash
+(
+  cd generation
+  OPENAI_BASE_URL=http://localhost:11434/v1 OPENAI_MODEL=qwen3.5-65k \
+    python3 agents/stage_1_agent.py --item ../shared/architecture/bbw/item-definition.json
+)
+```
+
+Use `--item` to select another item. If the server requires an API key, set
+`OPENAI_API_KEY` in the environment.
 
 ## Tests
 

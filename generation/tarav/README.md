@@ -3,8 +3,8 @@
 Validates, lints and renders TARA item-definition JSON (ISO/SAE 21434 style):
 components, connections, entry points, assets and damage scenarios. Findings point
 at the offending value with an RFC 6901 JSON pointer, and `tarav render` produces
-one offline HTML page showing the architecture with each edge coloured by its
-derived protection level.
+one offline HTML page showing the architecture with communication edges coloured by the selected
+property (MAC, encryption, freshness or E2E CRC).
 
 It also works as a pipeline step: `tarav check` gives a machine-readable pass or
 fail under a policy file, `tarav serve --review` lets a person review and approve,
@@ -154,7 +154,7 @@ and can be archived as review evidence: the viewer, cytoscape and elkjs are
 inlined, and the graph, findings and the raw item JSON are embedded. A Content
 Security Policy forbids any network load. The page shows trust zones, component
 cards with ASIL badges, entry points, orthogonally routed edges coloured by
-protection level, dashed physical-access and diagnostic paths, and multi-instance
+the selected property, dashed physical-access and diagnostic paths, and multi-instance
 components collapsed as `×N` (double-click to expand).
 
 - **Drawer:** click any element for its details: hardware, OS, software with
@@ -174,7 +174,7 @@ components collapsed as `×N` (double-click to expand).
 - **Search, layers, zones:** search by name, ID, software or CPE; toggle zones,
   entry points, protection colouring, assets, ASIL badges, diagnostic routes and
   labels; double-click a zone to fold it into one box (edges crossing it merge and
-  show their weakest protection level).
+  show Mixed when members disagree, with counts in the details panel).
 
 Reachability and the finding-to-element links are computed in Go and embedded,
 so they are deterministic and covered by golden tests.
@@ -182,9 +182,11 @@ so they are deterministic and covered by golden tests.
 `tarav serve` serves the same page on `127.0.0.1:8000` and reloads it within a
 second of the file being saved. Schema errors are shown in the page.
 
-### Protection levels
+### Edge colors and lint findings
 
-Each connection, message and entry-point edge gets a level, strongest first:
+The viewer opens in **Architecture overview** with a label showing every stated control. Green means encrypted and red means explicitly unencrypted. If encryption is unstated, an enabled MAC, freshness check or E2E CRC sets the color, in that order. An edge with no stated controls is orange. Use **Edge view** to color the graph by encryption, MAC, freshness or E2E CRC. Edge labels show + for enabled, − for disabled, ? for not stated and ± for mixed. Select an edge for its source fields.
+
+For lint rule L017, each connection, message and entry-point edge gets a derived level:
 encrypted, MAC + freshness, MAC, CRC only, none, or unknown. Derivation is
 strict: a flag that is not stated is unknown, never false, so an edge is only
 "none" when encryption, MAC and CRC are all stated false (SPEC D12). Flags come

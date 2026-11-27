@@ -1,0 +1,11 @@
+Bootstrap: docker
+From: python:3.11-slim
+
+%files
+    ../../agents/model_client.py /app/model_client.py
+    ../../tools/stageOneTools/stage_1_tools.py /app/stage_1_tools.py
+    ../../tools/stageOneTools/tool_dispatcher.py /app/tool_dispatcher.py
+    reviewed-stage1/reviewed_item.py /app/reviewed_item.py
+
+%post
+    pip install --no-cache-dir openai==1.109.1

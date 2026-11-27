@@ -42,7 +42,7 @@ This file is extracted from the development repo's `SPEC.md` and `plan.md`; mile
 |---|---|
 | D17 | **Reachability follows declared direction** over all drawn edges (connection, message, entry, physical, diagnostic), computed in Go and embedded per entry node. Entering a component reaches its instances. It is topology, not feasibility, and the UI says so. |
 | D18 | **Finding links are computed in Go** by longest JSON-pointer prefix over graph elements, with owner fallbacks (component, connection edge or its entry edges, asset's parent component). Embedded as `links` parallel to `findings`; the plan §7 finding shape is unchanged. |
-| D19 | **Zone collapse** merges border-crossing edges per (outside end, direction); the merged edge takes the weakest member level, ordered none < unknown < crc < mac < mac_freshness < encrypted (unknown sits just above none because it may be none). Physical and diagnostic edges merge separately and stay dashed. |
+| D19 | **Zone collapse** merges border-crossing edges per (outside end, direction). The viewer shows the selected property and member counts. Different member states produce a mixed edge. Physical and diagnostic edges merge separately and stay dashed. |
 | D20 | **UI tests extend the headless-Chrome driver** through `window.__tarav` hooks; no Playwright or other JS dependency. UI/UX reviewer suggestions on M2 are deferred and will be folded in when collected. |
 
 ### D21–D25 (M4: pipeline gate)
@@ -94,7 +94,7 @@ func checkDanglingRefs(it *model.Item) []Finding {
 - **Render/serve (M2):** byte-identical output, network-free page (CSP + no external loads), escaping, D15 exit codes; `serve` handler tests via `httptest`.
 - **Browser (M2):** headless Chrome with networking blocked loads each rendered sample: zero console errors, `routeCheck` clean (also expanded), identical layout across loads, and live reload under `serve`. Skipped without Chrome or with `-short`.
 - **Graph (M3):** reach per entry point in goldens, pinned BBW/OTA sets, closure test; `Locate` table tests for prefix, ties and every fallback; every fixture finding links to a drawable element.
-- **Browser (M3):** scenarios through `window.__tarav` (D20): drawer sections per element kind, exact undimmed set per entry point, every findings row (also with zones folded), search by CPE and ID, each layer toggle, folding each zone and all zones with `routeCheck` clean and merged edges at the weakest level.
+- **Browser (M3):** scenarios through `window.__tarav` (D20): drawer sections per element kind, exact undimmed set per entry point, every findings row (also with zones folded), search by CPE and ID, each layer toggle, folding each zone and all zones with `routeCheck` clean and merged edges summarised by property.
 - **Pipeline (M4):** policy parse errors and grading table tests; check report per fixture and policy; approval log append/find (stale, other stage); review endpoints refuse wrong token, form content type, cross origin, stale version, failing file, second decision and foreign Host names; CLI approve → gate → edit → gate closed; `serve --review` run end to end for approve and reject; browser tests drive the real Approve form and a blocked page.
 - Coverage target: ≥80% statements on `internal/...` (M1–M4).
 
@@ -137,13 +137,12 @@ The look follows Floorplan's flat, quiet style: lots of whitespace, thin borders
 
 **Visual encoding**
 
-- Edge color shows the protection level, derived from config: none, then CRC only, then MAC, then MAC plus freshness, then encrypted.
+- In the architecture overview, stated encryption sets the line color and the label lists all stated controls. Without an encryption setting, the first enabled control in MAC, freshness, E2E CRC order sets the color. Selecting a property colors the edges by that property. The viewer labels enabled, disabled, unstated and mixed states with distinct symbols.
 - Dashed edges are physical-access paths (SWD, wheel harness).
 - Components get an ASIL badge, and a red dot when the lint has findings for them.
 
 **Better than Floorplan for this use case**
 
-- The protection-level color scale makes the security posture visible at a glance.
 - Reachability highlighting from entry points.
 - The lint panel is tied to graph elements, like Floorplan's Health check but specific to item definitions.
 - Optional tabs reuse the same data: a **signal flow strip** for the braking chain and a **control matrix** of components × controls.
@@ -164,14 +163,16 @@ The look follows Floorplan's flat, quiet style: lots of whitespace, thin borders
 
 ### plan §6. Protection-level derivation
 
-The rules are table-driven and unit-tested, using the first rule that matches:
+L017 uses the first matching rule to derive a level:
 
 1. `encrypted: true` → **encrypted**
 2. MAC enabled and freshness enabled → **MAC + freshness**
 3. MAC enabled → **MAC only**
-4. E2E CRC present → **CRC only (integrity, not authenticity)**
-5. Otherwise → **none**
-6. A missing field gives **unknown**, shown in amber and also raised as a lint warning.
+4. E2E CRC enabled → **CRC**
+5. Encryption, MAC and E2E CRC explicitly disabled → **none**
+6. Otherwise → **unknown**
+
+L017 warns when an unstated flag could change the derived level.
 
 Flags are read from both the sender's and the receiver's `security_configuration`. Where they disagree, the receiver-side verification wins.
 
