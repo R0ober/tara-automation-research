@@ -2,10 +2,23 @@
 import argparse
 import shlex
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
 import yaml
+
+
+SSH_OPTIONS = [
+    "-o", "BatchMode=yes",
+    "-o", "ConnectTimeout=10",
+    "-o", "ServerAliveInterval=10",
+    "-o", "ServerAliveCountMax=2",
+]
+CONNECTION_HINT = (
+    "Check your Chalmers network or VPN connection and SSH key. "
+    "Test with: ssh -o BatchMode=yes -o ConnectTimeout=10 minerva hostname"
+)
 
 
 def write_job_script(command):
@@ -29,19 +42,27 @@ exec apptainer exec \
 
 def upload_job(image_path, input_dir, script_path):
     create_dir = "mkdir -p ~/tara-demo && mktemp -d ~/tara-demo/run-$(date +%Y-%m-%d_%H-%M-%S)-XXXXXXXX"
-    result = subprocess.run(
-        ["ssh", "-o", "BatchMode=yes", "minerva", create_dir],
-        check=True, stdout=subprocess.PIPE, text=True,
-    )
+    print("Connecting to Minerva...", flush=True)
+    try:
+        result = subprocess.run(
+            ["ssh", *SSH_OPTIONS, "minerva", create_dir],
+            check=True, stdout=subprocess.PIPE, text=True, timeout=15,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise ConnectionError(f"Minerva did not respond within 15 seconds. {CONNECTION_HINT}") from error
+    except subprocess.CalledProcessError as error:
+        if error.returncode == 255:
+            raise ConnectionError(f"SSH could not connect to Minerva. {CONNECTION_HINT}") from error
+        raise
     remote_dir = result.stdout.strip()
     destination = f"minerva:{remote_dir}"
     print(f"Remote run directory: {destination}", flush=True)
 
     if image_path is not None:
-        subprocess.run(["scp", "-B", image_path, f"{destination}/image.sif"], check=True)
+        subprocess.run(["scp", *SSH_OPTIONS, image_path, f"{destination}/image.sif"], check=True)
     if input_dir is not None:
-        subprocess.run(["scp", "-B", "-r", input_dir.resolve(), f"{destination}/input"], check=True)
-    subprocess.run(["scp", "-B", script_path, f"{destination}/job.sh"], check=True)
+        subprocess.run(["scp", *SSH_OPTIONS, "-r", input_dir.resolve(), f"{destination}/input"], check=True)
+    subprocess.run(["scp", *SSH_OPTIONS, script_path, f"{destination}/job.sh"], check=True)
     return remote_dir
 
 
@@ -109,10 +130,16 @@ def main():
 
     submit = shlex.join(["sbatch", "--chdir", remote_dir, f"{remote_dir}/job.sh"])
     try:
-        subprocess.run(["ssh", "-o", "BatchMode=yes", "minerva", submit], check=True)
+        subprocess.run(["ssh", *SSH_OPTIONS, "minerva", submit], check=True)
+    except KeyboardInterrupt:
+        parser.exit(130, "\nSubmission interrupted. Check your Minerva queue before retrying.\n")
     except (OSError, subprocess.CalledProcessError) as error:
         parser.exit(1, f"Could not confirm Slurm submission: {error}\n")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nCancelled.", file=sys.stderr)
+        sys.exit(130)
